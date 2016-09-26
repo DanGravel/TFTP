@@ -5,7 +5,7 @@ public class FileTransferClient {
 	private DatagramSocket sendReceiveSocket;
 	private DatagramPacket sendPacket, receivePacket;
 
-	public static final int INTERMEDIATE_PORT = 23;
+	public static enum Mode = {NORMAL, TEST};
 	
 	public FileTransferClient() {
 		try {
@@ -27,7 +27,14 @@ public class FileTransferClient {
 
 		byte[] filenameBytes = ("file.txt").getBytes();	
 		byte[] modeBytes = ("octet").getBytes();
-
+		
+		int sendPort; 
+		Mode run = Mode.TEST;
+		if(run == Mode.NORMAL) sendPort = 69;
+		else sendPort = 23; 
+		
+		if()
+		
 		for (int i = 0; i < 11; i++) {
 			System.out.println("Creating Client #" + i);
 			
@@ -54,7 +61,7 @@ public class FileTransferClient {
 			int length = filenameBytes.length + modeBytes.length + 4;
 			
 			try {
-				sendPacket = new DatagramPacket(msg, length, InetAddress.getLocalHost(), INTERMEDIATE_PORT);  
+				sendPacket = new DatagramPacket(msg, length, InetAddress.getLocalHost(), sendPort);  
 			} catch (UnknownHostException e) {
 				e.printStackTrace();
 				System.exit(1);
