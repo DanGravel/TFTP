@@ -8,11 +8,8 @@ public class IntermediateHost extends Host
 
 	public IntermediateHost() {
 		try {
-		      // Construct a datagram socket and bind it to port 23 
-	         // on the local host machine. This socket will be used to
-	         // receive UDP Datagram packets.
-			receiveSocket = new DatagramSocket(PORT);	// Receive packets from client and bind to port 23
-			sendReceiveSocket = new DatagramSocket();	// Datagram socket used to send and receive
+			receiveSocket = new DatagramSocket(PORT);	
+			sendReceiveSocket = new DatagramSocket();	
 		} catch (SocketException se) {
 			se.printStackTrace();
 			System.exit(1);
@@ -21,25 +18,33 @@ public class IntermediateHost extends Host
 
 	public void sendAndReceive() {
 		for (;;) {
-			receiveaPacket("intermediate", receiveSocket);
-			
-			// Create new datagram packet containing the string received
-			
-			sendaPacket(receivePacket.getData(), FileTransferServer.SERVER_PORT, sendReceiveSocket, "Intermediate");
+			receiveFromClient();
+			sendToServer()
 			
 			int clientPort = receivePacket.getPort();
 			
-			receiveaPacket("Intermediate", sendReceiveSocket);
-	        //sending to port of client given by port of receivePacket
+            receiveFromServer()			
+	        sendToClient(clientPort)
 			
-			sendaPacket(receivePacket.getData(), clientPort, sendSocket,"Intermediate");
-
-			
-			System.out.println("Simulator: packet sent\n");
-			System.out.println();
+			System.out.println("Simulator: packet sent\n\n);
 			sendSocket.close();
-			
 		}
+	}
+	
+	private void sendToServer(){
+		sendaPacket(receivePacket.getData(), FileTransferServer.SERVER_PORT, sendReceiveSocket, "Intermediate");
+	}
+	
+	private void receiveFromClient(){
+		receiveaPacket("intermediate", receiveSocket);
+	}
+	
+	private void receiveFromServer(){
+		receiveaPacket("Intermediate", sendReceiveSocket);
+	}
+	
+	private void sendToClient(int clientPort){
+		sendaPacket(receivePacket.getData(), clientPort, sendSocket,"Intermediate");
 	}
 	
 	public static void main (String args[]) {
