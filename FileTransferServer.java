@@ -28,43 +28,17 @@ public class FileTransferServer extends Host {
 	}
 
 	public void sendAndReceive() throws Exception {
+		System.out.println("Server: Waiting for Packet.\n");
 		for (;;) {
-			byte data[] = new byte[100];
-			
-			// Construct a DatagramPacket for receiving packets
-			receivePacket = new DatagramPacket(data, data.length);
-			System.out.println("Server: Waiting for Packet.\n");
-
-			try {
-				System.out.println("Waiting...");
-				receiveSocket.receive(receivePacket);
-			} catch (IOException e) {
-				System.out.println("IO Exception: likely");
-				System.out.println("Receive Socket Timed Out.\n" + e);
-				e.printStackTrace();
-				System.exit(1);
-			}
-
-			System.out.println("Server: Packet received:");
-			System.out.println("From host: " + receivePacket.getAddress());
-			System.out.println("Host port: " + receivePacket.getPort());
-			int len = receivePacket.getLength();
-			System.out.println("Length: " + len);
-			System.out.println("Containing: ");
-
-			System.out.println(new String(data, 0, len) + "\n");
-			String bytes = "bytes: ";
-			for (int j = 0; j < len; j++) {
-				bytes += receivePacket.getData()[j];
-			}
-			System.out.println(bytes);
+			System.out.println("Waiting..."); // so we know we're waiting
+			receiveaPacket("Server", receiveSocket);   
 			
 			//Parse packet to confirm whether format is valid
 			RequestType request = null; 
 			String filename = null;
 			
 			// Check first two bytes for 01 (read) or 02 (write)
-			data = receivePacket.getData(); 
+			byte data[] = receivePacket.getData(); 
 			
 			if (data[0] == 0 && data[1] == 1) {
 				request = RequestType.READ;
@@ -97,22 +71,8 @@ public class FileTransferServer extends Host {
 				response = responseWrite;
 			}
 			
-			// Create a new datagram packet containing the string received from the intermediate host
-			sendPacket = new DatagramPacket(response, response.length, receivePacket.getAddress(), receivePacket.getPort());
+			// Create a new datagram packet containing the string received from the intermediate host			
 			
-			System.out.println("Server: Sending packet");
-			System.out.println("To host: " + sendPacket.getAddress());
-			System.out.println("Destination host port: " + sendPacket.getPort());
-			len = sendPacket.getLength();
-			System.out.println("Length: " + len);
-			System.out.println("Containing: ");
-			System.out.println(new String(sendPacket.getData(), 0, len));
-			
-			bytes = "bytes: ";
-			for (int k = 0; k < len; k++) {
-				bytes += sendPacket.getData()[k];
-			}
-			System.out.println(bytes);
 			
 			//Create a new datagram socket to send a response
 			try {
@@ -122,13 +82,8 @@ public class FileTransferServer extends Host {
 				System.exit(1);
 			}
 			
-			// Send the datagram packet to the intermediate host via the send socket
-			try {
-				sendSocket.send(sendPacket);
-			} catch (IOException e) {
-				e.printStackTrace();
-				System.exit(1);
-			}
+			sendaPacket(response, receivePacket.getPort(), sendSocket, "Server");
+
 			
 			System.out.println("Server: packet sent");
 			sendSocket.close();
