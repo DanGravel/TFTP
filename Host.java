@@ -10,12 +10,10 @@ public class Host {
 	  protected DatagramPacket sendPacket, receivePacket;
 	  protected Printer p = new Printer();
 	  
-	  
-	  
 	  protected void sendaPacket(byte[] message, int sendPort, DatagramSocket sendSocket, String host) {
 		  try {
 		         sendPacket = new DatagramPacket(message, receivePacket.getLength(),
-		                                         InetAddress.getLocalHost(), sendPort); 
+		                      InetAddress.getLocalHost(), sendPort); 
 		      } catch (UnknownHostException e) {
 		         e.printStackTrace();
 		         System.exit(1);

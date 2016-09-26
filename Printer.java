@@ -2,14 +2,8 @@ import java.net.DatagramPacket;
 
 /**
  * This class simply prints out necessary information of packets before sending them and after receiving them
- * @author Tanzim Zaman
- *
  */
-
 public class Printer {
-
-	
-	
 	/**
 	 * 
 	 * @param host			Names such as Client, Server, Intermediate
@@ -25,6 +19,7 @@ public class Printer {
 	      System.out.println(host + ": Packet sent \n");
 
 	   }
+	   
 	/**
 	 * 
 	 * @param host				Names such as Client, Server, Intermediate replaces this
@@ -37,10 +32,8 @@ public class Printer {
 	      System.out.println("Length: " + receivePacket.getLength());
 	      System.out.print("Containing: " + new String(receivePacket.getData()));
 	      printBytes(receivePacket.getData());
-	   
-	      
 	   }
-	   
+	
 	   /**
 	    * Prints out a byte array single byte at a time
 	    * @param packet		byte array to be printed out
