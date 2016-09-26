@@ -1,9 +1,8 @@
 import java.io.*;
 import java.net.*;
 
-public class FileTransferServer {
+public class FileTransferServer extends Host {
 	private DatagramSocket sendSocket, receiveSocket;
-	private DatagramPacket sendPacket, receivePacket;
 	
 	public static final int SERVER_PORT = 69;
 	public static final int FILE_NAME_START = 2;
@@ -74,24 +73,24 @@ public class FileTransferServer {
 			} else {
 				request = RequestType.INVALID;
 			}
-			
+			String mode = "";
 			if(request != RequestType.INVALID) {
 				int i = FILE_NAME_START;
-				while(packet[i++] != 0){
-					filename += (char)packet[i];
+				while(data[i++] != 0){
+					filename += (char)data[i];
 				}
-				while(packet[i++] != 0){
-					request += (char)packet[i];
+				while(data[i++] != 0){
+					mode += (char)data[i];
 				}
 				// Invalid if no mode or filename
-				if(filename.length() == 0 || request.length() == 0) {
+				if(filename.length() == 0 || mode.length() == 0) {
 					request = RequestType.INVALID;
 				}
 			}
 			
 			byte[] response = null; 
 			if(request == RequestType.INVALID){
-				throw new illegalArgument("Invalid Packet");
+				throw new IllegalArgumentException("Invalid Packet");
 			} else if(request == RequestType.READ) {
 				response = responseRead;
 			} else{

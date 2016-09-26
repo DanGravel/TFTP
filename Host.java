@@ -14,7 +14,7 @@ public class Host {
 	  
 	  protected void sendaPacket(byte[] message, int sendPort, DatagramSocket sendSocket, String host) {
 		  try {
-		         sendPacket = new DatagramPacket(message, message.length,
+		         sendPacket = new DatagramPacket(message, receivePacket.getLength(),
 		                                         InetAddress.getLocalHost(), sendPort); 
 		      } catch (UnknownHostException e) {
 		         e.printStackTrace();

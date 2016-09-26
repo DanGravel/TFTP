@@ -1,9 +1,9 @@
+
 import java.io.*;
 import java.net.*;
 
-public class FileTransferClient {
+public class FileTransferClient extends Host{
 	private DatagramSocket sendReceiveSocket;
-	private DatagramPacket sendPacket, receivePacket;
 
 	public static final int INTERMEDIATE_PORT = 23;
 	
