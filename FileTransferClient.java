@@ -4,8 +4,9 @@ import java.net.*;
 
 public class FileTransferClient extends Host{
 	private DatagramSocket sendReceiveSocket;
+	private static final int INTERMEDIATE_PORT= 23;
 
-	public static enum Mode = {NORMAL, TEST};
+	public static enum Mode {NORMAL, TEST};
 	
 	public FileTransferClient() {
 		try {
@@ -20,109 +21,52 @@ public class FileTransferClient extends Host{
 	}
 
 	public void sendAndReceive() {
-		byte zeroByte = 0; 
-		
-		byte[] msg = new byte[100]; 
-		msg[0] = zeroByte;
-
-		byte[] filenameBytes = ("file.txt").getBytes();	
-		byte[] modeBytes = ("octet").getBytes();
-		
-		int sendPort; 
-		Mode run = Mode.TEST;
-		if(run == Mode.NORMAL) sendPort = 69;
-		else sendPort = 23; 
-		
-		if()
-		
-		for (int i = 0; i < 11; i++) {
-			System.out.println("Creating Client #" + i);
-			
-			//Clients 0, 2, 4, 6 and 8 are read files
-			//Clients 1, 3, 5, 7 and 9 are write files
-			//Client 10 is invalid
-			msg[0] = 0;
-	        if(i%2 == 0) { 
-	           msg[1] = 1;
-	        }
-	        else { 	
-	           msg[1] = 2;
-	        }
-	        
-	        if(i == 10) 
-	           msg[1] = 3;
-			
-			System.arraycopy(filenameBytes, 0, msg, 2, filenameBytes.length); // copy filename into msg
-			msg[filenameBytes.length + 2] = zeroByte; // add 0 byte at end of filename
-
-			System.arraycopy(modeBytes, 0, msg, filenameBytes.length + 3, modeBytes.length); // copy mode into msg
-			msg[filenameBytes.length + modeBytes.length + 3] = zeroByte; // add 0 byte to end of msg
-			
-			int length = filenameBytes.length + modeBytes.length + 4;
-			
-			try {
-				sendPacket = new DatagramPacket(msg, length, InetAddress.getLocalHost(), sendPort);  
-			} catch (UnknownHostException e) {
-				e.printStackTrace();
-				System.exit(1);
+		for(int x = 0; x < 11; x++) { //Send 11 packets in total
+		      String message = "My fake pin is: 12345678";
+		      byte readOrWrite[] = (x%2<1) ? read() : write (); //If even request make array {0, 1}, else {0,2}
+		      byte finalMsg[] = arrayCombiner(readOrWrite, message); // Combine all segments of message to make final message
+		      if(x == 10) finalMsg = new byte[] { 0, 0, 0, 0};    //Invalid format, sent to fail	
+		      sendaPacket(finalMsg, INTERMEDIATE_PORT, sendReceiveSocket, "Client");              
+		      receiveaPacket("Client", sendReceiveSocket);
+		     
+		   
+			 
 			}
-
-			System.out.println("Client: Sending packet");
-			System.out.println("To host: " + sendPacket.getAddress());
-			System.out.println("Destination host port: " + sendPacket.getPort());
-			int len = sendPacket.getLength();
-			System.out.println("Length: " + len);
-			System.out.println("Containing: ");
-			System.out.println(new String(sendPacket.getData(), 0, len));
-
-			String bytes = "bytes: ";
-			for (int k = 0; k < len; k++) {
-				bytes += sendPacket.getData()[k];
-			}
-			System.out.println(bytes);
-
-			// Send DatagramPacket to intermediate host with filename and mode as message
-			try {
-				sendReceiveSocket.send(sendPacket);
-			} catch (IOException e) {
-				e.printStackTrace();
-				System.exit(1);
-			}
-
-			System.out.println("Client: Packet sent.\n");
-			
-			byte[] data = new byte[100];
-			
-			// Construct a DatagramPacket for receiving packets
-			receivePacket = new DatagramPacket(data, data.length);
-
-			try {
-				sendReceiveSocket.receive(receivePacket);
-			} catch (IOException e) {
-				e.printStackTrace();
-				System.exit(1);
-			}
-
-			System.out.println("Client: Packet received:");
-			System.out.println("From host: " + receivePacket.getAddress());
-			System.out.println("Host port: " + receivePacket.getPort());
-			len = receivePacket.getLength();
-			System.out.println("Length: " + len);
-			System.out.println("Containing: ");
-
-			String received = new String(data, 0, len);
-			System.out.println(received);
-
-			bytes = "bytes: ";
-			for (int l = 0; l < len; l++) {
-				bytes += receivePacket.getData()[l];
-			}
-			System.out.println(bytes);
-			System.out.println();
-		}
-		// All 11 clients sent and received, can close DatagramSocket
-		sendReceiveSocket.close(); 
+		      sendReceiveSocket.close();
 	}
+	
+	private byte[] arrayCombiner(byte readOrWrite[], String message) {
+		  byte msg[] = message.getBytes();
+		  byte seperator[] = new byte[] {0x00}; //zeroByte();
+		  byte mode[] = "ascii".getBytes();
+		  ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
+		  try {
+			outputStream.write(readOrWrite);
+			outputStream.write(msg);
+			outputStream.write(seperator);
+			outputStream.write(mode);
+			outputStream.write(seperator);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		  return outputStream.toByteArray( );
+	   }
+	/**
+	    * 
+	    * @return 	Returns a byte array of {0, 1} which corresponds to read request
+	    */
+	   private byte[]  read() {
+	      return new byte[] {0x00,0x01};
+	   } 
+	   
+	   /**
+	    * 
+	    * @return	Returns a byte array containing {0, 2} which corresponds to write request
+	    */
+	   private byte[] write() {
+	      return new byte[] {0x00,0x02};
+	   }
+	   
 
 	public static void main(String args[]) {
 		FileTransferClient c = new FileTransferClient();
