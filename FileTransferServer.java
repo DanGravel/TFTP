@@ -6,6 +6,7 @@ public class FileTransferServer {
 	private DatagramPacket sendPacket, receivePacket;
 	
 	public static final int SERVER_PORT = 69;
+	public static final int FILE_NAME_START = 2;
 	
 	// Responses to send back to client via the intermediate host
 	public static final byte[] responseRead = {0, 3, 0, 1};
@@ -65,45 +66,32 @@ public class FileTransferServer {
 			
 			// Check first two bytes for 01 (read) or 02 (write)
 			data = receivePacket.getData(); 
-			if(data[0] != 0) {
-				request = RequestType.INVALID;
-			} else if (data[1] == 1) {
+			
+			if (data[0] == 0 && data[1] == 1) {
 				request = RequestType.READ;
-			} else if (data[1] == 2) {
+			} else if (data[0] == 0 && data[1] == 2) {
 				request = RequestType.WRITE; 
 			} else {
 				request = RequestType.INVALID;
 			}
 			
 			if(request != RequestType.INVALID) {
-				int i;
-				for (i = 2; i < len; i++) {
-					if (data[i] == 0) {
-						break;
-					}
+				int i = FILE_NAME_START;
+				while(packet[i++] != 0){
+					filename += (char)packet[i];
 				}
-				// If i == 3, there was no filename
-				if(i == 3) {
-					request = RequestType.INVALID;
-				} else {
-					//get filename
-					filename = new String(data, 2, i-2);
+				while(packet[i++] != 0){
+					request += (char)packet[i];
 				}
-				int j;
-				for(j = i+1; j < len; j++) {
-					if(data[j] == 0) {
-						break;
-					}
-				}
-				// Invalid if no mode or there are characters after the last 0 byte
-				if(j == filename.length() + 3 || j != (len-1)) {
+				// Invalid if no mode or filename
+				if(filename.length() == 0 || request.length() == 0) {
 					request = RequestType.INVALID;
 				}
 			}
 			
 			byte[] response = null; 
 			if(request == RequestType.INVALID){
-				throw new Exception("Invalid Packet");
+				throw new illegalArgument("Invalid Packet");
 			} else if(request == RequestType.READ) {
 				response = responseRead;
 			} else{
