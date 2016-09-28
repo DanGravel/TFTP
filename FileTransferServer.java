@@ -1,6 +1,8 @@
 import java.io.*;
 import java.net.*;
 
+import com.sun.corba.se.spi.protocol.RequestDispatcherRegistry;
+
 public class FileTransferServer extends Host {
 	private DatagramSocket sendSocket, receiveSocket;
 	
@@ -36,6 +38,7 @@ public class FileTransferServer extends Host {
 			//Parse packet to confirm whether format is valid
 			RequestType request = null; 
 			String filename = null;
+			String mode = "";
 			
 			// Check first two bytes for 01 (read) or 02 (write)
 			byte data[] = receivePacket.getData(); 
@@ -47,12 +50,13 @@ public class FileTransferServer extends Host {
 			} else {
 				request = RequestType.INVALID;
 			}
-			String mode = "";
+			
 			if(request != RequestType.INVALID) {
 				int i = FILE_NAME_START;
 				while(data[i++] != 0){
 					filename += (char)data[i];
 				}
+			//i++;
 				while(data[i++] != 0){
 					mode += (char)data[i];
 				}

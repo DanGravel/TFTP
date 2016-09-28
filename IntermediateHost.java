@@ -18,15 +18,18 @@ public class IntermediateHost extends Host
 
 	public void sendAndReceive() {
 		for (;;) {
+			System.out.println("Waiting to receive");
 			receiveFromClient();
-			sendToServer()
+			sendToServer();
+			
 			
 			int clientPort = receivePacket.getPort();
 			
-            receiveFromServer()			
-	        sendToClient(clientPort)
+            receiveFromServer();	
+          
+	        sendToClient(clientPort);
 			
-			System.out.println("Simulator: packet sent\n\n);
+			System.out.println("Simulator: packet sent\n\n");
 			sendSocket.close();
 		}
 	}
@@ -44,6 +47,11 @@ public class IntermediateHost extends Host
 	}
 	
 	private void sendToClient(int clientPort){
+		  try {	
+  			sendSocket = new DatagramSocket();
+  		} catch (SocketException se) {
+  			se.printStackTrace();
+  		}
 		sendaPacket(receivePacket.getData(), clientPort, sendSocket,"Intermediate");
 	}
 	

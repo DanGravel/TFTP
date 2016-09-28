@@ -12,20 +12,20 @@ public class Host {
 	  
 	  protected void sendaPacket(byte[] message, int sendPort, DatagramSocket sendSocket, String host) {
 		  try {
-<<<<<<< HEAD
+
 		         sendPacket = new DatagramPacket(message, message.length,
 		                                         InetAddress.getLocalHost(), sendPort); 
-=======
-		         sendPacket = new DatagramPacket(message, receivePacket.getLength(),
-		                      InetAddress.getLocalHost(), sendPort); 
->>>>>>> 2dd999b2cdd4c45e64e1ce02bf41740f22506953
+
+		      //  sendPacket = new DatagramPacket(message, receivePacket.getLength(),
+		        //              InetAddress.getLocalHost(), sendPort); 
+
 		      } catch (UnknownHostException e) {
 		         e.printStackTrace();
 		         System.exit(1);
 		      }
 		      p.printSendData(host, sendPacket);
 		      try {
-		         sendSocket.send(sendPacket); //Send to intermediate
+		         sendSocket.send(sendPacket);
 		      } catch (IOException e) {
 		         e.printStackTrace();
 		         System.exit(1);
@@ -35,6 +35,7 @@ public class Host {
 	  protected void receiveaPacket(String host, DatagramSocket receiveSocket) {
 		  byte data[] = new byte[100];
 	      receivePacket = new DatagramPacket(data, data.length);
+	      //data[] = 
 	      try { 
 	         receiveSocket.receive(receivePacket);
 	      } catch(IOException e) {

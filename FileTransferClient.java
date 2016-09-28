@@ -17,9 +17,10 @@ public class FileTransferClient extends Host{
 		}
 	}
 
-	public void sendAndReceive(String message) {
+	public void sendAndReceive(String msg) {
+		 String message = msg;
 		for(int x = 0; x < 11; x++) { //Send 11 packets in total
-		      String message = message;
+		     
 		      byte readOrWrite[] = (x%2<1) ? read() : write (); //If even request make array {0, 1}, else {0,2}
 		      byte finalMsg[] = arrayCombiner(readOrWrite, message); // Combine all segments of message to make final message
 		      if(x == 10) finalMsg = new byte[] { 0, 0, 0, 0};    //Invalid format, sent to fail	
@@ -64,6 +65,6 @@ public class FileTransferClient extends Host{
 
 	public static void main(String args[]) {
 		FileTransferClient c = new FileTransferClient();
-		c.sendAndReceive();
+		c.sendAndReceive("1234");
 	}
 }
