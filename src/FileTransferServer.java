@@ -1,7 +1,4 @@
-import java.io.*;
 import java.net.*;
-
-import com.sun.corba.se.spi.protocol.RequestDispatcherRegistry;
 
 public class FileTransferServer extends Host {
 	private DatagramSocket sendSocket, receiveSocket;
