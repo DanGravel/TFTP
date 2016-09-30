@@ -75,6 +75,7 @@ public class FileTransferServer extends Host implements Runnable {
 		} else {
 			receiveAFile("Server", receiveSocket);
 			convertPacketToFile(receivePacket);
+			ACK = false;
 			
 		}
 		
