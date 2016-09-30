@@ -1,16 +1,21 @@
 import java.io.*;
 import java.net.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 
 
 public class FileTransferServer extends Host implements Runnable {
 	private DatagramSocket sendSocket, receiveSocket;
+	public static final String fileDirectory = "asda";
 	
 	public static final int SERVER_PORT = 69;
 	public static final int FILE_NAME_START = 2;
 	
 	// Responses to send back to client via the intermediate host
-	public static final byte[] responseRead = {0, 3, 0, 1};
-	public static final byte[] responseWrite = {0, 4, 0, 1};
+	//public static final byte[] responseRead = {0, 3, 0, 1};
+	//public static final byte[] responseWrite = {0, 4, 0, 1};
 	
 	public enum RequestType {
 		READ, WRITE, INVALID
@@ -39,7 +44,6 @@ public class FileTransferServer extends Host implements Runnable {
 	
 	private byte[] validate(byte data[]) {
 		RequestType request;
-		String filename= "";
 		String mode = "";
 		
 		if (data[0] == 0 && data[1] == 1) {
@@ -53,14 +57,14 @@ public class FileTransferServer extends Host implements Runnable {
 		if(request != RequestType.INVALID) {
 			int i = FILE_NAME_START;
 			while(data[i++] != 0){
-				filename += (char)data[i];
+				fileName += (char)data[i];
 			}
 		//i++;
 			while(data[i++] != 0){
 				mode += (char)data[i];
 			}
 			// Invalid if no mode or filename
-			if(filename.length() == 0 || mode.length() == 0) {
+			if(fileName.length() == 0 || mode.length() == 0) {
 				request = RequestType.INVALID;
 			}
 		}

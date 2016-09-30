@@ -39,7 +39,7 @@ public class IntermediateHost extends Host
 	}
 	
 	private void receiveFromClient(){
-		receiveaPacket("intermediate", receiveSocket);
+		receiveaPacket("Intermediate", receiveSocket);
 	}
 	
 	private void receiveFromServer(){
