@@ -1,11 +1,12 @@
 
 import java.io.*;
+import java.lang.reflect.Array;
 import java.net.*;
+import java.util.Arrays;
 
 public class FileTransferClient extends Host{
 	private DatagramSocket sendReceiveSocket;
 	private static final int INTERMEDIATE_PORT= 23;
-
 	public static enum Mode {NORMAL, TEST};
 	
 	public FileTransferClient() {
@@ -17,16 +18,22 @@ public class FileTransferClient extends Host{
 		}
 	}
 
-	public void sendAndReceive(String msg) {
-		 String message = msg;
-		for(int x = 0; x < 11; x++) { //Send 11 packets in total
-		     
-		      byte readOrWrite[] = (x%2<1) ? read() : write (); //If even request make array {0, 1}, else {0,2}
-		      byte finalMsg[] = arrayCombiner(readOrWrite, message); // Combine all segments of message to make final message
-		      if(x == 10) finalMsg = new byte[] { 0, 0, 0, 0};    //Invalid format, sent to fail	
-		      sendaPacket(finalMsg, INTERMEDIATE_PORT, sendReceiveSocket, "Client");              
-		      receiveaPacket("Client", sendReceiveSocket);
-			}
+	public void sendAndReceive(String fileName) {
+		  int x = 2;
+		  this.fileName = fileName;
+	      byte readOrWrite[] = (x%2<1) ? read() : write (); //If even request make array {0, 1}, else {0,2}
+	      byte finalMsg[] = arrayCombiner(readOrWrite, fileName); // Combine all segments of message to make final message
+	      sendaPacket(finalMsg, INTERMEDIATE_PORT, sendReceiveSocket, "Client");              
+	      receiveaPacket("Client", sendReceiveSocket);
+	      if(Arrays.equals(Arrays.copyOfRange(receivePacket.getData(), 0, 3),responseWrite)) {
+	    	  byte[] file = convertFileToByteArray();
+	    	  sendAFile(file, FileTransferServer.SERVER_PORT, sendReceiveSocket, "Client");
+	      } else {
+	    	  sendaPacket(responseRead, FileTransferServer.SERVER_PORT, sendReceiveSocket, "client");
+	    	  receiveAFile("client", sendReceiveSocket);
+	    	  convertPacketToFile(receivePacket);
+	      }
+			
 		    sendReceiveSocket.close();
 	}
 	
