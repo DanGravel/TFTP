@@ -5,7 +5,7 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 
-public class Host {
+public abstract class Host {
 
 	  protected DatagramPacket sendPacket, receivePacket;
 	  protected Printer p = new Printer();
