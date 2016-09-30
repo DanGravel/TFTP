@@ -1,4 +1,5 @@
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -50,6 +51,33 @@ public abstract class Host {
 		  receiveaPacket(host, receiveSocket);
 	  }
 	  
+	  /*
+	   * Reads data from file in chunks rather then all at once
+	   */
+	  protected void sendFile(String fileName){
+		  File file = new File(fileName);
+		  byte[] data = new byte[512];
+		  int dataLen = 0;
+		  
+		  try{
+			  FileInputStream stream = new FileInputStream(file);
+			  
+			  sendaPacket();// send write request and wait for ack
+
+			  
+			  while((dataLen = stream.read(data)) != -1){
+				  //
+				 //add code to send to port and wait for ack block
+				 //
+				  
+			  }
+		  }catch(IOException e ){
+			  
+		  }
+		  
+		  
+	  } 
+	  
 	  protected void receiveaPacket(String host, DatagramSocket receiveSocket) {
 		  byte data[] = new byte[512];
 	      receivePacket = new DatagramPacket(data, data.length);
@@ -97,6 +125,19 @@ public abstract class Host {
 			
         
 	  }
+	  
+	  private byte[]  read() {
+	      return new byte[] {0,1};
+	   } 
+	   
+	   /**
+	    * 
+	    * @return	Returns a byte array containing {0, 2} which corresponds to write request
+	    */
+	   private byte[] write() {
+	      return new byte[] {0,2};
+	   }
+	   
 	  
 	  protected void waitFiveSeconds() {
 		  try {
