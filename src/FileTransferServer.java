@@ -11,19 +11,21 @@ public class FileTransferServer extends Host implements Runnable {
 	public enum RequestType {READ, WRITE, INVALID}
 	
 	public FileTransferServer() {
-		try {
-			receiveSocket = new DatagramSocket(SERVER_PORT);
-		} catch (SocketException se) {
-			se.printStackTrace();
-			System.exit(1);
-		}
-	}
+}
+	
 
 	public void sendAndReceive() throws Exception {
 		System.out.println("Server: Waiting for Packet.\n");
 		for (;;) {
+			try {
+				receiveSocket = new DatagramSocket(SERVER_PORT);
+			} catch (SocketException se) {
+				se.printStackTrace();
+				System.exit(1);
+			}
 			System.out.println("Waiting..."); // so we know we're waiting
 			receiveaPacket("Server", receiveSocket);   
+			receiveSocket.close();
 			new Thread(new FileTransferServer()).start(); 
 		}
 	}
@@ -34,6 +36,7 @@ public class FileTransferServer extends Host implements Runnable {
 		if(ACK == false) {
 			byte[] response = validate(data);
 			if(Arrays.equals((Arrays.copyOfRange(response, 0, 3)), responseRead))response = convertFileToByteArray();
+			
 			try {
 				sendSocket = new DatagramSocket(); 
 			} catch (SocketException se) {

@@ -19,11 +19,11 @@ public class FileTransferClient extends Host{
 	}
 
 	public void sendAndReceive(String fileName) {
-		  int x = 2;
+		  int x = 1;
 		  this.fileName = fileName;
 	      byte readOrWrite[] = (x%2<1) ? read() : write (); //If even request make array {0, 1}, else {0,2}
 	      byte finalMsg[] = arrayCombiner(readOrWrite, fileName); // Combine all segments of message to make final message
-	      sendaPacket(finalMsg, INTERMEDIATE_PORT, sendReceiveSocket, "Client");              
+	      sendaPacket(finalMsg, FileTransferServer.SERVER_PORT, sendReceiveSocket, "Client");              
 	      receiveaPacket("Client", sendReceiveSocket);
 	      if(Arrays.equals(Arrays.copyOfRange(receivePacket.getData(), 0, 3),responseWrite)) {
 	    	  byte[] file = convertFileToByteArray();
@@ -72,6 +72,6 @@ public class FileTransferClient extends Host{
 
 	public static void main(String args[]) {
 		FileTransferClient c = new FileTransferClient();
-		c.sendAndReceive("1234");
+		c.sendAndReceive("answers.txt");
 	}
 }

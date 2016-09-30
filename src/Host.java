@@ -1,18 +1,14 @@
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import javax.xml.crypto.Data;
 
 public abstract class Host {
 
@@ -74,7 +70,7 @@ public abstract class Host {
 			
 			String directory = System.getProperty("user.home") + "\\desktop\\";
 			
-			File file = new File(directory + fileName);
+			File file = new File(directory + "test");
 			try{
 				FileOutputStream fileOutputStream = new FileOutputStream(file);
 				fileOutputStream.write(b);
