@@ -1,6 +1,8 @@
+import java.io.*;
 import java.net.*;
 
-public class FileTransferServer extends Host {
+
+public class FileTransferServer extends Host implements Runnable {
 	private DatagramSocket sendSocket, receiveSocket;
 	
 	public static final int SERVER_PORT = 69;
@@ -31,65 +33,75 @@ public class FileTransferServer extends Host {
 		for (;;) {
 			System.out.println("Waiting..."); // so we know we're waiting
 			receiveaPacket("Server", receiveSocket);   
-			
-			//Parse packet to confirm whether format is valid
-			RequestType request = null; 
-			String filename = null;
-			String mode = "";
-			
-			// Check first two bytes for 01 (read) or 02 (write)
-			byte data[] = receivePacket.getData(); 
-			
-			if (data[0] == 0 && data[1] == 1) {
-				request = RequestType.READ;
-			} else if (data[0] == 0 && data[1] == 2) {
-				request = RequestType.WRITE; 
-			} else {
-				request = RequestType.INVALID;
-			}
-			
-			if(request != RequestType.INVALID) {
-				int i = FILE_NAME_START;
-				while(data[i++] != 0){
-					filename += (char)data[i];
-				}
-			//i++;
-				while(data[i++] != 0){
-					mode += (char)data[i];
-				}
-				// Invalid if no mode or filename
-				if(filename.length() == 0 || mode.length() == 0) {
-					request = RequestType.INVALID;
-				}
-			}
-			
-			byte[] response = null; 
-			if(request == RequestType.INVALID){
-				throw new IllegalArgumentException("Invalid Packet");
-			} else if(request == RequestType.READ) {
-				response = responseRead;
-			} else{
-				response = responseWrite;
-			}
-			
-			// Create a new datagram packet containing the string received from the intermediate host			
-			
-			
-			//Create a new datagram socket to send a response
-			try {
-				sendSocket = new DatagramSocket(); 
-			}catch (SocketException se) {
-				se.printStackTrace();
-				System.exit(1);
-			}
-			
-			sendaPacket(response, receivePacket.getPort(), sendSocket, "Server");
-
-			
-			System.out.println("Server: packet sent");
-			sendSocket.close();
+			new Thread(new FileTransferServer()).start(); 
 		}
 	}
+	
+	private byte[] validate(byte data[]) {
+		RequestType request;
+		String filename= "";
+		String mode = "";
+		
+		if (data[0] == 0 && data[1] == 1) {
+			request = RequestType.READ;
+		} else if (data[0] == 0 && data[1] == 2) {
+			request = RequestType.WRITE; 
+		} else {
+			request = RequestType.INVALID;
+		}
+		
+		if(request != RequestType.INVALID) {
+			int i = FILE_NAME_START;
+			while(data[i++] != 0){
+				filename += (char)data[i];
+			}
+		//i++;
+			while(data[i++] != 0){
+				mode += (char)data[i];
+			}
+			// Invalid if no mode or filename
+			if(filename.length() == 0 || mode.length() == 0) {
+				request = RequestType.INVALID;
+			}
+		}
+		
+		byte[] response = null; 
+		if(request == RequestType.INVALID){
+			throw new IllegalArgumentException("Invalid Packet");
+		} else if(request == RequestType.READ) {
+			response = responseRead;
+		} else{
+			response = responseWrite;
+		}
+		
+		return response;
+	
+	}
+	
+	public void run() {
+		// Check first two bytes for 01 (read) or 02 (write)
+		byte data[] = receivePacket.getData(); 
+		
+		byte[] response = validate(data);
+		// Create a new datagram packet containing the string received from the intermediate host			
+		
+		
+		//Create a new datagram socket to send a response
+		try {
+			sendSocket = new DatagramSocket(); 
+		}catch (SocketException se) {
+			se.printStackTrace();
+			System.exit(1);
+		}
+		
+		sendaPacket(response, receivePacket.getPort(), sendSocket, "Server");
+
+		
+		System.out.println("Server: packet sent");
+		sendSocket.close();
+		
+	}
+	
 	public static void main(String args[]) {
 		FileTransferServer c = new FileTransferServer();
 		try {
