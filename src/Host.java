@@ -8,6 +8,11 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import javax.xml.crypto.Data;
 
 public abstract class Host {
 
@@ -39,9 +44,16 @@ public abstract class Host {
 		         System.exit(1);
 		      }
 	  }
-	  protected void sendAFile(){
+	  
+	  protected void sendAFile(byte[] message, int sendPort, DatagramSocket sendSocket, String host){
+		  sendaPacket(message, sendPort, sendSocket, host);
 		  
 	  }
+	  
+	  protected void receiveAFile(String host, DatagramSocket receiveSocket) {
+		  receiveaPacket(host, receiveSocket);
+	  }
+	  
 	  protected void receiveaPacket(String host, DatagramSocket receiveSocket) {
 		  byte data[] = new byte[512];
 	      receivePacket = new DatagramPacket(data, data.length);
@@ -72,22 +84,22 @@ public abstract class Host {
 			}
 	  }
 	  
-	  protected void convertFileToByteArray(){
-			File file = new File(directory + "urmom.txt");
+	  protected byte[] convertFileToByteArray(){
+			Path path = Paths.get(directory + fileName);
+			
+			byte[] data;
+			try {
+				data = Files.readAllBytes(path);
+				return data;
+				
+			} catch (IOException e) {
 
-	        byte[] b = new byte[(int) file.length()];
-	        try {
-	              FileInputStream fileInputStream = new FileInputStream(file);
-	              fileInputStream.read(b);
-	              fileInputStream.close();
-	         } catch (FileNotFoundException e) {
-	                     System.out.println("File Not Found.");
-	                     e.printStackTrace();
-	         }
-	         catch (Exception e1) {
-	                  System.out.println("Error Reading The File.");
-	                   e1.printStackTrace();
-	         }
+				e.printStackTrace();
+			}
+			
+			return null;
+			
+        
 	  }
 	  
 	  protected void waitFiveSeconds() {
