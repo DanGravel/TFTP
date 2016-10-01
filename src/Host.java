@@ -11,6 +11,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import javax.swing.text.AttributeSet.CharacterAttribute;
+
 
 public abstract class Host {
 
@@ -25,10 +27,6 @@ public abstract class Host {
 		  try {
 		      sendPacket = new DatagramPacket(message, message.length,
 		                                         InetAddress.getLocalHost(), sendPort); 
-
-		      //  sendPacket = new DatagramPacket(message, receivePacket.getLength(),
-		      //              InetAddress.getLocalHost(), sendPort); 
-
 		      } catch (UnknownHostException e) {
 		         e.printStackTrace();
 		         System.exit(1);
@@ -45,7 +43,6 @@ public abstract class Host {
 	  protected void receiveaPacket(String host, DatagramSocket receiveSocket) {
 		  byte data[] = new byte[512];
 	      receivePacket = new DatagramPacket(data, data.length);
-	      //data[] = 
 	      try { 
 	         receiveSocket.receive(receivePacket);
 	      } catch(IOException e) {
@@ -108,23 +105,21 @@ public abstract class Host {
 		}
 	
 		
-	  private byte[] createAck(int blockNum){
-			byte[] datapacket = new byte[4];
-			datapacket[0] = (byte) 0;
-			datapacket[1] = (byte) 3;
-			datapacket[2] = (byte) blockNum;
-			datapacket[3] = (byte) (blockNum >>> 8);
-			return datapacket;
+	  protected byte[] createAck(int blockNum){
+			return (new byte[] {0, 4,  (byte) blockNum, (byte) (blockNum >>> 8)}); //new byte[4]; 
+			
 
+	  }
+	  
+	
+	  protected byte[] createDataPacket(int blockNum) {
+		  return (new byte[] {0, 3, (byte) (blockNum), (byte) (blockNum >>> 8)});
+	
 	  }
 
 	 	   
-	   private static byte[] createDataPacket(byte[] data, int blockNum){
-			byte[] datapacket = new byte[4];
-			datapacket[0] = (byte) 0;
-			datapacket[1] = (byte) 3;
-			datapacket[2] = (byte) blockNum;
-			datapacket[3] = (byte) (blockNum >>> 8);
+	   private byte[] createDataPacket(byte[] data, int blockNum){
+			byte[] datapacket = {0, 3, (byte) (blockNum), (byte) (blockNum >>> 8)};
 			
 			ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
 			  try {
@@ -155,14 +150,8 @@ public abstract class Host {
 			  return outputStream.toByteArray( );
 		   }
 
-	  protected void waitFiveSeconds() {
-		  try {
-	          Thread.sleep(5000);
-	      } catch (InterruptedException e ) {
-	          e.printStackTrace();
-	          System.exit(1);
-	      }
-	  }
+
+
 
 
 }
