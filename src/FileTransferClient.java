@@ -8,7 +8,7 @@ public class FileTransferClient extends Host{
 	private DatagramSocket sendReceiveSocket;
 	private static final int INTERMEDIATE_PORT= 23;
 	public static enum Mode {NORMAL, TEST};
-
+	
 	public FileTransferClient() {
 		try {
 			sendReceiveSocket = new DatagramSocket();
@@ -39,15 +39,17 @@ public class FileTransferClient extends Host{
 
 	public void sendFile(String filename){
 		byte[] filedata = new byte[512];
-		byte[] packetdata = new byte[516]
-
-		try{
-			 FileInputStream fis = new FileInputStream(file);
+		byte[] packetdata = new byte[516];
+		//String directory = System.getProperty("user.home") + "\\desktop\\";
+		File file = new File(filename);
+		
+		try(FileInputStream fis = new FileInputStream(file)){
+			 
 			 int endofFile = fis.read(filedata);
 			 int blockNum = 0;
 
 			 while(endofFile != - 1){
-				 packetdata = createDataPacket(filedata,blockNum);
+				 packetdata = createDataPacket(filedata, blockNum);
 				 sendaPacket(packetdata, FileTransferServer.SERVER_PORT, sendReceiveSocket, "client");
 				 receiveaPacket("Client", sendReceiveSocket);
 				 blockNum++;
@@ -56,15 +58,22 @@ public class FileTransferClient extends Host{
 
 		}
 	}
-
+	
 	private static byte[] createDataPacket(byte[] data, int blockNum){
-		byte[] datapacket = new byte[516];
+		byte[] datapacket = new byte[4];
 		datapacket[0] = (byte) 0;
 		datapacket[1] = (byte) 3;
 		datapacket[2] = (byte) blockNum;
 		datapacket[3] = (byte) (blockNum >>> 8);
-		System.arraycopy(datapacket,0,data,4,datapacket.length);
-		return datapacket;
+		
+		ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
+		  try {
+				outputStream.write(datapacket);
+				outputStream.write(data);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		return outputStream.toByteArray();
 	}
 
 	private byte[] arrayCombiner(byte readOrWrite[], String message) {
@@ -102,6 +111,6 @@ public class FileTransferClient extends Host{
 
 	public static void main(String args[]) {
 		FileTransferClient c = new FileTransferClient();
-		c.sendAndReceive("answers.txt");
+		c.sendFile("C:/Users/Gravel/Desktop/test.txt");
 	}
 }

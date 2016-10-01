@@ -62,7 +62,7 @@ public abstract class Host {
 		  try{
 			  FileInputStream stream = new FileInputStream(file);
 			  
-			  sendaPacket();// send write request and wait for ack
+			  //sendaPacket();// send write request and wait for ack
 
 			  
 			  while((dataLen = stream.read(data)) != -1){
