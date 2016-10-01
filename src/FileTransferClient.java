@@ -1,11 +1,12 @@
 
 import java.io.*;
+import java.lang.reflect.Array;
 import java.net.*;
+import java.util.Arrays;
 
 public class FileTransferClient extends Host{
 	private DatagramSocket sendReceiveSocket;
 	private static final int INTERMEDIATE_PORT= 23;
-
 	public static enum Mode {NORMAL, TEST};
 
 	public FileTransferClient() {
@@ -17,17 +18,53 @@ public class FileTransferClient extends Host{
 		}
 	}
 
-	public void sendAndReceive(String msg) {
-		 String message = msg;
-		for(int x = 0; x < 11; x++) { //Send 11 packets in total
+	public void sendAndReceive(String fileName) {
+		  int x = 1;
+		  this.fileName = fileName;
+	      byte readOrWrite[] = (x%2<1) ? read() : write (); //If even request make array {0, 1}, else {0,2}
+	      byte finalMsg[] = arrayCombiner(readOrWrite, fileName); // Combine all segments of message to make final message
+	      sendaPacket(finalMsg, FileTransferServer.SERVER_PORT, sendReceiveSocket, "Client");
+	      receiveaPacket("Client", sendReceiveSocket);
+	      if(Arrays.equals(Arrays.copyOfRange(receivePacket.getData(), 0, 3),responseWrite)) {
+	    	  byte[] file = convertFileToByteArray();
+	    	  sendAFile(file, FileTransferServer.SERVER_PORT, sendReceiveSocket, "Client");
+	      } else {
+	    	  sendaPacket(responseRead, FileTransferServer.SERVER_PORT, sendReceiveSocket, "client");
+	    	  receiveAFile("client", sendReceiveSocket);
+	    	  convertPacketToFile(receivePacket);
+	      }
 
-		      byte readOrWrite[] = (x%2<1) ? read() : write (); //If even request make array {0, 1}, else {0,2}
-		      byte finalMsg[] = arrayCombiner(readOrWrite, message); // Combine all segments of message to make final message
-		      if(x == 10) finalMsg = new byte[] { 0, 0, 0, 0};    //Invalid format, sent to fail
-		      sendaPacket(finalMsg, INTERMEDIATE_PORT, sendReceiveSocket, "Client");
-		      receiveaPacket("Client", sendReceiveSocket);
-			}
 		    sendReceiveSocket.close();
+	}
+
+	public void sendFile(String filename){
+		byte[] filedata = new byte[512];
+		byte[] packetdata = new byte[516]
+
+		try{
+			 FileInputStream fis = new FileInputStream(file);
+			 int endofFile = fis.read(filedata);
+			 int blockNum = 0;
+
+			 while(endofFile != - 1){
+				 packetdata = createDataPacket(filedata,blockNum);
+				 sendaPacket(packetdata, FileTransferServer.SERVER_PORT, sendReceiveSocket, "client");
+				 receiveaPacket("Client", sendReceiveSocket);
+				 blockNum++;
+			 }
+		}catch(IOException e){
+
+		}
+	}
+
+	private static byte[] createDataPacket(byte[] data, int blockNum){
+		byte[] datapacket = new byte[516];
+		datapacket[0] = (byte) 0;
+		datapacket[1] = (byte) 1;
+		datapacket[2] = (byte) blockNum;
+		datapacket[3] = (byte) (blockNum >>> 8);
+		System.arraycopy(datapacket,0,data,4,datapacket.length);
+		return datapacket;
 	}
 
 	private byte[] arrayCombiner(byte readOrWrite[], String message) {
@@ -65,6 +102,6 @@ public class FileTransferClient extends Host{
 
 	public static void main(String args[]) {
 		FileTransferClient c = new FileTransferClient();
-		c.sendAndReceive("1234");
+		c.sendAndReceive("answers.txt");
 	}
 }
