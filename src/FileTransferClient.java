@@ -26,16 +26,34 @@ public class FileTransferClient extends Host{
 	public void sendAndReceive() {
 	    
 	      if(request == request.READ) {
-	    	  receiveFile(fileName, sendReceiveSocket, FileTransferServer.SERVER_PORT, "client");	    	  
-	      } else {
-	    	  sendFile(fileName, sendReceiveSocket,  FileTransferServer.SERVER_PORT, "client");
+	    	  if(mode == Mode.NORMAL){
+	    		  receiveFile(fileName, sendReceiveSocket, FileTransferServer.SERVER_PORT, "client");	    	  
+	    	  }
+	    	  else{
+		    	  receiveFile(fileName, sendReceiveSocket, INTERMEDIATE_PORT, "client");	    	  
+	    	  }  
+	      } 
+	      else {
+	    	  if(mode == Mode.NORMAL){
+	    		  sendFile(fileName, sendReceiveSocket,  FileTransferServer.SERVER_PORT, "client");
+	    	  }
+	    	  else{
+	    		  sendFile(fileName, sendReceiveSocket, INTERMEDIATE_PORT, "client");
+	    	  }
 	      }
-
 		    sendReceiveSocket.close();
 	}
 
 	private void promtUser(){
 		Scanner reader = new Scanner(System.in);
+		System.out.println("verbose or quiet?");
+		String s0 = reader.nextLine();
+		if(s0.equals("verbose")){
+			p.setIsVerbose(true);
+		}
+		else{
+			p.setIsVerbose(false);
+		}
 		System.out.println("normal or test mode?");
 		String s = reader.nextLine();
 		if(s.equals("normal")){
