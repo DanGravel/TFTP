@@ -18,8 +18,8 @@ public abstract class Host {
 	  protected static final String directory = System.getProperty("user.home") + "\\desktop\\"; 
 	  protected Printer p = new Printer();
 	  protected String fileName;
-	  protected static final byte[] responseRead = {0, 3, 0, 1};
-	  protected static final byte[] responseWrite = {0, 4, 0, 1};
+	  protected static final byte[] read = {0,1};
+	  protected static final byte[] write = {0,2};
 	  
 	  protected void sendaPacket(byte[] message, int sendPort, DatagramSocket sendSocket, String host) {
 		  try {
@@ -62,7 +62,7 @@ public abstract class Host {
 			byte[] filedata = new byte[512];
 			byte[] packetdata = new byte[516];
 			//sending write request
-			byte[] WRQ = arrayCombiner(write(), "test.txt");
+			byte[] WRQ = arrayCombiner(write, "test.txt");
 	 		sendaPacket(WRQ,port, socket, sender);
 	 		receiveaPacket(sender, socket);
 			
@@ -88,7 +88,7 @@ public abstract class Host {
 			String path = "C:/Users/Gravel/Desktop"; ///FIX THIS
 			File file = new File(filename);
 		
-			byte[] RRQ = arrayCombiner(read(), "test.txt");
+			byte[] RRQ = arrayCombiner(read, "test.txt");
 	 		sendaPacket(RRQ,port, socket, sender);  //send request
 			
 	 		int blockNum = 1;
@@ -136,14 +136,6 @@ public abstract class Host {
 	  }
 	  
 	
-	  
-	  private byte[]  read() {
-	      return new byte[] {0,1};
-	   } 
-	   
-	 private byte[] write() {
-	      return new byte[] {0,2};
-	   }
 	   
 	   private static byte[] createDataPacket(byte[] data, int blockNum){
 			byte[] datapacket = new byte[4];
