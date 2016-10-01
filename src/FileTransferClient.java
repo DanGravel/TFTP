@@ -46,6 +46,14 @@ public class FileTransferClient extends Host{
 
 	private void promtUser(){
 		Scanner reader = new Scanner(System.in);
+		System.out.println("verbose or quiet?");
+		String s0 = reader.nextLine();
+		if(s0.equals("verbose")){
+			p.setIsVerbose(true);
+		}
+		else{
+			p.setIsVerbose(false);
+		}
 		System.out.println("normal or test mode?");
 		String s = reader.nextLine();
 		if(s.equals("normal")){

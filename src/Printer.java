@@ -4,18 +4,31 @@ import java.net.DatagramPacket;
  * This class simply prints out necessary information of packets before sending them and after receiving them
  */
 public class Printer {
-		private enum log {VERBOSE, QUIET};
+		private boolean isVerbose;
+		
+		public boolean isVerbose() {
+			return isVerbose;
+		}
+
+		public void setIsVerbose(boolean isVerbose) {
+			this.isVerbose = isVerbose;
+		}
+
 		/**
 		 * 
 		 * @param host			Names such as Client, Server, Intermediate
 		 * @param sendPacket 	The packet that is going to be sent
 		 */
 		public void printRequestAndAck(String host,  DatagramPacket sendPacket) {
-	      printSenderOrReceiverInfo(true, sendPacket, host);
-	      System.out.print("Containing: " + new String(sendPacket.getData()));
-	      printBytes(sendPacket.getData());
-	      System.out.println(host + ": Packet sent \n");
-
+	      if(isVerbose){
+	    	  printSenderOrReceiverInfo(true, sendPacket, host);
+	    	  System.out.print("Containing: " + new String(sendPacket.getData()));
+	    	  printBytes(sendPacket.getData());
+	    	  System.out.println(host + ": Packet sent \n");
+	      }
+	      else{
+	    	  System.out.println(host + ": Packet sent \n");
+	      }
 		}
 		
 		public void printReceivedFile(String host, DatagramPacket packet){
@@ -28,17 +41,24 @@ public class Printer {
 		 * @param receivePacket		The packet that has been received
 		 */
 	   public void printReceiveData(String host, DatagramPacket receivePacket) {
-	      printSenderOrReceiverInfo(true, receivePacket, host);
-	      System.out.print("Containing: " + new String(receivePacket.getData()));
-	      printBytes(receivePacket.getData());
+		  if(isVerbose){
+		    printSenderOrReceiverInfo(true, receivePacket, host);
+	        System.out.print("Containing: " + new String(receivePacket.getData()));
+	        printBytes(receivePacket.getData());
+		  }
 	   }
 	   
 	   private void printSenderOrReceiverInfo(boolean isReceiving, DatagramPacket packet, String host){
-		   String fromOrTo = (isReceiving == true) ? "From":"To";
-		   System.out.println(host + ": Packet received:");
-		   System.out.println(fromOrTo + " host: " + packet.getAddress());
-		   System.out.println("Host port: " + packet.getPort());
-		   System.out.println("Length: " + packet.getLength());
+		   if(isVerbose){
+		     String fromOrTo = (isReceiving == true) ? "From":"To";
+		     System.out.println(host + ": Packet received:");
+		     System.out.println(fromOrTo + " host: " + packet.getAddress());
+		     System.out.println("Host port: " + packet.getPort());
+		     System.out.println("Length: " + packet.getLength());
+		   }
+		   else{
+			 System.out.println(host + ": Packet received:");
+		   }
 	   }
 	   
 	   /**
