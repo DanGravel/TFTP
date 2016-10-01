@@ -52,8 +52,8 @@ public abstract class Host {
 			byte[] filedata = new byte[512];
 			byte[] packetdata = new byte[516];
 			//sending write request
-			byte[] RRQ = arrayCombiner(write(), "test.txt");
-	 		sendaPacket(RRQ,port, socket, "client");
+			byte[] WRQ = arrayCombiner(write(), "test.txt");
+	 		sendaPacket(WRQ,port, socket, sender);
 	 		receiveaPacket(sender, socket);
 			
 	 		File file = new File(filename);
@@ -78,7 +78,40 @@ public abstract class Host {
 		  receiveaPacket(host, receiveSocket);
 	  }
 	  
+		public void receiveFile(String filename, DatagramSocket socket, int port, String sender){
+			String path = "C:/Users/Gravel/Desktop"; ///FIX THIS
+			File file = new File(filename);
+		
+			byte[] RRQ = arrayCombiner(read(), "test.txt");
+	 		sendaPacket(RRQ,port, socket, sender);  //send request
+			
+	 		int blockNum = 1;
+			try{
+				FileOutputStream fis = new FileOutputStream(path);
+				receiveaPacket(sender, socket);
+				fis.write(receivePacket.getData());
+				byte[] ack = createAck(blockNum);
+				sendaPacket(ack, port, socket, sender);
+				if(receivePacket.getData().length < 512) {
+					fis.close();
+					return;
+				}
+			fis.close();	
+			}catch(IOException e){
 
+			}
+		}
+	
+		
+	  private byte[] createAck(int blockNum){
+			byte[] datapacket = new byte[4];
+			datapacket[0] = (byte) 0;
+			datapacket[1] = (byte) 3;
+			datapacket[2] = (byte) blockNum;
+			datapacket[3] = (byte) (blockNum >>> 8);
+			return datapacket;
+
+	  }
 	  protected void receiveaPacket(String host, DatagramSocket receiveSocket) {
 		  byte data[] = new byte[512];
 	      receivePacket = new DatagramPacket(data, data.length);
