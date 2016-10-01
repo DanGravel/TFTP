@@ -118,7 +118,7 @@ public abstract class Host {
 	  }
 
 	 	   
-	   private byte[] createDataPacket(byte[] data, int blockNum){
+	   protected byte[] createDataPacket(byte[] data, int blockNum){
 			byte[] datapacket = {0, 3, (byte) (blockNum), (byte) (blockNum >>> 8)};
 			
 			ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );

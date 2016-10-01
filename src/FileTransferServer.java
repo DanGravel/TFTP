@@ -1,4 +1,8 @@
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.*;
 import java.util.Arrays;
 
@@ -9,8 +13,7 @@ public class FileTransferServer extends Host implements Runnable {
 	private DatagramSocket sendSocket, receiveSocket;
 	public static final String fileDirectory = "asda";
 	public static final int SERVER_PORT = 69;
-	public static final int FILE_NAME_START = 2;
-	public static boolean ACK = false;	
+	public static final int FILE_NAME_START = 2;	
 	public enum RequestType {READ, WRITE, DATA, ACK, INVALID}
 	
 	public FileTransferServer() {
@@ -38,7 +41,6 @@ public class FileTransferServer extends Host implements Runnable {
 	public void run() {
 		// Check first two bytes for 01 (read) or 02 (write)
 		byte data[] = receivePacket.getData(); 
-		if(ACK == false) {
 			RequestType request = validate(data);
 			byte[] response = createRightPacket(request, data);
 			
@@ -50,20 +52,37 @@ public class FileTransferServer extends Host implements Runnable {
 			}
 			
 			switch(request) {
-			case READ: case WRITE: sendaPacket(response, receivePacket.getPort(), sendSocket, "Server"); break;
-			case ACK: response = createDataPacket(((data[2] & 0xff) << 8) | data[3] & 0xff); break;
-			case DATA: response = createAck(((data[2] & 0xff) << 8) | data[3] & 0xff); break;
-			
+			case READ: case WRITE: case DATA: sendaPacket(response, receivePacket.getPort(), sendSocket, "Server"); break;
+			case ACK: sendNextPartofFile();break;
 			default: break;
 			
 		}
 			;
 			System.out.println("Server: packet sent");
 			sendSocket.close();
-			ACK = true;
-		} else {
-			convertPacketToFile(receivePacket);
-			ACK = false;
+		
+	}
+	
+	private void sendNextPartofFile() {
+		byte[] filedata = new byte[512];
+		byte[] packetdata = new byte[516];
+		int currentBlocktoSend = ((receivePacket.getData()[2] & 0xff) << 8) | (receivePacket.getData()[3] & 0xff);
+ 		File file = new File(fileName);
+		try{
+			 FileInputStream fis = new FileInputStream(file);
+			 int endofFile = fis.read(filedata);
+			 int blockNum = 0;
+
+			 while(endofFile != - 1){
+				 if(blockNum == currentBlocktoSend) {
+					 packetdata = createDataPacket(filedata, currentBlocktoSend);
+					 sendaPacket(packetdata, receivePacket.getPort(), sendSocket, "Server");
+					 blockNum++;
+				 }
+			 }
+		fis.close();
+		} catch(IOException e){
+
 		}
 		
 	}
@@ -97,7 +116,7 @@ public class FileTransferServer extends Host implements Runnable {
 		switch(request) {
 			case READ: response = createDataPacket(0); break;
 			case WRITE: response = createAck(1); break;
-			case ACK: response = createDataPacket(((data[2] & 0xff) << 8) | data[3] & 0xff); break;
+			//case ACK: response = createDataPacket(((data[2] & 0xff) << 8) | data[3] & 0xff); break;
 			case DATA: response = createAck(((data[2] & 0xff) << 8) | data[3] & 0xff); break;
 			
 			default: break;
