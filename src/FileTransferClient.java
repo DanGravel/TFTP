@@ -3,11 +3,16 @@ import java.io.*;
 import java.lang.reflect.Array;
 import java.net.*;
 import java.util.Arrays;
+import java.util.Scanner;
 
 public class FileTransferClient extends Host{
 	private DatagramSocket sendReceiveSocket;
 	private static final int INTERMEDIATE_PORT= 23;
-	public static enum Mode {NORMAL, TEST};
+	private static enum Mode {NORMAL, TEST};
+	private static enum Request {READ, WRITE};
+	private Mode mode;
+	private Request request;
+	private String fileName;
 	
 	public FileTransferClient() {
 		try {
@@ -18,38 +23,44 @@ public class FileTransferClient extends Host{
 		}
 	}
 
-	public void sendAndReceive(String fileName) {
-	      //byte finalMsg[] = arrayCombiner(readOrWrite, fileName); // Combine all segments of message to make final message
-	      //sendaPacket(finalMsg, FileTransferServer.SERVER_PORT, sendReceiveSocket, "Client");
-	      receiveaPacket("Client", sendReceiveSocket);
-	      if(Arrays.equals(Arrays.copyOfRange(receivePacket.getData(), 0, 3),responseWrite)) {
-	    	  byte[] file = convertFileToByteArray();
-	    	  sendAFile(file, FileTransferServer.SERVER_PORT, sendReceiveSocket, "Client");
+	public void sendAndReceive() {
+	    
+	      if(request == request.READ) {
+	    	  receiveFile(fileName, sendReceiveSocket, FileTransferServer.SERVER_PORT, "client");	    	  
 	      } else {
-	    	  sendaPacket(responseRead, FileTransferServer.SERVER_PORT, sendReceiveSocket, "client");
-	    	  receiveAFile("client", sendReceiveSocket);
-	    	  convertPacketToFile(receivePacket);
+	    	  sendFile(fileName, sendReceiveSocket,  FileTransferServer.SERVER_PORT, "client");
 	      }
 
 		    sendReceiveSocket.close();
 	}
 
-
-	public void receiveFile(String filename){
-	String path = "C:/Users/Gravel/Desktop"; ///FIX THIS
-	File file = new File(filename);
-	try{
-		FileOutputStream fis = new FileOutputStream(path);
-		
-	}catch(IOException e){
-
-	}
-		
-		
+	private void promtUser(){
+		Scanner reader = new Scanner(System.in);
+		System.out.println("normal or test mode?");
+		String s = reader.nextLine();
+		if(s.equals("normal")){
+			mode = Mode.NORMAL;
+		}
+		else{
+			mode = Mode.TEST;
+		}
+		System.out.println("read or write a file?");
+		String s1 = reader.nextLine();
+		if(s1.equals("read")){
+			request = Request.READ;
+		}
+		else{
+			request = Request.WRITE;
+		}
+		System.out.println("file name:");
+		String s2 = reader.nextLine();
+		fileName = s2;
+		reader.close();
 	}
 	
 	public static void main(String args[]) {
 		FileTransferClient c = new FileTransferClient();
-		c.sendFile("C:/Users/Gravel/Desktop/test.txt", c.sendReceiveSocket, FileTransferServer.SERVER_PORT, "client");
+		c.promtUser();
+		c.sendAndReceive();
 	}
 }
