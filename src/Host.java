@@ -62,7 +62,7 @@ public abstract class Host {
 			byte[] filedata = new byte[512];
 			byte[] packetdata = new byte[516];
 			//sending write request
-			byte[] WRQ = arrayCombiner(write(), "test.txt");
+			byte[] WRQ = arrayCombiner(write(), filename);
 	 		sendaPacket(WRQ,port, socket, sender);
 	 		receiveaPacket(sender, socket);
 			
@@ -85,15 +85,16 @@ public abstract class Host {
 		}	  
 	  
 		public void receiveFile(String filename, DatagramSocket socket, int port, String sender){
-			String path = "C:/Users/Gravel/Desktop"; ///FIX THIS
-			File file = new File(filename);
+			String path = System.getProperty("user.home") + "\\Desktop\\"; ///FIX THIS
+			
+			File file = new File(path + "\\" + filename);
 		
-			byte[] RRQ = arrayCombiner(read(), "test.txt");
+			byte[] RRQ = arrayCombiner(read(), filename);
 	 		sendaPacket(RRQ,port, socket, sender);  //send request
 			
 	 		int blockNum = 1;
 			try{
-				FileOutputStream fis = new FileOutputStream(path);
+				FileOutputStream fis = new FileOutputStream(file);
 				receiveaPacket(sender, socket);
 				fis.write(receivePacket.getData());
 				byte[] ack = createAck(blockNum);
@@ -119,6 +120,23 @@ public abstract class Host {
 
 	  }
 
+	  protected byte[] convertFileToByteArray(){
+			Path path = Paths.get(directory + fileName);
+			
+			byte[] data;
+			try {
+				data = Files.readAllBytes(path);
+				return data;
+				
+			} catch (IOException e) {
+
+				e.printStackTrace();
+			}
+			
+			return null;
+			
+        
+	  }
 	  
 	  protected void convertPacketToFile(DatagramPacket datagramPacket){
 			byte[] b = datagramPacket.getData();
@@ -152,7 +170,7 @@ public abstract class Host {
 			datapacket[2] = (byte) blockNum;
 			datapacket[3] = (byte) (blockNum >>> 8);
 			
-			ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
+			ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 			  try {
 					outputStream.write(datapacket);
 					outputStream.write(data);
