@@ -43,17 +43,27 @@ public abstract class Host {
 		      }
 	  }
 	  
-	  protected void sendAFile(byte[] message, int sendPort, DatagramSocket sendSocket, String host){
-		  sendaPacket(message, sendPort, sendSocket, host);
-		  
+	  protected void receiveaPacket(String host, DatagramSocket receiveSocket) {
+		  byte data[] = new byte[512];
+	      receivePacket = new DatagramPacket(data, data.length);
+	      //data[] = 
+	      try { 
+	         receiveSocket.receive(receivePacket);
+	      } catch(IOException e) {
+	    	 System.out.print("IO Exception: likely:");
+	         System.out.println("Receive Socket Timed Out.\n" + e);
+	         e.printStackTrace();
+	         System.exit(1);
+	      }
+	      p.printReceiveData(host, receivePacket);
 	  }
 	  
 	  public void sendFile(String filename, DatagramSocket socket, int port, String sender){
 			byte[] filedata = new byte[512];
 			byte[] packetdata = new byte[516];
 			//sending write request
-			byte[] RRQ = arrayCombiner(write(), "test.txt");
-	 		sendaPacket(RRQ,port, socket, "client");
+			byte[] WRQ = arrayCombiner(write(), "test.txt");
+	 		sendaPacket(WRQ,port, socket, sender);
 	 		receiveaPacket(sender, socket);
 			
 	 		File file = new File(filename);
@@ -74,25 +84,41 @@ public abstract class Host {
 			}
 		}	  
 	  
-	  protected void receiveAFile(String host, DatagramSocket receiveSocket) {
-		  receiveaPacket(host, receiveSocket);
-	  }
-	  
+		public void receiveFile(String filename, DatagramSocket socket, int port, String sender){
+			String path = "C:/Users/Gravel/Desktop"; ///FIX THIS
+			File file = new File(filename);
+		
+			byte[] RRQ = arrayCombiner(read(), "test.txt");
+	 		sendaPacket(RRQ,port, socket, sender);  //send request
+			
+	 		int blockNum = 1;
+			try{
+				FileOutputStream fis = new FileOutputStream(path);
+				receiveaPacket(sender, socket);
+				fis.write(receivePacket.getData());
+				byte[] ack = createAck(blockNum);
+				sendaPacket(ack, port, socket, sender);
+				if(receivePacket.getData().length < 512) {
+					fis.close();
+					return;
+				}
+			fis.close();	
+			}catch(IOException e){
 
-	  protected void receiveaPacket(String host, DatagramSocket receiveSocket) {
-		  byte data[] = new byte[512];
-	      receivePacket = new DatagramPacket(data, data.length);
-	      //data[] = 
-	      try { 
-	         receiveSocket.receive(receivePacket);
-	      } catch(IOException e) {
-	    	 System.out.print("IO Exception: likely:");
-	         System.out.println("Receive Socket Timed Out.\n" + e);
-	         e.printStackTrace();
-	         System.exit(1);
-	      }
-	      p.printReceiveData(host, receivePacket);
+			}
+		}
+	
+		
+	  private byte[] createAck(int blockNum){
+			byte[] datapacket = new byte[4];
+			datapacket[0] = (byte) 0;
+			datapacket[1] = (byte) 3;
+			datapacket[2] = (byte) blockNum;
+			datapacket[3] = (byte) (blockNum >>> 8);
+			return datapacket;
+
 	  }
+
 	  
 	  protected void convertPacketToFile(DatagramPacket datagramPacket){
 			byte[] b = datagramPacket.getData();
@@ -109,33 +135,13 @@ public abstract class Host {
 			}
 	  }
 	  
-	  protected byte[] convertFileToByteArray(){
-			Path path = Paths.get(directory + fileName);
-			
-			byte[] data;
-			try {
-				data = Files.readAllBytes(path);
-				return data;
-				
-			} catch (IOException e) {
-
-				e.printStackTrace();
-			}
-			
-			return null;
-			
-        
-	  }
+	
 	  
 	  private byte[]  read() {
 	      return new byte[] {0,1};
 	   } 
 	   
-	   /**
-	    * 
-	    * @return	Returns a byte array containing {0, 2} which corresponds to write request
-	    */
-	   private byte[] write() {
+	 private byte[] write() {
 	      return new byte[] {0,2};
 	   }
 	   
