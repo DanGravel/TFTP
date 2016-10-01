@@ -7,7 +7,14 @@ Iteration 1
 - README.md
 
 -> Daniel Gravel	
-
+-FileTransferClient.java
+-Host.java
+  -receiveFile
+  -sendFile
+  -createAck
+  -createDataPacket
+ -Printer
+  -Verbose/Quiet
 -> Bhavik Tailor	
 
 -> Tanzim Zaman	
