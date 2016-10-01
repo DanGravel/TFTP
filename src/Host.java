@@ -29,17 +29,19 @@ public abstract class Host {
 		      //  sendPacket = new DatagramPacket(message, receivePacket.getLength(),
 		      //              InetAddress.getLocalHost(), sendPort); 
 
-		      } catch (UnknownHostException e) {
-		         e.printStackTrace();
-		         System.exit(1);
-		      }
-		      p.printRequestAndAck(host, sendPacket);
-		      try {
-		         sendSocket.send(sendPacket);
-		      } catch (IOException e) {
-		         e.printStackTrace();
-		         System.exit(1);
-		      }
+		  } catch (UnknownHostException e) {
+	         e.printStackTrace();
+	         System.exit(1);
+		  }
+		  
+	      p.printRequestAndAck(host, sendPacket);
+	      
+	      try {
+	         sendSocket.send(sendPacket);
+	      } catch (IOException e) {
+	         e.printStackTrace();
+	         System.exit(1);
+	      }
 	  }
 	  
 	  protected void sendAFile(byte[] message, int sendPort, DatagramSocket sendSocket, String host){
@@ -63,12 +65,14 @@ public abstract class Host {
 			  FileInputStream stream = new FileInputStream(file);
 			  
 			  //sendaPacket();// send write request and wait for ack
-
+			  
 			  
 			  while((dataLen = stream.read(data)) != -1){
 				  //
 				 //add code to send to port and wait for ack block
 				 //
+				  
+				  
 				  
 			  }
 		  }catch(IOException e ){

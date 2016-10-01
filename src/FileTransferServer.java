@@ -11,7 +11,7 @@ public class FileTransferServer extends Host implements Runnable {
 	public enum RequestType {READ, WRITE, INVALID}
 	
 	public FileTransferServer() {
-}
+	}
 	
 
 	public void sendAndReceive() throws Exception {
@@ -26,7 +26,8 @@ public class FileTransferServer extends Host implements Runnable {
 			System.out.println("Waiting..."); // so we know we're waiting
 			receiveaPacket("Server", receiveSocket);   
 			receiveSocket.close();
-			new Thread(new FileTransferServer()).start(); 
+			new Thread(new FileTransferServer()).start();
+			pauseThread();
 		}
 	}
 	
@@ -73,8 +74,16 @@ public class FileTransferServer extends Host implements Runnable {
 		else response = responseWrite;
 		return response;
 	}
-	
 
+
+	private void pauseThread(){
+		try {
+			Thread.sleep(3000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 	
 	public static void main(String args[]) {
 		FileTransferServer c = new FileTransferServer();
