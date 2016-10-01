@@ -26,11 +26,21 @@ public class FileTransferClient extends Host{
 	public void sendAndReceive() {
 	    
 	      if(request == request.READ) {
-	    	  receiveFile(fileName, sendReceiveSocket, FileTransferServer.SERVER_PORT, "client");	    	  
-	      } else {
-	    	  sendFile(fileName, sendReceiveSocket,  FileTransferServer.SERVER_PORT, "client");
+	    	  if(mode == Mode.NORMAL){
+	    		  receiveFile(fileName, sendReceiveSocket, FileTransferServer.SERVER_PORT, "client");	    	  
+	    	  }
+	    	  else{
+		    	  receiveFile(fileName, sendReceiveSocket, INTERMEDIATE_PORT, "client");	    	  
+	    	  }  
+	      } 
+	      else {
+	    	  if(mode == Mode.NORMAL){
+	    		  sendFile(fileName, sendReceiveSocket,  FileTransferServer.SERVER_PORT, "client");
+	    	  }
+	    	  else{
+	    		  sendFile(fileName, sendReceiveSocket, INTERMEDIATE_PORT, "client");
+	    	  }
 	      }
-
 		    sendReceiveSocket.close();
 	}
 
