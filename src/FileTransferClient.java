@@ -60,7 +60,7 @@ public class FileTransferClient extends Host{
 	private static byte[] createDataPacket(byte[] data, int blockNum){
 		byte[] datapacket = new byte[516];
 		datapacket[0] = (byte) 0;
-		datapacket[1] = (byte) 1;
+		datapacket[1] = (byte) 3;
 		datapacket[2] = (byte) blockNum;
 		datapacket[3] = (byte) (blockNum >>> 8);
 		System.arraycopy(datapacket,0,data,4,datapacket.length);
