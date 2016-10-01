@@ -4,7 +4,7 @@ import java.net.DatagramPacket;
  * This class simply prints out necessary information of packets before sending them and after receiving them
  */
 public class Printer {
-		private boolean isVerbose;
+		protected static boolean isVerbose;
 		
 		public boolean isVerbose() {
 			return isVerbose;
@@ -45,6 +45,9 @@ public class Printer {
 		    printSenderOrReceiverInfo(true, receivePacket, host);
 	        System.out.print("Containing: " + new String(receivePacket.getData()));
 	        printBytes(receivePacket.getData());
+		  }
+		  else{
+			  System.out.print("Received data");
 		  }
 	   }
 	   

@@ -23,7 +23,6 @@ public abstract class Host {
 	  
 	  protected void sendaPacket(byte[] message, int sendPort, DatagramSocket sendSocket, String host) {
 		  try {
-
 		      sendPacket = new DatagramPacket(message, message.length,
 		                                         InetAddress.getLocalHost(), sendPort); 
 
@@ -119,24 +118,7 @@ public abstract class Host {
 
 	  }
 
-	  
-	  protected void convertPacketToFile(DatagramPacket datagramPacket){
-			byte[] b = datagramPacket.getData();
-			
-			String directory = System.getProperty("user.home") + "\\desktop\\";
-			
-			File file = new File(directory + "test");
-			try{
-				FileOutputStream fileOutputStream = new FileOutputStream(file);
-				fileOutputStream.write(b);
-				fileOutputStream.close();
-			} catch (Exception e){
-				System.out.println("FUCK DA POLICE and ur mom");
-			}
-	  }
-	  
-	
-	   
+	 	   
 	   private static byte[] createDataPacket(byte[] data, int blockNum){
 			byte[] datapacket = new byte[4];
 			datapacket[0] = (byte) 0;
