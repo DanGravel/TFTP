@@ -1,3 +1,4 @@
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -47,37 +48,37 @@ public abstract class Host {
 		  
 	  }
 	  
+	  public void sendFile(String filename, DatagramSocket socket, int port, String sender){
+			byte[] filedata = new byte[512];
+			byte[] packetdata = new byte[516];
+			//sending write request
+			byte[] RRQ = arrayCombiner(write(), "test.txt");
+	 		sendaPacket(RRQ,port, socket, "client");
+	 		receiveaPacket(sender, socket);
+			
+	 		File file = new File(filename);
+			try{
+				 FileInputStream fis = new FileInputStream(file);
+				 int endofFile = fis.read(filedata);
+				 int blockNum = 0;
+
+				 while(endofFile != - 1){
+					 packetdata = createDataPacket(filedata, blockNum);
+					 sendaPacket(packetdata,port, socket, sender);
+					 receiveaPacket(sender, socket);
+					 blockNum++;
+				 }
+			fis.close();
+			}catch(IOException e){
+
+			}
+		}	  
+	  
 	  protected void receiveAFile(String host, DatagramSocket receiveSocket) {
 		  receiveaPacket(host, receiveSocket);
 	  }
 	  
-	  /*
-	   * Reads data from file in chunks rather then all at once
-	   */
-	  protected void sendFile(String fileName){
-		  File file = new File(fileName);
-		  byte[] data = new byte[512];
-		  int dataLen = 0;
-		  
-		  try{
-			  FileInputStream stream = new FileInputStream(file);
-			  
-			  //sendaPacket();// send write request and wait for ack
 
-			  
-			  while((dataLen = stream.read(data)) != -1){
-				  //
-				 //add code to send to port and wait for ack block
-				 //
-				  
-			  }
-		  }catch(IOException e ){
-			  
-		  }
-		  
-		  
-	  } 
-	  
 	  protected void receiveaPacket(String host, DatagramSocket receiveSocket) {
 		  byte data[] = new byte[512];
 	      receivePacket = new DatagramPacket(data, data.length);
@@ -138,7 +139,40 @@ public abstract class Host {
 	      return new byte[] {0,2};
 	   }
 	   
-	  
+	   private static byte[] createDataPacket(byte[] data, int blockNum){
+			byte[] datapacket = new byte[4];
+			datapacket[0] = (byte) 0;
+			datapacket[1] = (byte) 3;
+			datapacket[2] = (byte) blockNum;
+			datapacket[3] = (byte) (blockNum >>> 8);
+			
+			ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
+			  try {
+					outputStream.write(datapacket);
+					outputStream.write(data);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			return outputStream.toByteArray();
+		}
+
+		private byte[] arrayCombiner(byte readOrWrite[], String message) {
+			  byte msg[] = message.getBytes();
+			  byte seperator[] = new byte[] {0}; //zeroByte();
+			  byte mode[] = "ascii".getBytes();
+			  ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
+			  try {
+				outputStream.write(readOrWrite);
+				outputStream.write(msg);
+				outputStream.write(seperator);
+				outputStream.write(mode);
+				outputStream.write(seperator);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			  return outputStream.toByteArray( );
+		   }
+
 	  protected void waitFiveSeconds() {
 		  try {
 	          Thread.sleep(5000);
