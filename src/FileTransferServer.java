@@ -11,7 +11,6 @@ import javax.swing.text.AttributeSet.CharacterAttribute;
 
 public class FileTransferServer extends Host implements Runnable {
 	private DatagramSocket sendSocket, receiveSocket;
-	public static final String fileDirectory = "asda";
 	public static final int SERVER_PORT = 69;
 	public static final int FILE_NAME_START = 2;	
 	public enum RequestType {READ, WRITE, DATA, ACK, INVALID}
@@ -52,8 +51,10 @@ public class FileTransferServer extends Host implements Runnable {
 			}
 			
 			switch(request) {
-			case READ: case WRITE: case DATA: sendaPacket(response, receivePacket.getPort(), sendSocket, "Server"); break;
-			case ACK: sendNextPartofFile();break;
+			case READ: case WRITE:  sendaPacket(response, receivePacket.getPort(), sendSocket, "Server"); break;
+			case ACK: 	sendNextPartofFile(); break;
+			case DATA: 	receiveNextPartofFile(); 
+					 	sendaPacket(response, receivePacket.getPort(), sendSocket, "Server"); break;
 			default: break;
 			
 		}
@@ -84,6 +85,24 @@ public class FileTransferServer extends Host implements Runnable {
 		} catch(IOException e){
 
 		}
+		
+	}
+	
+	private void receiveNextPartofFile() {
+		String path = directory + fileName;
+		File file = new File(path);
+		byte[] wholePacket = receivePacket.getData();
+		byte[] data = Arrays.copyOfRange(wholePacket, 4, wholePacket.length-1);
+		
+		
+		try{
+			FileOutputStream fis = new FileOutputStream(file);
+			fis.write(data);
+			fis.close();	
+		}catch(IOException e){
+			System.out.println("Failed to reeive next part of file");
+		}
+		
 		
 	}
 	
