@@ -84,8 +84,8 @@ public class FileTransferClient extends Host{
 	}
 	
 	public static void main(String args[]) {
-		FileTransferClient c = new FileTransferClient();
 		while(true){
+			FileTransferClient c = new FileTransferClient();
 			c.promtUser();
 			c.sendAndReceive();
 			
