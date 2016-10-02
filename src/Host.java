@@ -85,7 +85,7 @@ public abstract class Host {
 	 		sendaPacket(WRQ,port, socket, sender);
 	 		receiveaPacket(sender, socket);
 			
-	 		String path = System.getProperty("user.home") + "\\Documents\\test.txt";
+	 		String path = System.getProperty("user.home") + "\\Documents\\" + filename;
 	 		File file = new File(path);
 			byte[] filedata = new byte[(int) file.length()];
 			try{
@@ -126,8 +126,9 @@ public abstract class Host {
 	   * @param sender: name of the sender
 	   */
 	  public void receiveFile(String filename, DatagramSocket socket, int port, String sender){
-			String path = "C:/Users/Gravel/Desktop"; ///FIX THIS
-			File file = new File(filename);
+			String path = System.getProperty("user.home") + "\\Desktop\\";
+			String filepath = System.getProperty("user.home") + "\\Documents\\" + filename;
+			File file = new File(filepath);
 		
 			byte[] RRQ = arrayCombiner(read, "test.txt");
 	 		sendaPacket(RRQ,port, socket, sender);  //send request
