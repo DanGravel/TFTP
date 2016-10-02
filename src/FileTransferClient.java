@@ -30,7 +30,7 @@ public class FileTransferClient extends Host{
 	    		  receiveFile(fileName, sendReceiveSocket, FileTransferServer.SERVER_PORT, "client");	    	  
 	    	  }
 	    	  else{
-		    	  receiveFile(fileName, sendReceiveSocket, INTERMEDIATE_PORT, "client");	    	  
+		    	  receiveFile(fileName, sendReceiveSocket, INTERMEDIATE_PORT, "client");	    	   
 	    	  }  
 	      } 
 	      else {
@@ -45,40 +45,41 @@ public class FileTransferClient extends Host{
 	}
 
 	private void promtUser(){
-		Scanner reader = new Scanner(System.in);
+		//Scanner reader = new Scanner(System.in);
 		System.out.println("verbose or quiet?");
-		String s0 = reader.nextLine();
-		if(s0.equals("verbose")){
+		//String s0 = reader.nextLine();
+		//if(s0.equals("verbose")){
 			p.setIsVerbose(true);
-		}
-		else{
-			p.setIsVerbose(false);
-		}
+		//}
+		//else{
+			//p.setIsVerbose(false);
+		//}
 		System.out.println("normal or test mode?");
-		String s = reader.nextLine();
-		if(s.equals("normal")){
+		//String s = reader.nextLine();
+		//if(s.equals("normal")){
 			mode = Mode.NORMAL;
-		}
-		else{
-			mode = Mode.TEST;
-		}
+		//}
+		//else{
+			//mode = Mode.TEST;
+		//}
 		System.out.println("read or write a file?");
-		String s1 = reader.nextLine();
-		if(s1.equals("read")){
-			request = Request.READ;
-		}
-		else{
+		//String s1 = reader.nextLine();
+		//if(s1.equals("read")){
+			//request = Request.READ;
+		//}
+		//else{
 			request = Request.WRITE;
-		}
-		System.out.println("file name:");
-		String s2 = reader.nextLine();
-		fileName = s2;
-		reader.close();
+		//}
+		//System.out.println("file name:");
+		//String s2 = reader.nextLine();
+		//fileName = s2;
+		//reader.close();
 	}
 	
 	public static void main(String args[]) {
 		FileTransferClient c = new FileTransferClient();
 		c.promtUser();
+	
 		c.sendAndReceive();
 	}
 }

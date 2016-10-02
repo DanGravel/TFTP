@@ -10,6 +10,7 @@ import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 
 import javax.swing.text.AttributeSet.CharacterAttribute;
 
@@ -19,7 +20,7 @@ public abstract class Host {
 	  protected DatagramPacket sendPacket, receivePacket;
 	  protected static final String directory = System.getProperty("user.home") + "\\desktop\\"; 
 	  protected Printer p = new Printer();
-	  protected String fileName;
+	  protected String fileName = "";
 	  protected static final byte[] read = {0,1};
 	  protected static final byte[] write = {0,2};
 	  
@@ -55,25 +56,39 @@ public abstract class Host {
 	  }
 	  
 	  public void sendFile(String filename, DatagramSocket socket, int port, String sender){
-			byte[] filedata = new byte[512];
-			byte[] packetdata = new byte[516];
+
+			byte[] packetdata = new byte[512];
 			//sending write request
 			byte[] WRQ = arrayCombiner(write, "test.txt");
 	 		sendaPacket(WRQ,port, socket, sender);
 	 		receiveaPacket(sender, socket);
 			
-	 		File file = new File(filename);
+	 		String path = System.getProperty("user.home") + "\\Documents\\test.txt";
+	 		File file = new File(path);
+			byte[] filedata = new byte[(int) file.length()];
 			try{
 				 FileInputStream fis = new FileInputStream(file);
 				 int endofFile = fis.read(filedata);
 				 int blockNum = 0;
-
-				 while(endofFile != - 1){
-					 packetdata = createDataPacket(filedata, blockNum);
-					 sendaPacket(packetdata,port, socket, sender);
-					 receiveaPacket(sender, socket);
-					 blockNum++;
+				 int start = 0;
+				 int upto = 507;
+				 while(endofFile >= 0){
+					 byte[] toSend;
+				      if(upto > endofFile) {
+				    	  toSend = Arrays.copyOfRange(filedata, start, filedata.length - 1);
+				      } else {
+				    	  toSend = Arrays.copyOfRange(filedata, start, upto);
+				      }
+				      packetdata = createDataPacket(toSend, blockNum);
+				  
+				      sendaPacket(packetdata,port, socket, sender);
+				      receiveaPacket(sender, socket);
+				      blockNum++;
+				      start += 508;
+				      upto += 508;
+				      endofFile -= 508;
 				 }
+				 
 			fis.close();
 			}catch(IOException e){
 

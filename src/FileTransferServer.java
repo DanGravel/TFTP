@@ -4,6 +4,10 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 
 
@@ -90,17 +94,25 @@ public class FileTransferServer extends Host implements Runnable {
 	
 	private void receiveNextPartofFile() {
 		String path = directory + fileName;
-		File file = new File(path);
 		byte[] wholePacket = receivePacket.getData();
 		byte[] data = Arrays.copyOfRange(wholePacket, 4, wholePacket.length-1);
-		
-		
-		try{
-			FileOutputStream fis = new FileOutputStream(file);
-			fis.write(data);
-			fis.close();	
-		}catch(IOException e){
-			System.out.println("Failed to reeive next part of file");
+		Path path2 = Paths.get(path);
+		if(new File(path).isFile()){
+			try {
+			    Files.write(path2, data, StandardOpenOption.APPEND);
+			}catch (IOException e) {
+			    //exception handling left as an exercise for the reader
+				e.printStackTrace();
+			}
+		} else{
+			File f = new File(path);
+			try{
+				FileOutputStream fis = new FileOutputStream(f);
+				fis.write(data);
+				fis.close();	
+			}catch(IOException e){
+				System.out.println("Failed to reeive next part of file");
+			}
 		}
 		
 		
@@ -116,8 +128,15 @@ public class FileTransferServer extends Host implements Runnable {
 		else throw new IllegalArgumentException("Invalid Packet");
 		if(request == RequestType.READ || request == RequestType.WRITE) {
 			int i = FILE_NAME_START;
-			while(data[i++] != 0) fileName += (char)data[i]; //save filename to global variable
-			while(data[i++] != 0) mode += (char)data[i];
+			while(data[i] != 0){
+				fileName += (char)data[i];
+				i++;//save filename to global variable
+			}
+			i++;
+			while(data[i] != 0){
+				mode += (char)data[i];
+				i++;
+			}
 			if(fileName.length() == 0 || mode.length() == 0) throw new IllegalArgumentException("Invalid Packet");;
 			
 		}
