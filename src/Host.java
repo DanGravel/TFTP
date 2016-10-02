@@ -106,8 +106,7 @@ public abstract class Host {
 	
 		
 	  protected byte[] createAck(int blockNum){
-			return (new byte[] {0, 4,  (byte) blockNum, (byte) (blockNum >>> 8)}); //new byte[4]; 
-			
+			return (new byte[] {0, 4,  (byte) (blockNum & 0xFF), (byte) ((blockNum >> 8) & 0xFF)}); //new byte[4]; 
 
 	  }
 	  

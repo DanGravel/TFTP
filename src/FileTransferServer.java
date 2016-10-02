@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.net.*;
 import java.util.Arrays;
 
-import javax.swing.text.AttributeSet.CharacterAttribute;
+
 
 
 public class FileTransferServer extends Host implements Runnable {
@@ -130,15 +130,13 @@ public class FileTransferServer extends Host implements Runnable {
 	
 	private byte[] createRightPacket(RequestType request, byte data[]) {
 		
-		byte[] response = null; 
-		if(request == RequestType.INVALID) 
+		byte[] response = null;  
 		switch(request) {
 			case READ: response = createDataPacket(0); break;
-			case WRITE: response = createAck(1); break;
-			//case ACK: response = createDataPacket(((data[2] & 0xff) << 8) | data[3] & 0xff); break;
+			case WRITE: response = createAck(0); break;
 			case DATA: response = createAck(((data[2] & 0xff) << 8) | data[3] & 0xff); break;
 			
-			default: break;
+			default: throw new IllegalArgumentException("Invalid Packet"); 
 			
 		}
 		return response;
