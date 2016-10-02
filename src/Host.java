@@ -24,6 +24,14 @@ public abstract class Host {
 	  protected static final byte[] read = {0,1};
 	  protected static final byte[] write = {0,2};
 	  
+	  /**
+	   * sends a datagram packet to a specified socket
+	   * 
+	   * @param message: the message to be sent in byte array format
+	   * @param sendPort: the port that the packet will be sent to
+	   * @param sendSocket: the socket that the packet will be sent to
+	   * @param host: the name of which host the packet will be sent to
+	   */
 	  protected void sendaPacket(byte[] message, int sendPort, DatagramSocket sendSocket, String host) {
 		  try {
 		      sendPacket = new DatagramPacket(message, message.length,
@@ -41,6 +49,12 @@ public abstract class Host {
 		      }
 	  }
 	  
+	  /**
+	   * Method used to receive a packet from a certain host
+	   * 
+	   * @param host: the host the packet is sent from
+	   * @param receiveSocket: the socket that is receiving the packet
+	   */
 	  protected void receiveaPacket(String host, DatagramSocket receiveSocket) {
 		  byte data[] = new byte[512];
 	      receivePacket = new DatagramPacket(data, data.length);
@@ -55,6 +69,14 @@ public abstract class Host {
 	      p.printReceiveData(host, receivePacket);
 	  }
 	  
+	  /**
+	   * Used in FileTransferClient for now. Sends a write request and then sends the file to the server.
+	   * 
+	   * @param filename: name of the file
+	   * @param socket: the socket to send and receive in the client
+	   * @param port: the port number of the socket to send to
+	   * @param sender: name of the sender
+	   */
 	  public void sendFile(String filename, DatagramSocket socket, int port, String sender){
 
 			byte[] packetdata = new byte[512];
@@ -95,7 +117,15 @@ public abstract class Host {
 			}
 		}	  
 	  
-		public void receiveFile(String filename, DatagramSocket socket, int port, String sender){
+	  /**
+	   * Used for write requests in the server
+	   * 
+	   * @param filename: name of the file to be sent from the server
+	   * @param socket: the socket that will receives blocks of the file from the server
+	   * @param port: the port number to send acknowledgements to 
+	   * @param sender: name of the sender
+	   */
+	  public void receiveFile(String filename, DatagramSocket socket, int port, String sender){
 			String path = "C:/Users/Gravel/Desktop"; ///FIX THIS
 			File file = new File(filename);
 		
@@ -119,19 +149,38 @@ public abstract class Host {
 			}
 		}
 	
-		
+	
+	  /**
+	   * creates a byte array with the acknowledgement info
+	   * 
+	   * @param blockNum: the block number of the ack signal (the # increases every time the ack has to send a new packet, should only send once for the ack)
+	   * @return byte array with ack signal
+	   */
 	  protected byte[] createAck(int blockNum){
 			return (new byte[] {0, 4,  (byte) (blockNum & 0xFF), (byte) ((blockNum >> 8) & 0xFF)}); //new byte[4]; 
 
 	  }
 	  
-	
+	  /**
+	   * Creates an empty datapacket with a DATA signal
+	   * 
+	   * @param blockNum: which block number is being sent 
+	   * @return a byte array with packet information
+	   */
 	  protected byte[] createDataPacket(int blockNum) {
 		  return (new byte[] {0, 3, (byte) (blockNum), (byte) (blockNum >>> 8)});
 	
 	  }
 
-	 	   
+	  /**
+	   * overload
+	   * 
+	   * creates a data packet with data in it and a DATA signal
+	   * 
+	   * @param data: the data to be sent in the packet
+	   * @param blockNum: which block number is being sent
+	   * @return the byte array to be sent in the packet
+	   */
 	   protected byte[] createDataPacket(byte[] data, int blockNum){
 			byte[] datapacket = {0, 3, (byte) (blockNum), (byte) (blockNum >>> 8)};
 			
@@ -146,7 +195,13 @@ public abstract class Host {
 		}
 
 			
-
+	   /**
+	    * creates the byte array for the initial read or write request
+	    * 
+	    * @param readOrWrite: indicates if it's a read or write request
+	    * @param message: message containing the file name of the file to be written or read
+	    * @return a byte array with the message to be sent
+	    */
 		private byte[] arrayCombiner(byte readOrWrite[], String message) {
 			  byte msg[] = message.getBytes();
 			  byte seperator[] = new byte[] {0}; //zeroByte();
@@ -163,9 +218,5 @@ public abstract class Host {
 			}
 			  return outputStream.toByteArray( );
 		   }
-
-
-
-
 
 }

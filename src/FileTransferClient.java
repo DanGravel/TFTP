@@ -14,6 +14,9 @@ public class FileTransferClient extends Host{
 	private Request request;
 	private String fileName;
 	
+	/**
+	 * constructs a socket to receive and send packets or requests
+	 */
 	public FileTransferClient() {
 		try {
 			sendReceiveSocket = new DatagramSocket();
@@ -22,7 +25,10 @@ public class FileTransferClient extends Host{
 			System.exit(1);
 		}
 	}
-
+	 
+	/**
+	 * method used to control if a file will be sent or received 
+	 */
 	public void sendAndReceive() {
 	    
 	      if(request == request.READ) {
@@ -43,13 +49,16 @@ public class FileTransferClient extends Host{
 	      }
 		    sendReceiveSocket.close();
 	}
-
+	
+	/**
+	 * Asks user whether they want to send or receive a file
+	 */
 	private void promtUser(){
 		//Scanner reader = new Scanner(System.in);
 		System.out.println("verbose or quiet?");
 		//String s0 = reader.nextLine();
 		//if(s0.equals("verbose")){
-			p.setIsVerbose(true);
+		p.setIsVerbose(true);
 		//}
 		//else{
 			//p.setIsVerbose(false);
