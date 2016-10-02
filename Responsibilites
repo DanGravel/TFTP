@@ -26,6 +26,12 @@ Iteration 1
 -shutdown in client
 
 -> Tanzim Zaman	
--FileTransferServer.java
--created the run method for threading of the server
--made method to send data to client 
+-FileTransferServer.java 
+  - Recieving files
+  - Sending files
+  - Validation and what to do with requests/data/acks
+ -Host.java
+  -debugged
+ -FileTransferClient.java
+  -debugged
+
