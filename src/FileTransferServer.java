@@ -32,6 +32,7 @@ public class FileTransferServer extends Host implements Runnable {
 			se.printStackTrace();
 			System.exit(1);
 		}
+		p.setIsVerbose(true);
 		
 	}
 
