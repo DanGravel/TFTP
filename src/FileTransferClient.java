@@ -65,10 +65,10 @@ public class FileTransferClient extends Host{
 		System.out.println("read or write a file?");
 		//String s1 = reader.nextLine();
 		//if(s1.equals("read")){
-			//request = Request.READ;
+			request = Request.READ;
 		//}
 		//else{
-			request = Request.WRITE;
+			//request = Request.WRITE;
 		//}
 		//System.out.println("file name:");
 		//String s2 = reader.nextLine();

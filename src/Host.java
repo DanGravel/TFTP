@@ -96,27 +96,37 @@ public abstract class Host {
 		}	  
 	  
 		public void receiveFile(String filename, DatagramSocket socket, int port, String sender){
-			String path = "C:/Users/Gravel/Desktop"; ///FIX THIS
-			File file = new File(filename);
+			
+			File file = new File(System.getProperty("user.home") + "\\Documents\\test.txt");
 		
 			byte[] RRQ = arrayCombiner(read, "test.txt");
-	 		sendaPacket(RRQ,port, socket, sender);  //send request
+	 		sendaPacket(RRQ,port, socket, sender);  //send requestdi
 			
+	 		
 	 		int blockNum = 1;
+	 		
 			try{
-				FileOutputStream fis = new FileOutputStream(path);
-				receiveaPacket(sender, socket);
-				fis.write(receivePacket.getData());
-				byte[] ack = createAck(blockNum);
-				sendaPacket(ack, port, socket, sender);
-				if(receivePacket.getData().length < 512) {
-					fis.close();
-					return;
-				}
-			fis.close();	
-			}catch(IOException e){
+				FileOutputStream fis = new FileOutputStream(file);
+				do{
+					
+					receiveaPacket(sender, socket);
+					
+					fis.write(Arrays.copyOfRange(receivePacket.getData(), 4, 512));
+					byte[] ack = createAck(blockNum);
+					sendaPacket(ack, port, socket, sender);
 
-			}
+					
+				} while(!(receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 4));
+				fis.close();
+				} catch(IOException e){
+
+				}
+			
+					
+				
+				
+				//FileOutputStream fis = new FileOutputStream(file);
+
 		}
 	
 		

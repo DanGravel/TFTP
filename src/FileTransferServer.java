@@ -10,6 +10,8 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 
+import javax.xml.stream.events.StartDocument;
+
 
 
 
@@ -18,6 +20,9 @@ public class FileTransferServer extends Host implements Runnable {
 	public static final int SERVER_PORT = 69;
 	public static final int FILE_NAME_START = 2;	
 	public enum RequestType {READ, WRITE, DATA, ACK, INVALID}
+	private int start = 0;
+	private int upto = 508;
+	private boolean doneFile = false;
 	
 	public FileTransferServer() {
 	
@@ -37,7 +42,7 @@ public class FileTransferServer extends Host implements Runnable {
 			receiveaPacket("Server", receiveSocket);   
 			Thread thread = new Thread(this);
 			thread.start();
-			Thread.sleep(1000);
+			Thread.sleep(3000);
 		}
 	}
 	
@@ -55,7 +60,8 @@ public class FileTransferServer extends Host implements Runnable {
 			}
 			
 			switch(request) {
-			case READ: case WRITE:  sendaPacket(response, receivePacket.getPort(), sendSocket, "Server"); break;
+			case WRITE:  sendaPacket(response, receivePacket.getPort(), sendSocket, "Server"); break;
+			case READ: 
 			case ACK: 	sendNextPartofFile(); break;
 			case DATA: 	receiveNextPartofFile(); 
 					 	sendaPacket(response, receivePacket.getPort(), sendSocket, "Server"); break;
@@ -69,26 +75,47 @@ public class FileTransferServer extends Host implements Runnable {
 	}
 	
 	private void sendNextPartofFile() {
-		byte[] filedata = new byte[512];
-		byte[] packetdata = new byte[516];
-		int currentBlocktoSend = ((receivePacket.getData()[2] & 0xff) << 8) | (receivePacket.getData()[3] & 0xff);
- 		File file = new File(fileName);
-		try{
-			 FileInputStream fis = new FileInputStream(file);
-			 int endofFile = fis.read(filedata);
-			 int blockNum = 0;
+		
+		byte[] packetdata = new byte[512];
+		Path path = Paths.get(directory + "test.txt");
+	    
+		
+		
+	//	int currentBlocktoSend = ((receivePacket.getData()[2] & 0xff) << 8) | (receivePacket.getData()[3] & 0xff);
+ 		if(doneFile == false) {
+			try{
+					
+					
+	
+				byte[] fileData = Files.readAllBytes(path);
+	
+				 byte[] toSend;
+				 if (upto > fileData.length) {
+			    	  toSend = Arrays.copyOfRange(fileData, start, fileData.length - 1);
+			    	  doneFile = true;
+			      } 
+			      else {
+			    	  toSend = Arrays.copyOfRange(fileData, start, upto);
+			      }
+			      packetdata = createDataPacket(toSend, 1);
+			  
+			      sendaPacket(packetdata, receivePacket.getPort(), sendSocket, "Server");
+			      
+			      
+			      start += 508;
+			      upto += 508;
+	
+			} catch(IOException e){
 
-			 while(endofFile != - 1){
-				 if(blockNum == currentBlocktoSend) {
-					 packetdata = createDataPacket(filedata, currentBlocktoSend);
-					 sendaPacket(packetdata, receivePacket.getPort(), sendSocket, "Server");
-					 blockNum++;
-				 }
-			 }
-		fis.close();
-		} catch(IOException e){
-
-		}
+			}
+		
+ 		} else {
+ 			System.out.print("File transferred");
+ 			
+ 			sendaPacket(new byte[] {0,4}, receivePacket.getPort(), sendSocket, "Server");
+ 			doneFile = true;
+ 		}
+ 		
 		
 	}
 	
@@ -137,7 +164,7 @@ public class FileTransferServer extends Host implements Runnable {
 				mode += (char)data[i];
 				i++;
 			}
-			if(fileName.length() == 0 || mode.length() == 0) throw new IllegalArgumentException("Invalid Packet");;
+			if(fileName.length() == 0 || mode.length() == 0) throw new IllegalArgumentException("Invalid Packet");
 			
 		}
 		
@@ -151,9 +178,10 @@ public class FileTransferServer extends Host implements Runnable {
 		
 		byte[] response = null;  
 		switch(request) {
-			case READ: response = createDataPacket(0); break;
+			case READ:  break;
 			case WRITE: response = createAck(0); break;
 			case DATA: response = createAck(((data[2] & 0xff) << 8) | data[3] & 0xff); break;
+			case ACK: break;
 			
 			default: throw new IllegalArgumentException("Invalid Packet"); 
 			
