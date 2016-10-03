@@ -101,7 +101,7 @@ public class FileTransferServer extends Host implements Runnable {
 			      }
 			      packetdata = createDataPacket(toSend, 1);
 			      sendaPacket(packetdata, receivePacket.getPort(), sendSocket, "Server");
-			  start += DATA_END;
+			  start += DATA_END - 1;
 			  upto += DATA_END;
 			} catch(IOException e){
 				System.out.println("Error in sending parts of file");
@@ -141,8 +141,6 @@ public class FileTransferServer extends Host implements Runnable {
 				System.out.println("Failed to reeive next part of file");
 			}
 		}
-		
-		
 	}
 	
 	/**
@@ -165,8 +163,8 @@ public class FileTransferServer extends Host implements Runnable {
 			while(data[i] != 0){
 				fileName += (char)data[i];
 				i++;
-			i++; 
 			}
+			i++; 
 			//Append mode if request was read or write
 			while(data[i] != 0){
 				mode += (char)data[i];

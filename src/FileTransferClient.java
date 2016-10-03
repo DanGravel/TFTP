@@ -53,12 +53,7 @@ public class FileTransferClient extends Host{
 	private void promtUser(){ 
 	
 		
-		p.setIsVerbose(true);
-		mode = Mode.TEST;
-		//request = Request.READ;
-		request = RequestType.WRITE;
-		fileName = "test.txt";
-		/*Scanner reader = new Scanner(System.in);
+		Scanner reader = new Scanner(System.in);
 		
 		System.out.println("quit yes|no?");
 		String quit = reader.nextLine();
@@ -89,10 +84,10 @@ public class FileTransferClient extends Host{
 		String s1 = reader.nextLine();
 		
 		if(s1.equals("read")){
-			request = Request.READ;
+			request = RequestType.READ;
 		}
 		else{
-			request = Request.WRITE;
+			request = RequestType.WRITE;
 		}
 		System.out.println("file name:");
 		String s2 = reader.nextLine();
@@ -101,17 +96,6 @@ public class FileTransferClient extends Host{
 		
 		fileName = s2;
 		reader.close();
-
-		s1 = reader.nextLine();
-		if(s1.equals("read")){
-			request = Request.READ;
-		}
-		else{
-			request = Request.WRITE;
-		}
-		System.out.println("file name:");
-		s2 = reader.nextLine();
-		fileName = s2; */
 	}
 	  /**
 	   * Sends a write request and then sends the file to the server.
@@ -136,7 +120,7 @@ public class FileTransferClient extends Host{
 				 int blockNum = 0;
 				 int start = DATA_START;
 				 int upto = DATA_END;
-				 while(endofFile >= DATA_START){
+				 while(endofFile > DATA_START){
 					 byte[] toSend;
 				      if(upto > endofFile) {
 				    	  toSend = Arrays.copyOfRange(filedata, start, filedata.length - 1);
@@ -211,11 +195,11 @@ public class FileTransferClient extends Host{
 	   }
 	
 	public static void main(String args[]) {
-		while(true){
+	//	while(true){
 			FileTransferClient c = new FileTransferClient();
 			c.promtUser();
 			c.sendAndReceive();
 			
-		}
+	//	}
 	}
 }
