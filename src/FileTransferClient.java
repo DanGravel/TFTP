@@ -5,6 +5,7 @@ import java.net.*;
 import java.util.Arrays;
 import java.util.Scanner;
 
+
 public class FileTransferClient extends Host{
 	private DatagramSocket sendReceiveSocket;
 	private static final int INTERMEDIATE_PORT= 23;
@@ -25,7 +26,7 @@ public class FileTransferClient extends Host{
 
 	public void sendAndReceive() {
 	    
-	      if(request == request.READ) {
+	      if(request == Request.READ) {
 	    	  if(mode == Mode.NORMAL){
 	    		  receiveFile(fileName, sendReceiveSocket, FileTransferServer.SERVER_PORT, "client");	    	  
 	    	  }
@@ -45,41 +46,68 @@ public class FileTransferClient extends Host{
 	}
 
 	private void promtUser(){
-		//Scanner reader = new Scanner(System.in);
+		Scanner reader = new Scanner(System.in);
+		
+		System.out.println("quit yes|no?");
+		String quit = reader.nextLine();
+		if(quit.equals("yes")){
+			System.exit(1);
+		}
+		
 		System.out.println("verbose or quiet?");
-		//String s0 = reader.nextLine();
-		//if(s0.equals("verbose")){
+		String s0 = reader.nextLine();
+		if(s0.equals("verbose")){
 			p.setIsVerbose(true);
-		//}
-		//else{
-			//p.setIsVerbose(false);
-		//}
+		}
+		else{
+			p.setIsVerbose(false);
+		}
+		
 		System.out.println("normal or test mode?");
-		//String s = reader.nextLine();
-		//if(s.equals("normal")){
+		String s = reader.nextLine();
+		if(s.equals("normal")){
 			mode = Mode.NORMAL;
-		//}
-		//else{
-			//mode = Mode.TEST;
-		//}
+		}
+		else{
+			mode = Mode.TEST;
+		}
 		System.out.println("read or write a file?");
-		//String s1 = reader.nextLine();
-		//if(s1.equals("read")){
+
+		
+		String s1 = reader.nextLine();
+		
+		if(s1.equals("read")){
 			request = Request.READ;
-		//}
-		//else{
+		}
+		else{
 			//request = Request.WRITE;
-		//}
-		//System.out.println("file name:");
-		//String s2 = reader.nextLine();
-		//fileName = s2;
-		//reader.close();
+		}
+		System.out.println("file name:");
+		String s2 = reader.nextLine();
+
+
+		
+		fileName = s2;
+		reader.close();
+
+		s1 = reader.nextLine();
+		if(s1.equals("read")){
+			request = Request.READ;
+		}
+		else{
+			request = Request.WRITE;
+		}
+		System.out.println("file name:");
+		s2 = reader.nextLine();
+		fileName = s2;
 	}
 	
 	public static void main(String args[]) {
-		FileTransferClient c = new FileTransferClient();
-		c.promtUser();
-	
-		c.sendAndReceive();
+		while(true){
+			FileTransferClient c = new FileTransferClient();
+			c.promtUser();
+			c.sendAndReceive();
+			
+		}
 	}
 }
