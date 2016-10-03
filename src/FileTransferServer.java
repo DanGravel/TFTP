@@ -1,6 +1,5 @@
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.*;
@@ -9,8 +8,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
-
-import javax.xml.stream.events.StartDocument;
 
 /**
  * 
@@ -21,10 +18,9 @@ import javax.xml.stream.events.StartDocument;
 
 public class FileTransferServer extends Host implements Runnable {
 	
-	public static final int SERVER_PORT = 69;
+
 	private static final int FILE_NAME_START = 2;
-	private static final int DATA_START = 0;
-	private static final int DATA_END = 508;
+	private static final int START_FILE_DATA = 4;
 	public enum RequestType {READ, WRITE, DATA, ACK, INVALID}
 	private int start, upto;
 	private boolean doneFile;
@@ -90,30 +86,31 @@ public class FileTransferServer extends Host implements Runnable {
 	private void sendNextPartofFile() {
 		
 		byte[] packetdata = new byte[PACKET_SIZE];
-		Path path = Paths.get(directory + fileName);
+		Path path = Paths.get(HOME_DIRECTORY + "\\Desktop\\" + fileName);
 	//	int currentBlocktoSend = ((receivePacket.getData()[2] & 0xff) << 8) | (receivePacket.getData()[3] & 0xff);
  		if(doneFile == false) {
 			try{
 				byte[] fileData = Files.readAllBytes(path);
+				int endOfFile = fileData.length - 1;
 				byte[] toSend;
 				if (upto > fileData.length) {
-					toSend = Arrays.copyOfRange(fileData, start, fileData.length - 1);
+					toSend = Arrays.copyOfRange(fileData, start, endOfFile);
 					doneFile = true;
 			      } else {
 			    	  toSend = Arrays.copyOfRange(fileData, start, upto);
 			      }
 			      packetdata = createDataPacket(toSend, 1);
 			      sendaPacket(packetdata, receivePacket.getPort(), sendSocket, "Server");
-			  start += 508;
-			  upto += 508;
+			  start += DATA_END;
+			  upto += DATA_END;
 			} catch(IOException e){
 				System.out.println("Error in sending parts of file");
 			}
  		} else {
  			System.out.print("File transferred");
  			sendaPacket(new byte[] {0,4}, receivePacket.getPort(), sendSocket, "Server");
- 			start = 0;
- 			upto = 508;
+ 			start = DATA_START;
+ 			upto = DATA_END;
  			doneFile = true;
  			fileName = "";
  		}
@@ -123,15 +120,15 @@ public class FileTransferServer extends Host implements Runnable {
 	 * Receive next part of file and either save it to a new file, or append to existing
 	 */
 	private void receiveNextPartofFile() {
-		String path = directory + fileName;
+		String path = HOME_DIRECTORY+ "\\Desktop\\" + fileName;
 		byte[] wholePacket = receivePacket.getData();
-		byte[] data = Arrays.copyOfRange(wholePacket, 4, wholePacket.length-1);
+		int endOfPacket = wholePacket.length - 1;
+		byte[] data = Arrays.copyOfRange(wholePacket,START_FILE_DATA, endOfPacket);
 		Path path2 = Paths.get(path);
 		if(new File(path).isFile()){
 			try {
 			    Files.write(path2, data, StandardOpenOption.APPEND);
 			}catch (IOException e) {
-			    //exception handling left as an exercise for the reader
 				e.printStackTrace();
 			}
 		} else{

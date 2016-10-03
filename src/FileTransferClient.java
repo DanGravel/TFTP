@@ -1,8 +1,5 @@
 
-import java.io.*;
-import java.lang.reflect.Array;
 import java.net.*;
-import java.util.Arrays;
 import java.util.Scanner;
 
 
@@ -28,18 +25,18 @@ public class FileTransferClient extends Host{
 	    
 	      if(request == Request.READ) {
 	    	  if(mode == Mode.NORMAL){
-	    		  receiveFile(fileName, sendReceiveSocket, FileTransferServer.SERVER_PORT, "client");	    	  
+	    		  receiveFile(fileName, sendReceiveSocket,INTERMEDIATE_PORT, "client");	    	  
 	    	  }
 	    	  else{
-		    	  receiveFile(fileName, sendReceiveSocket, INTERMEDIATE_PORT, "client");	    	   
+		    	  receiveFile(fileName, sendReceiveSocket, SERVER_PORT, "client");	    	   
 	    	  }  
 	      } 
 	      else {
 	    	  if(mode == Mode.NORMAL){
-	    		  sendFile(fileName, sendReceiveSocket,  FileTransferServer.SERVER_PORT, "client");
+	    		  sendFile(fileName, sendReceiveSocket,  INTERMEDIATE_PORT, "client");
 	    	  }
 	    	  else{
-	    		  sendFile(fileName, sendReceiveSocket, INTERMEDIATE_PORT, "client");
+	    		  sendFile(fileName, sendReceiveSocket, SERVER_PORT, "client");
 	    	  }
 	      }
 		    sendReceiveSocket.close();
@@ -80,7 +77,7 @@ public class FileTransferClient extends Host{
 			request = Request.READ;
 		}
 		else{
-			//request = Request.WRITE;
+			request = Request.WRITE;
 		}
 		System.out.println("file name:");
 		String s2 = reader.nextLine();

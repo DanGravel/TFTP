@@ -11,7 +11,7 @@ public class Printer {
 		}
 
 		public void setIsVerbose(boolean isVerbose) {
-			this.isVerbose = isVerbose;
+			Printer.isVerbose = isVerbose;
 		}
 
 		/**

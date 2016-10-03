@@ -1,6 +1,5 @@
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -8,23 +7,22 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
-
-import javax.swing.text.AttributeSet.CharacterAttribute;
-
 
 public abstract class Host {
 
 	  protected DatagramPacket sendPacket, receivePacket;
-	  protected static final String directory = System.getProperty("user.home") + "\\desktop\\"; 
+	  public static final int SERVER_PORT = 69;
+	  public static final int INTERMEDIATE_PORT = 23;
+	  public static final int PACKET_SIZE = 512;
+	  public static final int DATA_START = 0;
+	  public static final int DATA_END = 508;
+	  public static final String HOME_DIRECTORY = System.getProperty("user.home"); 
 	  protected Printer p = new Printer();
 	  protected String fileName = "";
 	  protected static final byte[] read = {0,1};
 	  protected static final byte[] write = {0,2};
-	  public static final int PACKET_SIZE = 512;
+	  
 	  
 	  /**
 	   * sends a datagram packet to a specified socket
@@ -58,7 +56,7 @@ public abstract class Host {
 	   * @param receiveSocket: the socket that is receiving the packet
 	   */
 	  protected void receiveaPacket(String host, DatagramSocket receiveSocket) {
-		  byte data[] = new byte[512];
+		  byte data[] = new byte[PACKET_SIZE];
 	      receivePacket = new DatagramPacket(data, data.length);
 	      try { 
 	         receiveSocket.receive(receivePacket);
@@ -80,23 +78,21 @@ public abstract class Host {
 	   * @param sender: name of the sender
 	   */
 	  public void sendFile(String filename, DatagramSocket socket, int port, String sender){
-
-			byte[] packetdata = new byte[512];
+			byte[] packetdata = new byte[PACKET_SIZE];
 			//sending write request
-			byte[] WRQ = arrayCombiner(write, "test.txt");
+			byte[] WRQ = arrayCombiner(write, filename);
 	 		sendaPacket(WRQ,port, socket, sender);
 	 		receiveaPacket(sender, socket);
-			
-	 		String path = System.getProperty("user.home") + "\\Documents\\" + filename;
+	 		String path = HOME_DIRECTORY + "\\Documents\\" + filename;
 	 		File file = new File(path);
 			byte[] filedata = new byte[(int) file.length()];
 			try{
 				 FileInputStream fis = new FileInputStream(file);
 				 int endofFile = fis.read(filedata);
 				 int blockNum = 0;
-				 int start = 0;
-				 int upto = 507;
-				 while(endofFile >= 0){
+				 int start = DATA_START;
+				 int upto = DATA_END;
+				 while(endofFile >= DATA_START){
 					 byte[] toSend;
 				      if(upto > endofFile) {
 				    	  toSend = Arrays.copyOfRange(filedata, start, filedata.length - 1);
@@ -104,13 +100,12 @@ public abstract class Host {
 				    	  toSend = Arrays.copyOfRange(filedata, start, upto);
 				      }
 				      packetdata = createDataPacket(toSend, blockNum);
-				  
 				      sendaPacket(packetdata,port, socket, sender);
 				      receiveaPacket(sender, socket);
 				      blockNum++;
-				      start += 508;
-				      upto += 508;
-				      endofFile -= 508;
+				      start += DATA_END;
+				      upto += DATA_END;
+				      endofFile -= DATA_END;
 				 }
 				 
 			fis.close();
@@ -123,43 +118,27 @@ public abstract class Host {
 	   * 
 	   * @param filename: name of the file to be sent from the server
 	   * @param socket: the socket that will receives blocks of the file from the server
-	   * @param port: the port number to send acknowledgements to 
+	   * @param port: the port number to send acknowledgments to 
 	   * @param sender: name of the sender
 	   */
 		public void receiveFile(String filename, DatagramSocket socket, int port, String sender){
-				String filepath = System.getProperty("user.home") + "\\Documents\\" + filename;
-			
-		
+			String filepath = System.getProperty("user.home") + "\\Documents\\" + filename;		
 			byte[] RRQ = arrayCombiner(read, filename);
-	 		sendaPacket(RRQ,port, socket, sender);  //send requestd
-	 		
-	 		File file = new File(filepath);
-			
-	 		
-	 		int blockNum = 1;
-	 		
+	 		sendaPacket(RRQ,port, socket, sender);  //send request 		
+	 		File file = new File(filepath);		
+	 		int blockNum = 1;	 		
 			try{
 				FileOutputStream fis = new FileOutputStream(file);
 				do{
-					
 					receiveaPacket(sender, socket);
-					
-					fis.write(Arrays.copyOfRange(receivePacket.getData(), 4, 512));
+					fis.write(Arrays.copyOfRange(receivePacket.getData(), 4, PACKET_SIZE));
 					byte[] ack = createAck(blockNum);
 					sendaPacket(ack, port, socket, sender);
-
-					
 				} while(!(receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 4));
 				fis.close();
 				} catch(IOException e){
-
+					System.out.println("Failed to receive next part of file");
 				}
-			
-					
-				
-				
-				//FileOutputStream fis = new FileOutputStream(file);
-
 		}
 	
 	

@@ -1,14 +1,13 @@
-import java.io.*;
 import java.net.*;
 
 public class IntermediateHost extends Host
 {
 	private DatagramSocket sendSocket, receiveSocket, sendReceiveSocket;
-	private static final int PORT = 23;
+	
 
 	public IntermediateHost() {
 		try {
-			receiveSocket = new DatagramSocket(PORT);	
+			receiveSocket = new DatagramSocket(INTERMEDIATE_PORT);	
 			sendReceiveSocket = new DatagramSocket();	
 		} catch (SocketException se) {
 			se.printStackTrace();
