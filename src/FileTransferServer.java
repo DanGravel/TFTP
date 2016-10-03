@@ -21,7 +21,6 @@ public class FileTransferServer extends Host implements Runnable {
 
 	private static final int FILE_NAME_START = 2;
 	private static final int START_FILE_DATA = 4;
-	public enum RequestType {READ, WRITE, DATA, ACK, INVALID}
 	private int start, upto;
 	private boolean doneFile;
 	private DatagramSocket sendSocket, receiveSocket;
@@ -68,12 +67,13 @@ public class FileTransferServer extends Host implements Runnable {
 			System.exit(1);
 		}
 		switch(request) {
-		case WRITE:  sendaPacket(response, receivePacket.getPort(), sendSocket, "Server"); break;
+		case DATA: 	receiveNextPartofFile();
+		/* FALLTHROUGH */
+		case WRITE: sendaPacket(response, receivePacket.getPort(), sendSocket, "Server"); 
+			break;
 		case READ: 
-		case ACK: 	sendNextPartofFile(); break;
-		case DATA: 	receiveNextPartofFile(); 
-				 	sendaPacket(response, receivePacket.getPort(), sendSocket, "Server"); 
-				 	break;
+		case ACK: 	sendNextPartofFile(); 
+			break;
 		default: 	throw new IllegalArgumentException("Not a proper request");
 		}
 		sendSocket.close();
@@ -172,7 +172,7 @@ public class FileTransferServer extends Host implements Runnable {
 				mode += (char)data[i];
 				i++;
 			}
-			if(fileName.length() == 0 || mode.length() == 0) throw new IllegalArgumentException("Invalid Packet");
+			if(fileName.length() == 0 || mode.length() == 0) throw new IllegalArgumentException("Invalid Packet?");
 		}
 		return request;
 	}
@@ -186,8 +186,12 @@ public class FileTransferServer extends Host implements Runnable {
 	private byte[] createRightPacket(RequestType request, byte data[]) {
 		byte[] response = null;  
 		switch(request) {
-			case WRITE: response = createAck(0); break;
-			case DATA: response = createAck(((data[2] & 0xff) << 8) | data[3] & 0xff); break;
+			case WRITE: response = createAck(0);
+				break;
+			case DATA: 
+				int blockNum = ((data[2] & 0xff) << 8) | (data[3] & 0xff);
+				response = createAck(blockNum); 
+				break;
 			default: System.out.print("Formulating packet");
 		}
 		return response;
