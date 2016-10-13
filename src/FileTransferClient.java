@@ -104,14 +104,13 @@ public class FileTransferClient extends Host{
 		System.out.println("file name:");
 		String s2 = reader.nextLine();
 		fileName = s2;
-		checkIfFileDoesNotExists();
 		reader.close();
 	}
 	
 	/**
 	 * Check if file does not exist.
 	 */
-	public void checkIfFileDoesNotExists()
+	public void checkIfFileDoesNotExist()
 	{
 		String path = HOME_DIRECTORY + "\\Documents\\" + fileName;
  		File file = new File(path);
@@ -182,35 +181,35 @@ public class FileTransferClient extends Host{
 	 		if (accessViolation(socket, sender, file)){
 	 			System.out.println("Access violation");
 	 			promptUser();
-	 			return;
+	 		}else{
+				byte[] filedata = new byte[(int) file.length()];
+				try{
+					 FileInputStream fis = new FileInputStream(file);
+					 int endofFile = fis.read(filedata);
+					 int blockNum = 0;
+					 int start = DATA_START;
+					 int upto = DATA_END;
+					 while(endofFile > DATA_START){
+						 byte[] toSend;
+					      if(upto > endofFile) {
+					    	  toSend = Arrays.copyOfRange(filedata, start, filedata.length - 1);
+					      } else {
+					    	  toSend = Arrays.copyOfRange(filedata, start, upto);
+					      }
+					      packetdata = createDataPacket(toSend, blockNum);
+					      sendaPacket(packetdata, receivePacket.getPort(), socket, sender);
+					      receiveaPacket(sender, socket);
+					      blockNum++;
+					      start += DATA_END;
+					      upto += DATA_END;
+					      endofFile -= DATA_END;
+					 }
+					 
+					 fis.close();
+				}catch(IOException e){
+	
+				}
 	 		}
-			byte[] filedata = new byte[(int) file.length()];
-			try{
-				 FileInputStream fis = new FileInputStream(file);
-				 int endofFile = fis.read(filedata);
-				 int blockNum = 0;
-				 int start = DATA_START;
-				 int upto = DATA_END;
-				 while(endofFile > DATA_START){
-					 byte[] toSend;
-				      if(upto > endofFile) {
-				    	  toSend = Arrays.copyOfRange(filedata, start, filedata.length - 1);
-				      } else {
-				    	  toSend = Arrays.copyOfRange(filedata, start, upto);
-				      }
-				      packetdata = createDataPacket(toSend, blockNum);
-				      sendaPacket(packetdata, receivePacket.getPort(), socket, sender);
-				      receiveaPacket(sender, socket);
-				      blockNum++;
-				      start += DATA_END;
-				      upto += DATA_END;
-				      endofFile -= DATA_END;
-				 }
-				 
-			fis.close();
-			}catch(IOException e){
-
-			}
 		}	  
  
   	  /**
@@ -233,29 +232,42 @@ public class FileTransferClient extends Host{
 //	 			promtUser();
 //	 		}
 	 		//check if  there is access violation
-	 		if (accessViolation(socket, sender, file)){
-	 			System.out.println("Access violation");
-	 			promptUser();
-	 			return;
-	 		}
- 		int blockNum = 1;	 		
-		try{
-			FileOutputStream fis = new FileOutputStream(file);
-			do{
-				receiveaPacket(sender, socket);
-				fis.write(Arrays.copyOfRange(receivePacket.getData(), 4, PACKET_SIZE));
-				byte[] ack = createAck(blockNum);
-				sendaPacket(ack, port, socket, sender);
-			} while(!(receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 4));
-			fis.close();
-		} catch(IOException e){
-			System.out.println("Failed to receive next part of file");
-		}
+ 		if (accessViolation(socket, sender, file)){
+ 			System.out.println("Access violation");
+ 			promptUser();
+ 		} else {
+	 		int blockNum = 1;	 		
+			try{
+				FileOutputStream fis = new FileOutputStream(file);
+				do{
+					receiveaPacket(sender, socket);
+					fis.write(Arrays.copyOfRange(receivePacket.getData(), 4, PACKET_SIZE));
+					byte[] ack = createAck(blockNum);
+					sendaPacket(ack, port, socket, sender);
+				} while(!(receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 4));
+				fis.close();
+			} catch(IOException e){
+				System.out.println("Failed to receive next part of file");
+			}
+ 		}
 	}
 	
 	private void checkFileSpace(){
-		if(new File("C:\\").getUsableSpace() < PACKET_SIZE){
-			System.out.println("Disk Full");
+		if(new File("F:\\").getUsableSpace() < PACKET_SIZE){
+			byte[] errorCode = {0,5,0,3};
+ 			String errorMsg = "Client Disk Full";
+ 			byte[] errMsg = errorMsg.getBytes();
+ 			byte[] zero = {0};
+ 			ByteArrayOutputStream b = new ByteArrayOutputStream();
+ 			try{
+	 			b.write(errorCode);
+	 			b.write(errMsg);
+	 			b.write(zero);
+ 			} catch (Exception e){
+ 				e.printStackTrace();
+ 			}
+ 			byte[] error = b.toByteArray();
+ 			
 		}
 	}
 	
@@ -281,7 +293,7 @@ public class FileTransferClient extends Host{
 			e.printStackTrace();
 		}
 		  return outputStream.toByteArray( );
-	   }
+	}
 	
 	/**
 	 * Main.
