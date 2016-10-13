@@ -26,7 +26,7 @@ public class FileTransferClient extends Host{
 		} catch (SocketException se) {
 			se.printStackTrace();
 			System.exit(1);
-		}
+		} 
 	}
 
 	public void sendAndReceive() {
@@ -141,35 +141,42 @@ public class FileTransferClient extends Host{
 
 			}
 		}	  
-	  	  /**
-	   * Used for write requests in the server
-	   * 
-	   * @param filename: name of the file to be sent from the server
-	   * @param socket: the socket that will receives blocks of the file from the server
-	   * @param port: the port number to send acknowledgments to 
-	   * @param sender: name of the sender
-	   */
-		public void receiveFile(String filename, DatagramSocket socket, int port, String sender){
-			String filepath = System.getProperty("user.home") + "\\Documents\\" + filename;		
-			byte[] RRQ = arrayCombiner(read, filename);
-	 		sendaPacket(RRQ,port, socket, sender);  //send request 		
-	 		File file = new File(filepath);		
-	 		int blockNum = 1;	 		
-			try{
-				FileOutputStream fis = new FileOutputStream(file);
-				do{
-					receiveaPacket(sender, socket);
-					fis.write(Arrays.copyOfRange(receivePacket.getData(), 4, PACKET_SIZE));
-					byte[] ack = createAck(blockNum);
-					sendaPacket(ack, port, socket, sender);
-				} while(!(receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 4));
-				fis.close();
-				} catch(IOException e){
-					System.out.println("Failed to receive next part of file");
-				}
+ 
+  	  /**
+   * Used for write requests in the server
+   * 
+   * @param filename: name of the file to be sent from the server
+   * @param socket: the socket that will receives blocks of the file from the server
+   * @param port: the port number to send acknowledgments to 
+   * @param sender: name of the sender
+   */
+	public void receiveFile(String filename, DatagramSocket socket, int port, String sender){
+		String filepath = System.getProperty("user.home") + "\\Documents\\" + filename;		
+		byte[] RRQ = arrayCombiner(read, filename);
+ 		sendaPacket(RRQ,port, socket, sender);  //send request 		
+ 		File file = new File(filepath);		
+ 		checkFileSpace();
+ 		int blockNum = 1;	 		
+		try{
+			FileOutputStream fis = new FileOutputStream(file);
+			do{
+				receiveaPacket(sender, socket);
+				fis.write(Arrays.copyOfRange(receivePacket.getData(), 4, PACKET_SIZE));
+				byte[] ack = createAck(blockNum);
+				sendaPacket(ack, port, socket, sender);
+			} while(!(receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 4));
+			fis.close();
+		} catch(IOException e){
+			System.out.println("Failed to receive next part of file");
 		}
+	}
 	
-
+	private void checkFileSpace(){
+		if(new File("C:\\").getUsableSpace() < PACKET_SIZE){
+			System.out.println("Disk Full");
+		}
+	}
+	
    /**
     * creates the byte array for the initial read or write request
     * 
