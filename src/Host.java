@@ -14,7 +14,7 @@ public abstract class Host {
 	  public static final int DATA_START = 0;
 	  public static final int DATA_END = 508;
 	  public static final String HOME_DIRECTORY = System.getProperty("user.home"); 
-	  public enum RequestType {READ, WRITE, DATA, ACK, INVALID}
+	  public enum RequestType {READ, WRITE, DATA, ACK, INVALID, FILEEXISTS, DISKFULL, ACCESSDENIED, FILENOTFOUND }
 	  protected Printer p = new Printer();
 	  protected String fileName = "";
 	  protected DatagramPacket sendPacket, receivePacket;
@@ -115,7 +115,11 @@ public abstract class Host {
 
 			
 
-
+	   protected boolean isError(){
+			byte data[] = receivePacket.getData(); 
+			if(data[0] == 0 && data[1] == 5) return true;
+			return false;
+	   }
 
 
 
