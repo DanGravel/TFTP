@@ -86,7 +86,9 @@ public class FileTransferServer extends Host implements Runnable {
 	private void sendNextPartofFile() {
 		
 		byte[] packetdata = new byte[PACKET_SIZE];
-		Path path = Paths.get(HOME_DIRECTORY + "\\Desktop\\" + fileName);
+		//String pathName = HOME_DIRECTORY + "\\Desktop\\" + fileName;
+		String pathName = "C:\\Users\\supriyagadigone\\Desktop\\Server\\";
+		Path path = Paths.get(pathName);
 	//	int currentBlocktoSend = ((receivePacket.getData()[2] & 0xff) << 8) | (receivePacket.getData()[3] & 0xff);
  		if(doneFile == false) {
 			try{

@@ -9,7 +9,10 @@ import java.util.Arrays;
 import java.util.Scanner;
 
 
-
+/**
+ * File Transfer Client
+ *
+ */
 public class FileTransferClient extends Host{
 	private DatagramSocket sendReceiveSocket;
 	private static final int INTERMEDIATE_PORT= 23;
@@ -20,6 +23,9 @@ public class FileTransferClient extends Host{
 	private static final byte[] read = {0,1};
 	private static final byte[] write = {0,2};
 	
+	/**
+	 * FileTransferClient Constructor creates a new DatgramSocket.
+	 */
 	public FileTransferClient() {
 		try {
 			sendReceiveSocket = new DatagramSocket();
@@ -29,6 +35,9 @@ public class FileTransferClient extends Host{
 		}
 	}
 
+	/**
+	 * Send and receive 
+	 */
 	public void sendAndReceive() {
 	    
 	      if(request == RequestType.READ) {
@@ -50,7 +59,10 @@ public class FileTransferClient extends Host{
 		    sendReceiveSocket.close();
 	}
 
-	private void promtUser(){ 
+	/**
+	 * Prompt User for information like mode, verbose or quiet, filename or quit or not.
+	 */
+	private void promptUser(){ 
 	
 		
 		Scanner reader = new Scanner(System.in);
@@ -91,12 +103,65 @@ public class FileTransferClient extends Host{
 		}
 		System.out.println("file name:");
 		String s2 = reader.nextLine();
-
-
-		
 		fileName = s2;
+		checkIfFileDoesNotExists();
 		reader.close();
 	}
+	
+	/**
+	 * Check if file does not exist.
+	 */
+	public void checkIfFileDoesNotExists()
+	{
+		String path = HOME_DIRECTORY + "\\Documents\\" + fileName;
+ 		File file = new File(path);
+ 		if(!file.exists() && !file.isDirectory())
+ 		{
+ 			System.out.println("The file name entered does not exist");
+ 			promptUser();
+ 		}
+	}
+	
+
+	/**
+	 * Check if there is access violation.
+	 * 
+	 * @param socket: the socket to send and receive in the client
+	 * @param sender: name of the sender
+	 * @return
+	 */
+	public boolean accessViolation(DatagramSocket socket, String sender, File file)
+	{
+ 		if(!file.canWrite() && !file.isDirectory())
+ 		{
+ 			System.out.println("The file cannot be written to");
+ 			//Error packet 
+ 			byte[] errorCode = {0,5,0,2};
+ 			String errorMsg = "Access Violation";
+ 			byte[] errMsg = errorMsg.getBytes();
+ 			byte[] zero = {0};
+ 			ByteArrayOutputStream b = new ByteArrayOutputStream();
+ 			try{
+	 			b.write(errorCode);
+	 			b.write(errMsg);
+	 			b.write(zero);
+ 			} catch (Exception e){
+ 				e.printStackTrace();
+ 			}
+ 			byte[] error = b.toByteArray();
+ 			
+ 			sendaPacket(error, receivePacket.getPort(), socket, sender);
+ 			return true;
+ 		}
+ 		
+ 		if(!file.canRead() && !file.isDirectory())
+ 		{
+ 			System.out.println("The file cannot be read");
+ 			return true;
+ 		}
+ 		return false;
+	}
+	
 	  /**
 	   * Sends a write request and then sends the file to the server.
 	   * 
@@ -109,10 +174,16 @@ public class FileTransferClient extends Host{
 			byte[] packetdata = new byte[PACKET_SIZE];
 			//sending write request
 			byte[] WRQ = arrayCombiner(write, filename);
+			
 	 		sendaPacket(WRQ,port, socket, sender);
 	 		receiveaPacket(sender, socket);
 	 		String path = HOME_DIRECTORY + "\\Documents\\" + filename;
 	 		File file = new File(path);
+	 		if (accessViolation(socket, sender, file)){
+	 			System.out.println("Access violation");
+	 			promptUser();
+	 			return;
+	 		}
 			byte[] filedata = new byte[(int) file.length()];
 			try{
 				 FileInputStream fis = new FileInputStream(file);
@@ -128,7 +199,7 @@ public class FileTransferClient extends Host{
 				    	  toSend = Arrays.copyOfRange(filedata, start, upto);
 				      }
 				      packetdata = createDataPacket(toSend, blockNum);
-				      sendaPacket(packetdata,port, socket, sender);
+				      sendaPacket(packetdata, receivePacket.getPort(), socket, sender);
 				      receiveaPacket(sender, socket);
 				      blockNum++;
 				      start += DATA_END;
@@ -141,7 +212,7 @@ public class FileTransferClient extends Host{
 
 			}
 		}	  
-	  	  /**
+	  /**
 	   * Used for write requests in the server
 	   * 
 	   * @param filename: name of the file to be sent from the server
@@ -154,6 +225,18 @@ public class FileTransferClient extends Host{
 			byte[] RRQ = arrayCombiner(read, filename);
 	 		sendaPacket(RRQ,port, socket, sender);  //send request 		
 	 		File file = new File(filepath);		
+	 		//check if the file already exists
+//	 		if(file.exists() && !file.isDirectory())
+//	 		{
+//	 			System.out.println("File already exists, no overwriting allowed");
+//	 			promtUser();
+//	 		}
+	 		//check if  there is access violation
+	 		if (accessViolation(socket, sender, file)){
+	 			System.out.println("Access violation");
+	 			promptUser();
+	 			return;
+	 		}
 	 		int blockNum = 1;	 		
 			try{
 				FileOutputStream fis = new FileOutputStream(file);
@@ -161,7 +244,7 @@ public class FileTransferClient extends Host{
 					receiveaPacket(sender, socket);
 					fis.write(Arrays.copyOfRange(receivePacket.getData(), 4, PACKET_SIZE));
 					byte[] ack = createAck(blockNum);
-					sendaPacket(ack, port, socket, sender);
+					sendaPacket(ack, receivePacket.getPort(), socket, sender);
 				} while(!(receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 4));
 				fis.close();
 				} catch(IOException e){
@@ -194,10 +277,16 @@ public class FileTransferClient extends Host{
 		  return outputStream.toByteArray( );
 	   }
 	
+	/**
+	 * Main.
+	 * @param args
+	 */
 	public static void main(String args[]) {
 	//	while(true){
 			FileTransferClient c = new FileTransferClient();
-			c.promtUser();
+			//File f = new File("C:\\Users\\supriyagadigone\\Documents\\blah.txt\\");
+			//f.setReadable(false);
+			c.promptUser();
 			c.sendAndReceive();
 			
 	//	}
