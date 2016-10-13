@@ -1,9 +1,11 @@
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.*;
 import java.util.Arrays;
 import java.util.Scanner;
@@ -37,8 +39,9 @@ public class FileTransferClient extends Host{
 
 	/**
 	 * Send and receive 
+	 * @throws IOException 
 	 */
-	public void sendAndReceive() {
+	public void sendAndReceive() throws IOException {
 	    
 	      if(request == RequestType.READ) {
 	    	  if(mode == Mode.NORMAL){
@@ -56,61 +59,71 @@ public class FileTransferClient extends Host{
 	    		  sendFile(fileName, sendReceiveSocket, SERVER_PORT, "client");
 	    	  }
 	      }
-		    sendReceiveSocket.close();
+		    //sendReceiveSocket.close();
 	}
 
 	/**
 	 * Prompt User for information like mode, verbose or quiet, filename or quit or not.
 	 */
-	private void promptUser(){ 
-	
+	private void promptUser() throws IOException{ 
+		p.setIsVerbose(true);
+		fileName = "";
+		BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+		System.out.println("Enter command: ");
+		String r = in.readLine();
+		String delims = "[ ]+";
+		String[] tokens = r.split(delims);
 		
-		Scanner reader = new Scanner(System.in);
-		
-		System.out.println("quit yes|no?");
-		String quit = reader.nextLine();
-		if(quit.equals("yes")){
-			System.exit(1);
-		}
-		
-		System.out.println("verbose or quiet?");
-		String s0 = reader.nextLine();
-		if(s0.equals("verbose")){
-			p.setIsVerbose(true);
-		}
-		else{
-			p.setIsVerbose(false);
+		for(String s: tokens){
+			parser(s);
 		}
 		
-		System.out.println("normal or test mode?");
-		String s = reader.nextLine();
-		if(s.equals("normal")){
-			mode = Mode.NORMAL;
-		}
-		else{
-			mode = Mode.TEST;
-		}
-		System.out.println("read or write a file?");
-
-		
-		String s1 = reader.nextLine();
-		
-		if(s1.equals("read")){
-			request = RequestType.READ;
-		}
-		else{
-			request = RequestType.WRITE;
-		}
-		System.out.println("file name:");
-		String s2 = reader.nextLine();
-		fileName = s2;
-		reader.close();
 	}
+	
+	private void parser(String input){
+		switch(input){
+		case "quit": 
+			System.exit(0);
+			break;
+		case "normal": 
+			mode = Mode.NORMAL;
+			break;
+		case "test":
+			mode = Mode.TEST;
+			break;
+		case "read":
+			request = RequestType.READ;
+			break;
+		case "write":
+			request = RequestType.WRITE;
+			break;
+		case "help":
+			System.out.println("General format:"
+					+ "normal/test read/write filename.txt");
+		case " ": 
+			break;
+		case "": 
+			break;
+		default: 
+			stringChecker(input);
+			break;
+		}
+	}
+	private void stringChecker(String s){
+		if(s.indexOf(".txt") != -1) fileName = s;
+		else{ 
+			if(!s.equals("help")){
+			System.out.println("Sorry something you typed was no supported, try 'help'");
+			}
+		}
+	}
+	
+	
 	
 	/**
 	 * Check if file does not exist.
 	 */
-	public void checkIfFileDoesNotExist()
+	public void checkIfFileDoesNotExists() throws IOException
 	{
 		String path = HOME_DIRECTORY + "\\Documents\\" + fileName;
  		File file = new File(path);
@@ -168,8 +181,9 @@ public class FileTransferClient extends Host{
 	   * @param socket: the socket to send and receive in the client
 	   * @param port: the port number of the socket to send to
 	   * @param sender: name of the sender
+	 * @throws IOException 
 	   */
-	  public void sendFile(String filename, DatagramSocket socket, int port, String sender){
+	  public void sendFile(String filename, DatagramSocket socket, int port, String sender) throws IOException{
 			byte[] packetdata = new byte[PACKET_SIZE];
 			//sending write request
 			byte[] WRQ = arrayCombiner(write, filename);
@@ -219,6 +233,7 @@ public class FileTransferClient extends Host{
    * @param socket: the socket that will receives blocks of the file from the server
    * @param port: the port number to send acknowledgments to 
    * @param sender: name of the sender
+  	 * @throws IOException 
    */
 	public void receiveFile(String filename, DatagramSocket socket, int port, String sender){
 		String filepath = System.getProperty("user.home") + "\\Documents\\" + filename;		
@@ -234,7 +249,12 @@ public class FileTransferClient extends Host{
 	 		//check if  there is access violation
  		if (accessViolation(socket, sender, file)){
  			System.out.println("Access violation");
- 			promptUser();
+ 			try {
+				promptUser();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
  		} else {
 	 		int blockNum = 1;	 		
 			try{
@@ -250,7 +270,7 @@ public class FileTransferClient extends Host{
 				System.out.println("Failed to receive next part of file");
 			}
  		}
-	}
+  	  }
 	
 	private void checkFileSpace(){
 		if(new File("F:\\").getUsableSpace() < PACKET_SIZE){
@@ -271,6 +291,38 @@ public class FileTransferClient extends Host{
 		}
 	}
 	
+	
+	private void handleError(){
+		String error = "";
+		byte data[] = receivePacket.getData(); 
+		if(data[2] == 0 && data[3] == 1) request = RequestType.FILENOTFOUND;
+		else if(data[2] == 0 && data[3] == 2) request = RequestType.ACCESSDENIED;
+		else if(data[2] == 0 && data[3] == 3) request = RequestType.DISKFULL;
+		else if(data[2] == 0 && data[3] == 6) request = RequestType.FILEEXISTS;
+		
+		int i = 3; //start of error message
+		while(data[i++] != 0){
+			error += (char)data[i];
+		}
+		
+		switch(request){
+		case FILENOTFOUND:
+			System.out.println(error);
+			break;
+		case ACCESSDENIED:
+			System.out.println(error);
+			request = null;
+			break;
+		case DISKFULL:
+			System.out.println(error);
+			break;
+		case FILEEXISTS:
+			System.out.println(error);
+			break;
+		default: System.out.println("Error?");
+		}	
+	}
+
    /**
     * creates the byte array for the initial read or write request
     * 
@@ -298,15 +350,16 @@ public class FileTransferClient extends Host{
 	/**
 	 * Main.
 	 * @param args
+	 * @throws IOException 
 	 */
-	public static void main(String args[]) {
-	//	while(true){
-			FileTransferClient c = new FileTransferClient();
+	public static void main(String args[]) throws IOException {
+		
+		FileTransferClient c = new FileTransferClient();
+		while(true){
 			//File f = new File("C:\\Users\\supriyagadigone\\Documents\\blah.txt\\");
 			//f.setReadable(false);
 			c.promptUser();
-			c.sendAndReceive();
-			
-	//	}
+			if(c.fileName.length() != 0) c.sendAndReceive();
+		}
 	}
 }
