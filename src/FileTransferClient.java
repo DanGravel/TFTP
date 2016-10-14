@@ -7,6 +7,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Scanner;
 
@@ -128,15 +131,16 @@ public class FileTransferClient extends Host{
 	 * @param sender: name of the sender
 	 * @return
 	 */
-	public boolean accessViolation(File file)
+	private boolean accessViolation(File file, String path)
 	{
- 		if(!file.canWrite())
+		Path path2 = Paths.get(path);
+ 		if(!Files.isWritable(path2))
  		{
  			System.out.println("The file cannot be written to");
  			return true;
  		}
  		
- 		if(!file.canRead())
+ 		if(!Files.isReadable(path2))
  		{
  			System.out.println("The file cannot be read");
  			return true;
@@ -157,8 +161,9 @@ public class FileTransferClient extends Host{
 	  public void sendFile(String filename, DatagramSocket socket, int port, String sender) throws IOException{
 		  	String path = HOME_DIRECTORY + "\\Documents\\" + filename;
 	 	  	File file = new File(path);
-	 	  	
-	 	  	if (fileDoesNotExist(file)){
+	 		if (fileDoesNotExist(file)){
+	 			promptUser();
+	 		}else if (accessViolation(file, path)){
 	 	  		promptUser();
 	 	  	} else {
 		 		byte[] packetdata = new byte[PACKET_SIZE];
@@ -167,39 +172,36 @@ public class FileTransferClient extends Host{
 				
 		 		sendaPacket(WRQ,port, socket, sender);
 		 		receiveaPacket(sender, socket);
-		 		
-		 		if (accessViolation(file)){
-		 			promptUser();
-		 		}else{
-					byte[] filedata = new byte[(int) file.length()];
-					try{
-						 FileInputStream fis = new FileInputStream(file);
-						 int endofFile = fis.read(filedata);
-						 int blockNum = 0;
-						 int start = DATA_START;
-						 int upto = DATA_END;
-						 while(endofFile > DATA_START){
-							 byte[] toSend;
-						      if(upto > endofFile) {
-						    	  toSend = Arrays.copyOfRange(filedata, start, filedata.length - 1);
-						      } else {
-						    	  toSend = Arrays.copyOfRange(filedata, start, upto);
-						      }
-						      packetdata = createDataPacket(toSend, blockNum);
-						      sendaPacket(packetdata, receivePacket.getPort(), socket, sender);
-						      receiveaPacket(sender, socket);
-						      blockNum++;
-						      start += DATA_END;
-						      upto += DATA_END;
-						      endofFile -= DATA_END;
-						 }
-						 
-						 fis.close();
-					}catch(IOException e){
-		
-					}
-		 		}
-	 	  	} 
+	 		
+
+				byte[] filedata = new byte[(int) file.length()];
+				try{
+					 FileInputStream fis = new FileInputStream(file);
+					 int endofFile = fis.read(filedata);
+					 int blockNum = 0;
+					 int start = DATA_START;
+					 int upto = DATA_END;
+					 while(endofFile > DATA_START){
+						 byte[] toSend;
+					      if(upto > endofFile) {
+					    	  toSend = Arrays.copyOfRange(filedata, start, filedata.length - 1);
+					      } else {
+					    	  toSend = Arrays.copyOfRange(filedata, start, upto);
+					      }
+					      packetdata = createDataPacket(toSend, blockNum);
+					      sendaPacket(packetdata, receivePacket.getPort(), socket, sender);
+					      receiveaPacket(sender, socket);
+					      blockNum++;
+					      start += DATA_END;
+					      upto += DATA_END;
+					      endofFile -= DATA_END;
+					 }
+					 
+					 fis.close();
+				}catch(IOException e){
+	
+				}
+	 		}
 		}	  
  
   	  /**
