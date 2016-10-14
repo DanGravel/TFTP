@@ -155,6 +155,7 @@ public class FileTransferClient extends Host{
 				
 		 		sendaPacket(WRQ,port, socket, sender);
 		 		receiveaPacket(sender, socket);
+		 		handleError(); //probably not how this is implemented
 	 		
 
 				byte[] filedata = new byte[(int) file.length()];
@@ -174,6 +175,7 @@ public class FileTransferClient extends Host{
 					      packetdata = createDataPacket(toSend, blockNum);
 					      sendaPacket(packetdata, receivePacket.getPort(), socket, sender);
 					      receiveaPacket(sender, socket);
+					      handleError(); //probably not how this is implemented
 					      blockNum++;
 					      start += DATA_END;
 					      upto += DATA_END;
@@ -217,6 +219,7 @@ public class FileTransferClient extends Host{
 					FileOutputStream fis = new FileOutputStream(file);
 					do{
 						receiveaPacket(sender, socket);
+						handleError(); //probably not how this is implemented
 						fis.write(Arrays.copyOfRange(receivePacket.getData(), 4, PACKET_SIZE));
 						byte[] ack = createAck(blockNum);
 						sendaPacket(ack, receivePacket.getPort(), socket, sender);
