@@ -128,52 +128,21 @@ public class FileTransferClient extends Host{
 	 * @param sender: name of the sender
 	 * @return
 	 */
-	public boolean accessViolation(DatagramSocket socket, String sender, File file)
+	public boolean accessViolation(File file)
 	{
- 		if(!file.canWrite() && !file.isDirectory())
+ 		if(!file.canWrite())
  		{
  			System.out.println("The file cannot be written to");
- 			//Error packet 
- 			byte[] errorCode = {0,5,0,2};
- 			String errorMsg = "Access Violation";
- 			byte[] errMsg = errorMsg.getBytes();
- 			byte[] zero = {0};
- 			ByteArrayOutputStream b = new ByteArrayOutputStream();
- 			try{
-	 			b.write(errorCode);
-	 			b.write(errMsg);
-	 			b.write(zero);
- 			} catch (Exception e){
- 				e.printStackTrace();
- 			}
- 			byte[] error = b.toByteArray();
- 			
- 			sendaPacket(error, receivePacket.getPort(), socket, sender);
  			return true;
  		}
  		
- 		if(!file.canRead() && !file.isDirectory())
+ 		if(!file.canRead())
  		{
  			System.out.println("The file cannot be read");
  			return true;
  		}
  		return false;
 	}
-	/**
-	 * Check if file does not exist.
-	 * @throws IOException 
-	 */
-	public void checkIfFileDoesNotExists() throws IOException
-	{
-		String path = HOME_DIRECTORY + "\\Documents\\" + fileName;
- 		File file = new File(path);
- 		if(!file.exists() && !file.isDirectory())
- 		{
- 			System.out.println("The file name entered does not exist");
- 			promptUser();
- 		}
-	}
-	
 
 	
 	  /**
@@ -188,58 +157,49 @@ public class FileTransferClient extends Host{
 	  public void sendFile(String filename, DatagramSocket socket, int port, String sender) throws IOException{
 		  	String path = HOME_DIRECTORY + "\\Documents\\" + filename;
 	 	  	File file = new File(path);
-	 	  	if(!file.exists()){
-	 	  		System.out.println("Cant find: " + fileName);
-	 			return;
-	 	  	}
 	 	  	
-	 		if(!file.canRead()) {
-	 			System.out.println("Cant read: " + fileName);
-	 			return;
-	 		}
-	 		
-	 		byte[] packetdata = new byte[PACKET_SIZE];
-			//sending write request
-			byte[] WRQ = arrayCombiner(write, filename);
-			
-	 		sendaPacket(WRQ,port, socket, sender);
-	 		receiveaPacket(sender, socket);
-	 		String path = HOME_DIRECTORY + "\\Documents\\" + filename;
-	 		File file = new File(path);
-	 		
-	 		if (request == RequestType.READ && fileAlreadyExists(file)){
-	 			promptUser();
-	 		} else if (fileDoesNotExist(file)){
-	 			promptUser();
-	 		}else{
-				byte[] filedata = new byte[(int) file.length()];
-				try{
-					 FileInputStream fis = new FileInputStream(file);
-					 int endofFile = fis.read(filedata);
-					 int blockNum = 0;
-					 int start = DATA_START;
-					 int upto = DATA_END;
-					 while(endofFile > DATA_START){
-						 byte[] toSend;
-					      if(upto > endofFile) {
-					    	  toSend = Arrays.copyOfRange(filedata, start, filedata.length - 1);
-					      } else {
-					    	  toSend = Arrays.copyOfRange(filedata, start, upto);
-					      }
-					      packetdata = createDataPacket(toSend, blockNum);
-					      sendaPacket(packetdata, receivePacket.getPort(), socket, sender);
-					      receiveaPacket(sender, socket);
-					      blockNum++;
-					      start += DATA_END;
-					      upto += DATA_END;
-					      endofFile -= DATA_END;
-					 }
-					 
-					 fis.close();
-				}catch(IOException e){
-	
-				}
-	 		}
+	 	  	if (fileDoesNotExist(file)){
+	 	  		promptUser();
+	 	  	} else {
+		 		byte[] packetdata = new byte[PACKET_SIZE];
+				//sending write request
+				byte[] WRQ = arrayCombiner(write, filename);
+				
+		 		sendaPacket(WRQ,port, socket, sender);
+		 		receiveaPacket(sender, socket);
+		 		
+		 		if (accessViolation(file)){
+		 			promptUser();
+		 		}else{
+					byte[] filedata = new byte[(int) file.length()];
+					try{
+						 FileInputStream fis = new FileInputStream(file);
+						 int endofFile = fis.read(filedata);
+						 int blockNum = 0;
+						 int start = DATA_START;
+						 int upto = DATA_END;
+						 while(endofFile > DATA_START){
+							 byte[] toSend;
+						      if(upto > endofFile) {
+						    	  toSend = Arrays.copyOfRange(filedata, start, filedata.length - 1);
+						      } else {
+						    	  toSend = Arrays.copyOfRange(filedata, start, upto);
+						      }
+						      packetdata = createDataPacket(toSend, blockNum);
+						      sendaPacket(packetdata, receivePacket.getPort(), socket, sender);
+						      receiveaPacket(sender, socket);
+						      blockNum++;
+						      start += DATA_END;
+						      upto += DATA_END;
+						      endofFile -= DATA_END;
+						 }
+						 
+						 fis.close();
+					}catch(IOException e){
+		
+					}
+		 		}
+	 	  	} 
 		}	  
  
   	  /**
@@ -253,33 +213,37 @@ public class FileTransferClient extends Host{
    */
 	public void receiveFile(String filename, DatagramSocket socket, int port, String sender){
 		String filepath = System.getProperty("user.home") + "\\Documents\\" + filename;	
+		File file = new File(filepath);
 		//String filepath = "F:\\" + filename;
-		byte[] RRQ = arrayCombiner(read, filename);
- 		sendaPacket(RRQ,port, socket, sender);  //send request 		
- 		File file = new File(filepath);
- 		if(!diskFull(file, socket, sender)){
- 			int blockNum = 1;	 
-			try{
-				FileOutputStream fis = new FileOutputStream(file);
-				do{
-					receiveaPacket(sender, socket);
-					fis.write(Arrays.copyOfRange(receivePacket.getData(), 4, PACKET_SIZE));
-					byte[] ack = createAck(blockNum);
-					sendaPacket(ack, receivePacket.getPort(), socket, sender);
-				} while(!(receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 4));
-				fis.close();
-			} catch(IOException e){
-				System.out.println("Failed to receive next part of file");
+
+		 if (request == RequestType.READ && fileAlreadyExists(file)){
+	 	  	try {
+				promptUser();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
- 		}
+		 } else {
+			byte[] RRQ = arrayCombiner(read, filename);
+	 		sendaPacket(RRQ,port, socket, sender);  //send request 		
+	 		if(!diskFull(file, socket, sender)){
+	 			int blockNum = 1;	 
+				try{
+					FileOutputStream fis = new FileOutputStream(file);
+					do{
+						receiveaPacket(sender, socket);
+						fis.write(Arrays.copyOfRange(receivePacket.getData(), 4, PACKET_SIZE));
+						byte[] ack = createAck(blockNum);
+						sendaPacket(ack, receivePacket.getPort(), socket, sender);
+					} while(!(receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 4));
+					fis.close();
+				} catch(IOException e){
+					System.out.println("Failed to receive next part of file");
+				}
+	 		}
+		 }
   	}
 	
-
-	private void checkFileSpace(){
-		if(new File("C:\\").getUsableSpace() < PACKET_SIZE){
-			System.out.println("Disk Full");
-		}
-	}
 	
 	private void handleError(){
 		String error = "";
