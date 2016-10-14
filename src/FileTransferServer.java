@@ -1,3 +1,4 @@
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -8,6 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Scanner;
+
 
 /**
  * 
@@ -22,6 +24,7 @@ public class FileTransferServer extends Host implements Runnable {
 	private boolean doneFile;
 	private DatagramSocket sendAndReceiveSocket, receiveSocket;
 	private int blockNum = 0; 
+	private boolean serverShutdown = false;
 	
 	public FileTransferServer(DatagramPacket packet, int port) {
 		try {
@@ -45,11 +48,14 @@ public class FileTransferServer extends Host implements Runnable {
 	public void sendAndReceive() throws Exception {
 		System.out.println("Server: Waiting for Packet.\n");
 		for (;;) {	
+			if(serverShutdown) return;
 			System.out.println("Waiting..."); // so we know we're waiting
+			if(serverShutdown) return;
 			receiveaPacket("Server", receiveSocket);   
 			Thread thread = new Thread(new FileTransferServer(receivePacket, 0)); //create a connection manager to deal with file transfer
 			thread.start();
 			Thread.sleep(1000);
+			if(serverShutdown) return;
 		}
 	}
 	
@@ -66,7 +72,10 @@ public class FileTransferServer extends Host implements Runnable {
 		
 		byte data[] = receivePacket.getData(); 
 		RequestType request = validate(data); //Find out what kind of packet is sent: RRQ, WRQ, etc.
-		if(request == RequestType.SHUTDOWN) System.exit(1);
+		if(request != RequestType.READ && request != RequestType.WRITE) {
+			request = RequestType.INVALID; // First packet must be read or write!
+			return;
+		}
 		byte[] response = createRightPacket(request, data); //Create the right response to the packet
 		
 		switch(request) {
@@ -100,7 +109,7 @@ public class FileTransferServer extends Host implements Runnable {
 			System.out.println("Could not open file to read");
 		}
 		
-			int endOfFile = fileData.length;
+			int endOfFile = fileData.length - 1;
 			if(fileData.length == 0) {
 				endOfFile = 0; 
 			}
@@ -150,15 +159,9 @@ public class FileTransferServer extends Host implements Runnable {
 			fos = new FileOutputStream(file);
 			while(request == RequestType.DATA) { //If not data, wrong packet
 				byte[] wholePacket = receivePacket.getData();
-				//gets end of file
-				int endOfPacket = 4;
-				while(wholePacket[endOfPacket] != 0 && endOfPacket != 515){
-					endOfPacket++;
-				}
-				if(wholePacket[515] != 0) endOfPacket++;
-				//
+				//TODO host method here
+				int endOfPacket = wholePacket.length - 1;
 				byte[] data = Arrays.copyOfRange(wholePacket,START_FILE_DATA, endOfPacket); //|gnore op code and only get file data
-				
 				fos.write(data); //Write this to file
 				sendaPacket(ack, receivePacket.getPort(), sendAndReceiveSocket, "Server"); //SEND ACK
 				receiveaPacket("Server", sendAndReceiveSocket);
@@ -185,16 +188,14 @@ public class FileTransferServer extends Host implements Runnable {
 		else if(data[0] == 0 && data[1] == 3) request = RequestType.DATA;
 		else if(data[0] == 0 && data[1] == 4) request = RequestType.ACK;
 		else if(data[0] == 0 && data[1] == 5 && data[2] == 0 && data[3] == 3) request = RequestType.DISKFULL;
-		else if(data[0] == 9 && data[1] == 9) request = RequestType.SHUTDOWN;
 		else request = RequestType.INVALID;
 		if(request == RequestType.READ || request == RequestType.WRITE) {
 			request = validateFileNameandMode(data, request);	//Get filename and validate packet
 		}
 		String path = HOME_DIRECTORY+ "\\Desktop\\" + fileName;
-		File file = new File(path);
 		Path path2 = Paths.get(path);
 		if(request == RequestType.READ) {
-			if(!(file.isFile())) {
+			if(!(new File(path).isFile())) {
 				request = RequestType.FILENOTFOUND; //check if client is trying to read from a file that DNE
 				fileName = "";
 			}
@@ -203,7 +204,7 @@ public class FileTransferServer extends Host implements Runnable {
 				fileName = "";
 			}
 		} else if(request == RequestType.WRITE) {
-			if(file.exists()) {
+			if(new File(path).isFile()) {
 				request = RequestType.FILEEXISTS; // Check if file is trying to write to existing file
 				fileName = "";
 			}
@@ -313,25 +314,38 @@ public class FileTransferServer extends Host implements Runnable {
 	 * Ongoing: prompts the user to quit, if so, closes down the main thread thus 
 	 * allowing iongoing transfers to be maintained
 	 */
-	private void promptServerOperator() {
-		Scanner reader = new Scanner(System.in);
-		
-		System.out.println("Server: quit yes|no?");
-		String quit = reader.nextLine();
-		if(quit.equals("yes")){
-			stopServer(); 
-		}
-		
-		reader.close();
+	private void promptServerOperator() { 
+		new Thread() {
+			public void run() {
+				Scanner reader = new Scanner(System.in);
+				String key = "";
+				
+				System.out.println("Press q to quit server");
+				while(true) 
+				{
+					key = reader.nextLine();
+					if(key.equalsIgnoreCase("q")) {
+						System.out.println("Server no longer accepting new client connections");
+						serverShutdown = true;
+						//receiveSocket.close();
+					}
+				}
+			}
+						
+		}.start();
+
 	}
 		
 	public static void main(String args[]) {
 		FileTransferServer s = new FileTransferServer(null, SERVER_PORT);
-		//s.promptServerOperator(); 
+		s.promptServerOperator();
 		try {
 			s.sendAndReceive();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		
 	}
 }
+
+  
