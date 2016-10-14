@@ -7,6 +7,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Scanner;
 
@@ -53,7 +56,11 @@ public class FileTransferClient extends Host{
 	      } 
 	      else {
 	    	  if(mode == Mode.NORMAL){
+<<<<<<< HEAD
 	    		 sendFile(fileName, sendReceiveSocket,  INTERMEDIATE_PORT, "client");
+=======
+	    		  sendFile(fileName, sendReceiveSocket,  INTERMEDIATE_PORT, "client");
+>>>>>>> 99165ca30ee9545dba99a6c2068cf218b2336c32
 	    	  }
 	    	  else{
 	    		  sendFile(fileName, sendReceiveSocket, SERVER_PORT, "client");
@@ -79,8 +86,14 @@ public class FileTransferClient extends Host{
 	}
 	
 	/**
+<<<<<<< HEAD
 	 * Parses the text input to set variables
 	 * @param input
+=======
+	 * Parses inputs from the user
+	 * 
+	 * @param input: The string entered in the console command line
+>>>>>>> 99165ca30ee9545dba99a6c2068cf218b2336c32
 	 */
 	private void parser(String input){
 		switch(input){
@@ -125,8 +138,14 @@ public class FileTransferClient extends Host{
 	}
 	
 	/**
+<<<<<<< HEAD
 	 * Bad way to check if an uknown string is a file by checking if it containt '.txt'
 	 * @param s
+=======
+	 * Checks if the command is a file name, otherwise it is a unrecognized command.
+	 * 
+	 * @param s: The string that is inputted.
+>>>>>>> 99165ca30ee9545dba99a6c2068cf218b2336c32
 	 */
 	private void stringChecker(String s){
 		if(s.indexOf(".txt") != -1) fileName = s;
@@ -136,7 +155,10 @@ public class FileTransferClient extends Host{
 			}
 		}
 	}
+<<<<<<< HEAD
 	
+=======
+>>>>>>> 99165ca30ee9545dba99a6c2068cf218b2336c32
 
 	  /**
 	   * Sends a write request and then sends the file to the server.
@@ -150,6 +172,7 @@ public class FileTransferClient extends Host{
 	  public void sendFile(String filename, DatagramSocket socket, int port, String sender) throws IOException{
 		  	String path = HOME_DIRECTORY + "\\Documents\\" + filename;
 	 	  	File file = new File(path);
+<<<<<<< HEAD
 	 	  	//check if the file exists
 	 	  	if (!file.exists()){
 	 	  		return;
@@ -257,7 +280,99 @@ public class FileTransferClient extends Host{
 		return false;
 	}
 	
+=======
+	 		if (fileDoesNotExist(file)){
+	 			promptUser();
+	 		}else if (accessViolation(path)){
+	 	  		promptUser();
+	 	  	} else {
+		 		byte[] packetdata = new byte[PACKET_SIZE];
+				//sending write request
+				byte[] WRQ = arrayCombiner(write, filename);
+				
+		 		sendaPacket(WRQ,port, socket, sender);
+		 		receiveaPacket(sender, socket);
+		 		handleError(); //probably not how this is implemented
+	 		
+
+				byte[] filedata = new byte[(int) file.length()];
+				try{
+					 FileInputStream fis = new FileInputStream(file);
+					 int endofFile = fis.read(filedata);
+					 int blockNum = 0;
+					 int start = DATA_START;
+					 int upto = DATA_END;
+					 while(endofFile > DATA_START){
+						 byte[] toSend;
+					      if(upto > endofFile) {
+					    	  toSend = Arrays.copyOfRange(filedata, start, filedata.length - 1);
+					      } else {
+					    	  toSend = Arrays.copyOfRange(filedata, start, upto);
+					      }
+					      packetdata = createDataPacket(toSend, blockNum);
+					      sendaPacket(packetdata, receivePacket.getPort(), socket, sender);
+					      receiveaPacket(sender, socket);
+					      handleError(); //probably not how this is implemented
+					      blockNum++;
+					      start += DATA_END;
+					      upto += DATA_END;
+					      endofFile -= DATA_END;
+					 }
+					 
+					 fis.close();
+				}catch(IOException e){
 	
+				}
+	 		}
+		}	  
+ 
+  	  /**
+   * Used for write requests in the server
+   * 
+   * @param filename: name of the file to be sent from the server
+   * @param socket: the socket that will receives blocks of the file from the server
+   * @param port: the port number to send acknowledgments to 
+   * @param sender: name of the sender
+  	 * @throws IOException 
+   */
+	public void receiveFile(String filename, DatagramSocket socket, int port, String sender){
+		String filepath = System.getProperty("user.home") + "\\Documents\\" + filename;	
+		File file = new File(filepath);
+		//String filepath = "F:\\" + filename;
+
+		 if (request == RequestType.READ && fileAlreadyExists(file)){
+	 	  	try {
+				promptUser();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		 } else {
+			byte[] RRQ = arrayCombiner(read, filename);
+	 		sendaPacket(RRQ,port, socket, sender);  //send request 		
+	 		if(!diskFull(file, socket, sender)){
+	 			int blockNum = 1;	 
+				try{
+					FileOutputStream fis = new FileOutputStream(file);
+					do{
+						receiveaPacket(sender, socket);
+						handleError(); //probably not how this is implemented
+						fis.write(Arrays.copyOfRange(receivePacket.getData(), 4, PACKET_SIZE));
+						byte[] ack = createAck(blockNum);
+						sendaPacket(ack, receivePacket.getPort(), socket, sender);
+					} while(!(receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 4));
+					fis.close();
+				} catch(IOException e){
+					System.out.println("Failed to receive next part of file");
+				}
+	 		}
+		 }
+  	}
+>>>>>>> 99165ca30ee9545dba99a6c2068cf218b2336c32
+	
+	/**
+	 * Handles incoming error packets
+	 */
 	private void handleError(){
 		String error = "";
 		byte data[] = receivePacket.getData(); 
@@ -311,7 +426,92 @@ public class FileTransferClient extends Host{
 			e.printStackTrace();
 		}
 		  return outputStream.toByteArray( );
-	   }
+	}
+	
+	/**
+	 * Checks if a file already exists in the event of a read request. Files cannot be overwritten.
+	 * 
+	 * @param file: the file to be checked
+	 * @return True if the file already exists
+	 */
+	private boolean fileAlreadyExists(File file){
+		if (file.exists()){
+			System.out.println("File already exists. Files cannot be overwritten. \n");
+			return true;
+		}
+		return false;
+	}
+	
+	/**
+	 * Checks if the file does not exists
+	 * 
+	 * @param file: The file to be checked
+	 * @return True if the file does not exist
+	 * @throws IOException
+	 */
+	private boolean fileDoesNotExist(File file) throws IOException
+	{
+ 		if(!file.exists() && !file.isDirectory())
+ 		{
+ 			System.out.println("The file name entered does not exist, please try again. \n");
+ 			return true;
+ 		}
+ 		return false;
+	}
+	
+	/**
+	 * Checks if the disk being written to is full.
+	 * 
+	 * @param file: The file that is being received
+	 * @param socket: The socket to send an error packet back to
+	 * @param sender: The name of the sender of a packet
+	 * @return True if the disk is full
+	 */
+	private boolean diskFull(File file, DatagramSocket socket, String sender){
+		if(new File(file.getPath()).getUsableSpace() < PACKET_SIZE){
+			byte[] errorCode = {0,5,0,3};
+ 			String errorMsg = "Client Disk Full";
+ 			byte[] errMsg = errorMsg.getBytes();
+ 			byte[] zero = {0};
+ 			ByteArrayOutputStream b = new ByteArrayOutputStream();
+ 			try{
+	 			b.write(errorCode);
+	 			b.write(errMsg);
+	 			b.write(zero);
+ 			} catch (Exception e){
+ 				e.printStackTrace();
+ 			}
+ 			byte[] error = b.toByteArray();
+ 			//sendaPacket(error, receivePacket.getPort(), socket, sender);
+ 			System.out.println("Disk Is Full");
+ 			return true;
+		}
+		return false;
+	}
+	
+	
+	/**
+	 * Checks the permissions of a file.
+	 * 
+	 * @param path: The path for the file to be checked
+	 * @return Returns true if the file has no read or write permissions
+	 */
+	private boolean accessViolation(String path)
+	{
+		Path path2 = Paths.get(path);
+ 		if(!Files.isWritable(path2))
+ 		{
+ 			System.out.println("The file cannot be written to");
+ 			return true;
+ 		}
+ 		
+ 		if(!Files.isReadable(path2))
+ 		{
+ 			System.out.println("The file cannot be read");
+ 			return true;
+ 		}
+ 		return false;
+	}
 	
 	/**
 	 * Main.
@@ -324,5 +524,6 @@ public class FileTransferClient extends Host{
 			c.promptUser();
 			if(c.fileName.length() != 0) c.sendAndReceive();
 		}
+		
 	}
 }
