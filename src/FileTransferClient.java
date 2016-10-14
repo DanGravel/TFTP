@@ -178,9 +178,6 @@ public class FileTransferClient extends Host{
 				 int start = DATA_START;
 				 int upto = DATA_END;
 				 while(endofFile > DATA_START){
-					 if(endofFile == -1){
-						 packetdata = new byte[0];
-					 }
 					  byte[] toSend;
 				      if(upto > endofFile) {
 				    	  toSend = Arrays.copyOfRange(filedata, start, filedata.length - 1);
@@ -198,6 +195,14 @@ public class FileTransferClient extends Host{
 				      start += DATA_END;
 				      upto += DATA_END;
 				      endofFile -= DATA_END;
+				 }
+				 
+				 if(file.length() == 0){
+					 byte[] z = new byte[0];
+					 byte [] toSend = Arrays.copyOfRange(z, start, z.length);
+				     packetdata = createDataPacket(toSend, blockNum);
+					 sendaPacket(packetdata, receivePacket.getPort(), socket, sender);
+				     receiveaPacket(sender, socket);
 				 }
 				 
 			fis.close();
@@ -226,10 +231,7 @@ public class FileTransferClient extends Host{
 		public void receiveFile(String filename, DatagramSocket socket, int port, String sender){
 			String filepath = System.getProperty("user.home") + "\\Documents\\" + filename;		
 			File file = new File(filepath);	
-			if(file.exists()){
-				System.out.println("File: " + fileName + " is currently already on your system and cannot be overwritten");
-				return;
-			}
+			
 			
 			byte[] RRQ = arrayCombiner(read, filename);
 	 		sendaPacket(RRQ,port, socket, sender);  //send request 			
