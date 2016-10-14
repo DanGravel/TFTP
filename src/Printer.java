@@ -20,15 +20,16 @@ public class Printer {
 		 * @param sendPacket 	The packet that is going to be sent
 		 */
 		public void printRequestAndAck(String host,  DatagramPacket sendPacket) {
-	      if(isVerbose){
+			System.out.println(host + ": Packet sent \n");
+	      //if(isVerbose()){
 	    	  printSenderOrReceiverInfo(true, sendPacket, host);
 	    	  System.out.print("Containing: " + new String(sendPacket.getData()));
 	    	  printBytes(sendPacket.getData());
 	    	  System.out.println(host + ": Packet sent \n");
-	      }
-	      else{
-	    	  System.out.println(host + ": Packet sent \n");
-	      }
+	      //}
+	     // else{
+	    	//  System.out.println(host + ": Packet sent \n");
+	      //}
 		}
 		
 		public void printReceivedFile(String host, DatagramPacket packet){
@@ -41,18 +42,18 @@ public class Printer {
 		 * @param receivePacket		The packet that has been received
 		 */
 	   public void printReceiveData(String host, DatagramPacket receivePacket) {
-		  if(isVerbose){
+		  if(isVerbose()){
 		    printSenderOrReceiverInfo(true, receivePacket, host);
 	        System.out.print("Containing: " + new String(receivePacket.getData()));
 	        printBytes(receivePacket.getData());
 		  }
 		  else{
-			  System.out.print("Received data");
+			  System.out.print("Received data\n");
 		  }
 	   }
 	   
 	   private void printSenderOrReceiverInfo(boolean isReceiving, DatagramPacket packet, String host){
-		   if(isVerbose){
+		   if(isVerbose()){
 		     String fromOrTo = (isReceiving == true) ? "From":"To";
 		     String receivedOrSent = (isReceiving == true) ? "received":"sent";
 		     System.out.println(host + ": Packet " + receivedOrSent + ":");

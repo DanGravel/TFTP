@@ -1,22 +1,13 @@
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.*;
-import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Scanner;
-
-import javax.xml.bind.ValidationEvent;
-import javax.xml.ws.Response;
-
-import org.omg.CORBA.Request;
-
 
 /**
  * 
@@ -24,14 +15,13 @@ import org.omg.CORBA.Request;
  *
  */
 
-
 public class FileTransferServer extends Host implements Runnable {
 	
-
 	private static final int FILE_NAME_START = 2; // Index where filename starts for RRQ and WRQ
 	private static final int START_FILE_DATA = 4; // Index where the file data starts for DATA packets
 	private boolean doneFile;
 	private DatagramSocket sendAndReceiveSocket, receiveSocket;
+	private int blockNum = 0; 
 	
 	public FileTransferServer(DatagramPacket packet, int port) {
 		try {
@@ -76,9 +66,7 @@ public class FileTransferServer extends Host implements Runnable {
 		
 		byte data[] = receivePacket.getData(); 
 		RequestType request = validate(data); //Find out what kind of packet is sent: RRQ, WRQ, etc.
-		if(request != RequestType.READ && request != RequestType.WRITE) {
-			request = RequestType.INVALID; // First packet must be read or write!
-		}
+		if(request == RequestType.SHUTDOWN) System.exit(1);
 		byte[] response = createRightPacket(request, data); //Create the right response to the packet
 		
 		switch(request) {
@@ -99,7 +87,7 @@ public class FileTransferServer extends Host implements Runnable {
 	 * Sends next part of the file that is 
 	 */
 	private void sendNextPartofFile() {
-		int start, upto; //Since the whole filke cannot be sent at once, this is used to submit segments at a time
+		int start, upto; //Since the whole file cannot be sent at once, this is used to submit segments at a time
 		start = DATA_START;
 		upto = DATA_END;
 		int blockNum = 1;
@@ -112,7 +100,7 @@ public class FileTransferServer extends Host implements Runnable {
 			System.out.println("Could not open file to read");
 		}
 		
-			int endOfFile = fileData.length - 1;
+			int endOfFile = fileData.length;
 			if(fileData.length == 0) {
 				endOfFile = 0; 
 			}
@@ -162,16 +150,22 @@ public class FileTransferServer extends Host implements Runnable {
 			fos = new FileOutputStream(file);
 			while(request == RequestType.DATA) { //If not data, wrong packet
 				byte[] wholePacket = receivePacket.getData();
-				int endOfPacket = wholePacket.length - 1;
+				//gets end of file
+				int endOfPacket = 4;
+				while(wholePacket[endOfPacket] != 0 && endOfPacket != 515){
+					endOfPacket++;
+				}
+				if(wholePacket[515] != 0) endOfPacket++;
+				//
 				byte[] data = Arrays.copyOfRange(wholePacket,START_FILE_DATA, endOfPacket); //|gnore op code and only get file data
+				
 				fos.write(data); //Write this to file
 				sendaPacket(ack, receivePacket.getPort(), sendAndReceiveSocket, "Server"); //SEND ACK
 				receiveaPacket("Server", sendAndReceiveSocket);
 				request = validate(receivePacket.getData());
 				ack = createRightPacket(request, receivePacket.getData()); 
-				
-			fos.close();
 			} 
+			fos.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -191,14 +185,16 @@ public class FileTransferServer extends Host implements Runnable {
 		else if(data[0] == 0 && data[1] == 3) request = RequestType.DATA;
 		else if(data[0] == 0 && data[1] == 4) request = RequestType.ACK;
 		else if(data[0] == 0 && data[1] == 5 && data[2] == 0 && data[3] == 3) request = RequestType.DISKFULL;
+		else if(data[0] == 9 && data[1] == 9) request = RequestType.SHUTDOWN;
 		else request = RequestType.INVALID;
 		if(request == RequestType.READ || request == RequestType.WRITE) {
 			request = validateFileNameandMode(data, request);	//Get filename and validate packet
 		}
 		String path = HOME_DIRECTORY+ "\\Desktop\\" + fileName;
+		File file = new File(path);
 		Path path2 = Paths.get(path);
 		if(request == RequestType.READ) {
-			if(!(new File(path).isFile())) {
+			if(!(file.isFile())) {
 				request = RequestType.FILENOTFOUND; //check if client is trying to read from a file that DNE
 				fileName = "";
 			}
@@ -207,7 +203,7 @@ public class FileTransferServer extends Host implements Runnable {
 				fileName = "";
 			}
 		} else if(request == RequestType.WRITE) {
-			if(new File(path).isFile()) {
+			if(file.exists()) {
 				request = RequestType.FILEEXISTS; // Check if file is trying to write to existing file
 				fileName = "";
 			}

@@ -4,21 +4,22 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Arrays;
 
 public abstract class Host {
 
 	
 	  public static final int SERVER_PORT = 69;
 	  public static final int INTERMEDIATE_PORT = 23;
-	  public static final int PACKET_SIZE = 512;
+	  public static final int PACKET_SIZE = 516;
 	  public static final int DATA_START = 0;
-	  public static final int DATA_END = 508;
+	  public static final int DATA_END = 512;
 	  public static final String HOME_DIRECTORY = System.getProperty("user.home"); 
-	  public enum RequestType {READ, WRITE, DATA, ACK, INVALID, FILEEXISTS, DISKFULL, ACCESSDENIED, FILENOTFOUND }
+	  public enum RequestType {READ, WRITE, DATA, ACK, INVALID, FILEEXISTS, DISKFULL, ACCESSDENIED, FILENOTFOUND,SHUTDOWN}
 	  protected Printer p = new Printer();
 	  protected String fileName = "";
 	  protected DatagramPacket sendPacket, receivePacket;
-	  
+	  protected int datalen;
 
 	  
 	  
@@ -101,12 +102,17 @@ public abstract class Host {
 	   * @return the byte array to be sent in the packet
 	   */
 	   protected byte[] createDataPacket(byte[] data, int blockNum){
-			byte[] datapacket = {0, 3, (byte) (blockNum), (byte) (blockNum >>> 8)};
+		   	byte[] d = Arrays.copyOf(data, data.length);
+		    byte[] datapacket = {0, 3, (byte) (blockNum >>> 8),(byte) (blockNum)};
+			int i = 0;
+			for(; i < data.length - 1 ; i++){};
+			datalen = i+1;
+			byte[] packetdata = Arrays.copyOfRange(d, 0, datalen);
 			
 			ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
 			  try {
 					outputStream.write(datapacket);
-					outputStream.write(data);
+					outputStream.write(packetdata);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -119,6 +125,16 @@ public abstract class Host {
 			byte data[] = receivePacket.getData(); 
 			if(data[0] == 0 && data[1] == 5) return true;
 			return false;
+	   }
+	   
+	   protected int getSize(){
+		   	byte[] wholePacket = Arrays.copyOf(receivePacket.getData(), receivePacket.getData().length);
+		   	int endOfPacket = 4;
+			while(wholePacket[endOfPacket] != 0 && endOfPacket != 515){
+				endOfPacket++;
+			}
+			if(wholePacket[515] != 0) endOfPacket++;
+			return endOfPacket;
 	   }
 
 

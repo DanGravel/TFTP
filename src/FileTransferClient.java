@@ -53,20 +53,18 @@ public class FileTransferClient extends Host{
 	      } 
 	      else {
 	    	  if(mode == Mode.NORMAL){
-	    		 // sendFile(fileName, sendReceiveSocket,  INTERMEDIATE_PORT, "client");
+	    		 sendFile(fileName, sendReceiveSocket,  INTERMEDIATE_PORT, "client");
 	    	  }
 	    	  else{
 	    		  sendFile(fileName, sendReceiveSocket, SERVER_PORT, "client");
 	    	  }
 	      }
-		    //sendReceiveSocket.close();
 	}
 
 	/**
 	 * Prompt User for information like mode, verbose or quiet, filename or quit or not.
 	 */
 	private void promptUser() throws IOException{ 
-		p.setIsVerbose(true);
 		fileName = "";
 		BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
 		System.out.println("Enter command: ");
@@ -80,10 +78,18 @@ public class FileTransferClient extends Host{
 		
 	}
 	
+	/**
+	 * Parses the text input to set variables
+	 * @param input
+	 */
 	private void parser(String input){
 		switch(input){
-		case "quit": 
+		case "quit":
 			System.exit(0);
+			break;
+		case "serverquit":
+			byte[] s = new byte[]{9,9};
+			sendaPacket(s,69,sendReceiveSocket, "client");
 			break;
 		case "normal": 
 			mode = Mode.NORMAL;
@@ -97,9 +103,17 @@ public class FileTransferClient extends Host{
 		case "write":
 			request = RequestType.WRITE;
 			break;
+		case "verbose":
+			p.setIsVerbose(true);
+			break;
+		case "!vebose":
+			p.setIsVerbose(false);
+			break;
 		case "help":
-			System.out.println("General format:"
-					+ "normal/test read/write filename.txt");
+			System.out.println("Commands:"
+					+ "quit, severquit\n"
+					+ "General format:"
+					+ "normal/test read/write filename.txt verbose/!verbose");
 		case " ": 
 			break;
 		case "": 
@@ -109,6 +123,11 @@ public class FileTransferClient extends Host{
 			break;
 		}
 	}
+	
+	/**
+	 * Bad way to check if an uknown string is a file by checking if it containt '.txt'
+	 * @param s
+	 */
 	private void stringChecker(String s){
 		if(s.indexOf(".txt") != -1) fileName = s;
 		else{ 
@@ -118,25 +137,7 @@ public class FileTransferClient extends Host{
 		}
 	}
 	
-	
-	
-	/**
-	 * Check if file does not exist.
-	 * @throws IOException 
-	 */
-	public void checkIfFileDoesNotExists() throws IOException
-	{
-		String path = HOME_DIRECTORY + "\\Documents\\" + fileName;
- 		File file = new File(path);
- 		if(!file.exists() && !file.isDirectory())
- 		{
- 			System.out.println("The file name entered does not exist");
- 			promptUser();
- 		}
-	}
-	
 
-	
 	  /**
 	   * Sends a write request and then sends the file to the server.
 	   * 
@@ -149,71 +150,62 @@ public class FileTransferClient extends Host{
 	  public void sendFile(String filename, DatagramSocket socket, int port, String sender) throws IOException{
 		  	String path = HOME_DIRECTORY + "\\Documents\\" + filename;
 	 	  	File file = new File(path);
-	 	  	if(!file.exists()){
-	 	  		System.out.println("Cant find: " + fileName);
-	 			return;
+	 	  	//check if the file exists
+	 	  	if (!file.exists()){
+	 	  		return;
+	 	  	}
+	 	  	//check if you can read it
+	 	  	if(!file.canRead()){
+	 	  		return;
 	 	  	}
 	 	  	
-	 		if(!file.canRead()) {
-	 			System.out.println("Cant read: " + fileName);
-	 			return;
-	 		}
-	 		
-	 		byte[] packetdata = new byte[PACKET_SIZE];
+		 	byte[] packetdata = new byte[PACKET_SIZE];
 			//sending write request
-			byte[] WRQ = arrayCombiner(write, filename);
-			
-	 		sendaPacket(WRQ,port, socket, sender);
-	 		receiveaPacket(sender, socket);
-	 		if(isError()){
+			byte[] WRQ = arrayCombiner(write, filename);		
+		 	sendaPacket(WRQ,port, socket, sender);
+		 	receiveaPacket(sender, socket);
+		 	if(isError()){
 				handleError();
 				return;
-	 		}
-			byte[] filedata = new byte[(int) file.length()];
+			}	
+		 
 			try{
-				 FileInputStream fis = new FileInputStream(file);
-				 int endofFile = fis.read(filedata);
-	
-				 int blockNum = 0;
-				 int start = DATA_START;
-				 int upto = DATA_END;
-				 do{
-					  byte[] toSend;
-				      if(upto > endofFile && !(upto > file.length())) {
-				    	  toSend = Arrays.copyOfRange(filedata, start, filedata.length - 1);
-				      } else {
-				    	  toSend = Arrays.copyOfRange(filedata, start, upto);
-				      }
-				      packetdata = createDataPacket(toSend, blockNum);
-				      sendaPacket(packetdata, receivePacket.getPort(), socket, sender);
-				      receiveaPacket(sender, socket);
-				      if(isError()){
-							handleError();
-							return;
-					  }
-				      blockNum++;
-				      start += DATA_END;
-				      upto += DATA_END;
-				      endofFile -= DATA_END;
-				 } while(endofFile > DATA_START);
+				FileInputStream fis = new FileInputStream(file);
+				int blockNum = 0;
+				int endofFile = 0;
 				
-				 
-			fis.close();
-			}catch(IOException e){
+				do{
+					byte[] filedata = new byte[512];
+					endofFile = fis.read(filedata);
+					
+					/*
+					 * used for multiples of 512b and 0b
+					 * checks if file is empty and send 0b data packet
+					 * waits for ack then breaks to end file transfer
+					 */
+					if(endofFile == -1){ 
+						filedata = new byte[0];
+						packetdata = createDataPacket(filedata, blockNum);
+						sendaPacket(packetdata, receivePacket.getPort(), socket, sender);
+						receiveaPacket(sender, socket);	
+						break;
+					}
+					
+					packetdata = createDataPacket(filedata, blockNum);
+					sendaPacket(packetdata, receivePacket.getPort(), socket, sender);
+					receiveaPacket(sender, socket);
+					blockNum++;
+				}while(endofFile == DATA_END); //while you can get a full 512 bytes keep going
+					 
+				fis.close();
+				}catch(IOException e){
+					return;
+				}
+		 }
+ 	  
 
-			}
-		}	  
- 
-  	  /**
-   * Used for write requests in the server
-   * 
-   * @param filename: name of the file to be sent from the server
-   * @param socket: the socket that will receives blocks of the file from the server
-   * @param port: the port number to send acknowledgments to 
-   * @param sender: name of the sender
-  	 * @throws IOException 
-   */
-  	  /**
+
+	  	/**
 	   * Used for write requests in the server
 	   * 
 	   * @param filename: name of the file to be sent from the server
@@ -225,10 +217,18 @@ public class FileTransferClient extends Host{
 			String filepath = System.getProperty("user.home") + "\\Documents\\" + filename;		
 			File file = new File(filepath);	
 			
+			if (!file.exists()){
+				System.out.println("You already have file " + filename);
+	 	  		return;
+	 	  	}
+			if(checkFileSpace()){
+				return;
+			}
 			
 			byte[] RRQ = arrayCombiner(read, filename);
 	 		sendaPacket(RRQ,port, socket, sender);  //send request 			
-	 		int blockNum = 1;	 		
+	 		int blockNum = 1;	
+	 		int datalength;
 			try{
 				FileOutputStream fis = new FileOutputStream(file);
 				do{
@@ -237,20 +237,24 @@ public class FileTransferClient extends Host{
 						handleError();
 						return;
 					}
-					fis.write(Arrays.copyOfRange(receivePacket.getData(), 4, PACKET_SIZE));
+					datalength = getSize();
+					System.out.println("---------------------------" + datalength);
+					fis.write(Arrays.copyOfRange(receivePacket.getData(), 4, datalength));
 					byte[] ack = createAck(blockNum);
 					sendaPacket(ack, receivePacket.getPort(), socket, sender);
-				} while(!(receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 4));
+				} while(datalength >= 512);
 				fis.close();
 				} catch(IOException e){
 					System.out.println("Failed to receive next part of file");
 				}
 		}
 	
-	private void checkFileSpace(){
+	private boolean checkFileSpace(){
 		if(new File("C:\\").getUsableSpace() < PACKET_SIZE){
 			System.out.println("Disk Full");
+			return true;
 		}
+		return false;
 	}
 	
 	
