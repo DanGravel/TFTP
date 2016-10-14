@@ -118,6 +118,11 @@ public class FileTransferClient extends Host{
 		}
 	}
 	
+	/**
+	 * Checks if the command is a file name, otherwise it is a unrecognized command.
+	 * 
+	 * @param s: The string that is inputted.
+	 */
 	private void stringChecker(String s){
 		if(s.indexOf(".txt") != -1) fileName = s;
 		else{ 
@@ -126,12 +131,7 @@ public class FileTransferClient extends Host{
 			}
 		}
 	}
-	
-	
-	
-	
 
-	
 	  /**
 	   * Sends a write request and then sends the file to the server.
 	   * 
