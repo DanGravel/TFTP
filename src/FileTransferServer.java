@@ -159,8 +159,7 @@ public class FileTransferServer extends Host implements Runnable {
 			fos = new FileOutputStream(file);
 			while(request == RequestType.DATA) { //If not data, wrong packet
 				byte[] wholePacket = receivePacket.getData();
-				//TODO host method here
-				int endOfPacket = wholePacket.length - 1;
+				int endOfPacket = getSize();
 				byte[] data = Arrays.copyOfRange(wholePacket,START_FILE_DATA, endOfPacket); //|gnore op code and only get file data
 				fos.write(data); //Write this to file
 				sendaPacket(ack, receivePacket.getPort(), sendAndReceiveSocket, "Server"); //SEND ACK
