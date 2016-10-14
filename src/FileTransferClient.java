@@ -53,7 +53,7 @@ public class FileTransferClient extends Host{
 	      } 
 	      else {
 	    	  if(mode == Mode.NORMAL){
-	    		  sendFile(fileName, sendReceiveSocket,  INTERMEDIATE_PORT, "client");
+	    		 // sendFile(fileName, sendReceiveSocket,  INTERMEDIATE_PORT, "client");
 	    	  }
 	    	  else{
 	    		  sendFile(fileName, sendReceiveSocket, SERVER_PORT, "client");
@@ -136,44 +136,6 @@ public class FileTransferClient extends Host{
 	}
 	
 
-	/**
-	 * Check if there is access violation.
-	 * 
-	 * @param socket: the socket to send and receive in the client
-	 * @param sender: name of the sender
-	 * @return
-	 */
-	public boolean accessViolation(DatagramSocket socket, String sender, File file)
-	{
- 		if(!file.canWrite() && !file.isDirectory())
- 		{
- 			System.out.println("The file cannot be written to");
- 			//Error packet 
- 			byte[] errorCode = {0,5,0,2};
- 			String errorMsg = "Access Violation";
- 			byte[] errMsg = errorMsg.getBytes();
- 			byte[] zero = {0};
- 			ByteArrayOutputStream b = new ByteArrayOutputStream();
- 			try{
-	 			b.write(errorCode);
-	 			b.write(errMsg);
-	 			b.write(zero);
- 			} catch (Exception e){
- 				e.printStackTrace();
- 			}
- 			byte[] error = b.toByteArray();
- 			
- 			sendaPacket(error, receivePacket.getPort(), socket, sender);
- 			return true;
- 		}
- 		
- 		if(!file.canRead() && !file.isDirectory())
- 		{
- 			System.out.println("The file cannot be read");
- 			return true;
- 		}
- 		return false;
-	}
 	
 	  /**
 	   * Sends a write request and then sends the file to the server.
@@ -185,28 +147,41 @@ public class FileTransferClient extends Host{
 	 * @throws IOException 
 	   */
 	  public void sendFile(String filename, DatagramSocket socket, int port, String sender) throws IOException{
-			byte[] packetdata = new byte[PACKET_SIZE];
+		  	String path = HOME_DIRECTORY + "\\Documents\\" + filename;
+	 	  	File file = new File(path);
+	 	  	if(!file.exists()){
+	 	  		System.out.println("Cant find: " + fileName);
+	 			return;
+	 	  	}
+	 	  	
+	 		if(!file.canRead()) {
+	 			System.out.println("Cant read: " + fileName);
+	 			return;
+	 		}
+	 		
+	 		byte[] packetdata = new byte[PACKET_SIZE];
 			//sending write request
 			byte[] WRQ = arrayCombiner(write, filename);
 			
 	 		sendaPacket(WRQ,port, socket, sender);
 	 		receiveaPacket(sender, socket);
-	 		String path = HOME_DIRECTORY + "\\Documents\\" + filename;
-	 		File file = new File(path);
-	 		if (accessViolation(socket, sender, file)){
-	 			System.out.println("Access violation");
-	 			promptUser();
-	 			return;
+	 		if(isError()){
+				handleError();
+				return;
 	 		}
 			byte[] filedata = new byte[(int) file.length()];
 			try{
 				 FileInputStream fis = new FileInputStream(file);
 				 int endofFile = fis.read(filedata);
+	
 				 int blockNum = 0;
 				 int start = DATA_START;
 				 int upto = DATA_END;
 				 while(endofFile > DATA_START){
-					 byte[] toSend;
+					 if(endofFile == -1){
+						 packetdata = new byte[0];
+					 }
+					  byte[] toSend;
 				      if(upto > endofFile) {
 				    	  toSend = Arrays.copyOfRange(filedata, start, filedata.length - 1);
 				      } else {
@@ -215,6 +190,10 @@ public class FileTransferClient extends Host{
 				      packetdata = createDataPacket(toSend, blockNum);
 				      sendaPacket(packetdata, receivePacket.getPort(), socket, sender);
 				      receiveaPacket(sender, socket);
+				      if(isError()){
+							handleError();
+							return;
+					  }
 				      blockNum++;
 				      start += DATA_END;
 				      upto += DATA_END;
@@ -247,7 +226,11 @@ public class FileTransferClient extends Host{
 		public void receiveFile(String filename, DatagramSocket socket, int port, String sender){
 			String filepath = System.getProperty("user.home") + "\\Documents\\" + filename;		
 			File file = new File(filepath);	
-
+			if(file.exists()){
+				System.out.println("File: " + fileName + " is currently already on your system and cannot be overwritten");
+				return;
+			}
+			
 			byte[] RRQ = arrayCombiner(read, filename);
 	 		sendaPacket(RRQ,port, socket, sender);  //send request 			
 	 		int blockNum = 1;	 		
@@ -337,11 +320,8 @@ public class FileTransferClient extends Host{
 	 * @throws IOException 
 	 */
 	public static void main(String args[]) throws IOException {
-		
 		FileTransferClient c = new FileTransferClient();
 		while(true){
-			//File f = new File("C:\\Users\\supriyagadigone\\Documents\\blah.txt\\");
-			//f.setReadable(false);
 			c.promptUser();
 			if(c.fileName.length() != 0) c.sendAndReceive();
 		}
