@@ -177,9 +177,9 @@ public class FileTransferClient extends Host{
 				 int blockNum = 0;
 				 int start = DATA_START;
 				 int upto = DATA_END;
-				 while(endofFile > DATA_START){
+				 do{
 					  byte[] toSend;
-				      if(upto > endofFile) {
+				      if(upto > endofFile && !(upto > file.length())) {
 				    	  toSend = Arrays.copyOfRange(filedata, start, filedata.length - 1);
 				      } else {
 				    	  toSend = Arrays.copyOfRange(filedata, start, upto);
@@ -195,15 +195,8 @@ public class FileTransferClient extends Host{
 				      start += DATA_END;
 				      upto += DATA_END;
 				      endofFile -= DATA_END;
-				 }
-				 
-				 if(file.length() == 0){
-					 byte[] z = new byte[0];
-					 byte [] toSend = Arrays.copyOfRange(z, start, z.length);
-				     packetdata = createDataPacket(toSend, blockNum);
-					 sendaPacket(packetdata, receivePacket.getPort(), socket, sender);
-				     receiveaPacket(sender, socket);
-				 }
+				 } while(endofFile > DATA_START);
+				
 				 
 			fis.close();
 			}catch(IOException e){
