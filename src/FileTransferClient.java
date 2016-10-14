@@ -159,6 +159,22 @@ public class FileTransferClient extends Host{
  		}
  		return false;
 	}
+	/**
+	 * Check if file does not exist.
+	 * @throws IOException 
+	 */
+	public void checkIfFileDoesNotExists() throws IOException
+	{
+		String path = HOME_DIRECTORY + "\\Documents\\" + fileName;
+ 		File file = new File(path);
+ 		if(!file.exists() && !file.isDirectory())
+ 		{
+ 			System.out.println("The file name entered does not exist");
+ 			promptUser();
+ 		}
+	}
+	
+
 	
 	  /**
 	   * Sends a write request and then sends the file to the server.
@@ -170,7 +186,19 @@ public class FileTransferClient extends Host{
 	 * @throws IOException 
 	   */
 	  public void sendFile(String filename, DatagramSocket socket, int port, String sender) throws IOException{
-			byte[] packetdata = new byte[PACKET_SIZE];
+		  	String path = HOME_DIRECTORY + "\\Documents\\" + filename;
+	 	  	File file = new File(path);
+	 	  	if(!file.exists()){
+	 	  		System.out.println("Cant find: " + fileName);
+	 			return;
+	 	  	}
+	 	  	
+	 		if(!file.canRead()) {
+	 			System.out.println("Cant read: " + fileName);
+	 			return;
+	 		}
+	 		
+	 		byte[] packetdata = new byte[PACKET_SIZE];
 			//sending write request
 			byte[] WRQ = arrayCombiner(write, filename);
 			
@@ -247,6 +275,11 @@ public class FileTransferClient extends Host{
   	}
 	
 
+	private void checkFileSpace(){
+		if(new File("C:\\").getUsableSpace() < PACKET_SIZE){
+			System.out.println("Disk Full");
+		}
+	}
 	
 	private void handleError(){
 		String error = "";
@@ -352,11 +385,8 @@ public class FileTransferClient extends Host{
 	 * @throws IOException 
 	 */
 	public static void main(String args[]) throws IOException {
-		
 		FileTransferClient c = new FileTransferClient();
 		while(true){
-			//File f = new File("C:\\Users\\supriyagadigone\\Documents\\blah.txt\\");
-			//f.setReadable(false);
 			c.promptUser();
 			if(c.fileName.length() != 0) c.sendAndReceive();
 		}
