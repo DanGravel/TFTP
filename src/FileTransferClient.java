@@ -109,6 +109,7 @@ public class FileTransferClient extends Host{
 			break;
 		}
 	}
+	
 	private void stringChecker(String s){
 		if(s.indexOf(".txt") != -1) fileName = s;
 		else{ 
@@ -120,21 +121,6 @@ public class FileTransferClient extends Host{
 	
 	
 	
-	/**
-	 * Check if file does not exist.
-	 */
-	public void checkIfFileDoesNotExists() throws IOException
-	{
-		String path = HOME_DIRECTORY + "\\Documents\\" + fileName;
- 		File file = new File(path);
- 		if(!file.exists() && !file.isDirectory())
- 		{
- 			System.out.println("The file name entered does not exist");
- 			promptUser();
- 		}
-	}
-	
-
 	/**
 	 * Check if there is access violation.
 	 * 
@@ -192,8 +178,10 @@ public class FileTransferClient extends Host{
 	 		receiveaPacket(sender, socket);
 	 		String path = HOME_DIRECTORY + "\\Documents\\" + filename;
 	 		File file = new File(path);
-	 		if (accessViolation(socket, sender, file)){
-	 			System.out.println("Access violation");
+	 		
+	 		if (request == RequestType.READ && fileAlreadyExists(file)){
+	 			promptUser();
+	 		} else if (fileDoesNotExist(file)){
 	 			promptUser();
 	 		}else{
 				byte[] filedata = new byte[(int) file.length()];
@@ -236,61 +224,29 @@ public class FileTransferClient extends Host{
   	 * @throws IOException 
    */
 	public void receiveFile(String filename, DatagramSocket socket, int port, String sender){
-		String filepath = System.getProperty("user.home") + "\\Documents\\" + filename;		
+		String filepath = System.getProperty("user.home") + "\\Documents\\" + filename;	
+		//String filepath = "F:\\" + filename;
 		byte[] RRQ = arrayCombiner(read, filename);
  		sendaPacket(RRQ,port, socket, sender);  //send request 		
- 		File file = new File(filepath);		
- 		//check if the file already exists
-//	 		if(file.exists() && !file.isDirectory())
-//	 		{
-//	 			System.out.println("File already exists, no overwriting allowed");
-//	 			promtUser();
-//	 		}
-	 		//check if  there is access violation
- 		if (accessViolation(socket, sender, file)){
- 			System.out.println("Access violation");
- 			try {
-				promptUser();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
- 		} else {
-	 		int blockNum = 1;	 		
+ 		File file = new File(filepath);
+ 		if(!diskFull(file, socket, sender)){
+ 			int blockNum = 1;	 
 			try{
 				FileOutputStream fis = new FileOutputStream(file);
 				do{
 					receiveaPacket(sender, socket);
 					fis.write(Arrays.copyOfRange(receivePacket.getData(), 4, PACKET_SIZE));
 					byte[] ack = createAck(blockNum);
-					sendaPacket(ack, port, socket, sender);
+					sendaPacket(ack, receivePacket.getPort(), socket, sender);
 				} while(!(receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 4));
 				fis.close();
 			} catch(IOException e){
 				System.out.println("Failed to receive next part of file");
 			}
  		}
-  	  }
+  	}
 	
-	private void checkFileSpace(){
-		if(new File("F:\\").getUsableSpace() < PACKET_SIZE){
-			byte[] errorCode = {0,5,0,3};
- 			String errorMsg = "Client Disk Full";
- 			byte[] errMsg = errorMsg.getBytes();
- 			byte[] zero = {0};
- 			ByteArrayOutputStream b = new ByteArrayOutputStream();
- 			try{
-	 			b.write(errorCode);
-	 			b.write(errMsg);
-	 			b.write(zero);
- 			} catch (Exception e){
- 				e.printStackTrace();
- 			}
- 			byte[] error = b.toByteArray();
- 			
-		}
-	}
-	
+
 	
 	private void handleError(){
 		String error = "";
@@ -347,6 +303,49 @@ public class FileTransferClient extends Host{
 		  return outputStream.toByteArray( );
 	}
 	
+	private boolean fileAlreadyExists(File file){
+		if (file.exists()){
+			System.out.println("File already exists. Files cannot be overwritten. \n");
+			return true;
+		}
+		return false;
+	}
+	
+	/**
+	 * Check if file does not exist.
+	 */
+	private boolean fileDoesNotExist(File file) throws IOException
+	{
+ 		if(!file.exists() && !file.isDirectory())
+ 		{
+ 			System.out.println("The file name entered does not exist, please try again. \n");
+ 			return true;
+ 		}
+ 		return false;
+	}
+	
+	private boolean diskFull(File file, DatagramSocket socket, String sender){
+		if(new File(file.getPath()).getUsableSpace() < PACKET_SIZE){
+			byte[] errorCode = {0,5,0,3};
+ 			String errorMsg = "Client Disk Full";
+ 			byte[] errMsg = errorMsg.getBytes();
+ 			byte[] zero = {0};
+ 			ByteArrayOutputStream b = new ByteArrayOutputStream();
+ 			try{
+	 			b.write(errorCode);
+	 			b.write(errMsg);
+	 			b.write(zero);
+ 			} catch (Exception e){
+ 				e.printStackTrace();
+ 			}
+ 			byte[] error = b.toByteArray();
+ 			//sendaPacket(error, receivePacket.getPort(), socket, sender);
+ 			System.out.println("Disk Is Full");
+ 			return true;
+		}
+		return false;
+	}
+	
 	/**
 	 * Main.
 	 * @param args
@@ -361,5 +360,6 @@ public class FileTransferClient extends Host{
 			c.promptUser();
 			if(c.fileName.length() != 0) c.sendAndReceive();
 		}
+		
 	}
 }
