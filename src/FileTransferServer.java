@@ -21,10 +21,9 @@ public class FileTransferServer extends Host implements Runnable {
 	
 	private static final int FILE_NAME_START = 2; // Index where filename starts for RRQ and WRQ
 	private static final int START_FILE_DATA = 4; // Index where the file data starts for DATA packets
-	private boolean doneFile;
+	private boolean doneFile; // set when you are at the end of the file;
 	private DatagramSocket sendAndReceiveSocket, receiveSocket;
-	private int blockNum = 0; 
-	private boolean serverShutdown = false;
+	private boolean serverShutdown = false; // boolean to see if server is supposed to be shut down
 	
 	public FileTransferServer(DatagramPacket packet, int port) {
 		try {

@@ -1,11 +1,9 @@
 /FileTransferClient$Mode.class
-/FileTransferClient$Request.class
 /FileTransferClient.class
-/FileTransferServer$RequestType.class
+/FileTransferServer$1.class
 /FileTransferServer.class
+/Host$RequestType.class
 /Host.class
 /IntermediateHost.class
 /Printer.class
 /Test.class
-/Host$RequestType.class
-/FileTransferServer$1.class
