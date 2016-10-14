@@ -19,11 +19,11 @@ import java.util.Scanner;
 
 public class FileTransferServer extends Host implements Runnable {
 	
-	private static final int FILE_NAME_START = 2; // Index where filename starts for RRQ and WRQ
 	private static final int START_FILE_DATA = 4; // Index where the file data starts for DATA packets
 	private boolean doneFile; // set when you are at the end of the file;
 	private DatagramSocket sendAndReceiveSocket, receiveSocket;
 	private boolean serverShutdown = false; // boolean to see if server is supposed to be shut down
+	private Validater validater;
 	
 	public FileTransferServer(DatagramPacket packet, int port) {
 		try {
@@ -68,13 +68,9 @@ public class FileTransferServer extends Host implements Runnable {
 			se.printStackTrace();
 			System.exit(1);
 		}
-		
 		byte data[] = receivePacket.getData(); 
-		RequestType request = validate(data); //Find out what kind of packet is sent: RRQ, WRQ, etc.
-		if(request != RequestType.READ && request != RequestType.WRITE) {
-			request = RequestType.INVALID; // First packet must be read or write!
-			return;
-		}
+		RequestType request = validater.validate(data); //Find out what kind of packet is sent: RRQ, WRQ, etc.
+		if(request == RequestType.READ || request == RequestType.WRITE) request = RequestType.INVALID; // First packet must be read or write!
 		byte[] response = createRightPacket(request, data); //Create the right response to the packet
 		
 		switch(request) {
@@ -101,7 +97,7 @@ public class FileTransferServer extends Host implements Runnable {
 		int blockNum = 1;
 		byte[] fileData = null; 
 		byte[] packetdata = new byte[PACKET_SIZE];
-		Path path = Paths.get(HOME_DIRECTORY + "\\Desktop\\" + fileName);
+		Path path = Paths.get(HOME_DIRECTORY + "\\Desktop\\" + validater.getFilename());
 		try{
 			fileData = Files.readAllBytes(path);
 		} catch(IOException e){
@@ -128,7 +124,7 @@ public class FileTransferServer extends Host implements Runnable {
 			      blockNum++; //Next block
 			      receiveaPacket("Server", sendAndReceiveSocket); //Attempt to get ack from sender
 			      byte data[] = receivePacket.getData(); 
-			      request = validate(data); //get the request type
+			      request = validater.validate(data); //get the request type
 			} while(request == RequestType.ACK && !doneFile); //Only do this a second time (or more) if more data is left AND an ACK was received
 				
 	}
@@ -150,7 +146,7 @@ public class FileTransferServer extends Host implements Runnable {
 		//TODO This part looks like shit, cant find a proper way to infuse
 		//it with the while loop
 		receiveaPacket("Server", sendAndReceiveSocket); // Receive first part of data
-		request = validate(receivePacket.getData()); //Get the request
+		request = validater.validate(receivePacket.getData()); //Get the request
 		//if(request != RequestType.DATA) request = RequestType.INVALID; //If its not a data packet, its in invalid packet for this  transfer
 		byte[] ack = createRightPacket(request, receivePacket.getData()); //create ACK
 		
@@ -163,7 +159,7 @@ public class FileTransferServer extends Host implements Runnable {
 				fos.write(data); //Write this to file
 				sendaPacket(ack, receivePacket.getPort(), sendAndReceiveSocket, "Server"); //SEND ACK
 				receiveaPacket("Server", sendAndReceiveSocket);
-				request = validate(receivePacket.getData());
+				request = validater.validate(receivePacket.getData());
 				ack = createRightPacket(request, receivePacket.getData()); 
 			} 
 			fos.close();
@@ -173,67 +169,7 @@ public class FileTransferServer extends Host implements Runnable {
 		if(request != RequestType.DATA) sendaPacket(ack, receivePacket.getPort(), sendAndReceiveSocket, "Server");	//Error Handling
 	}
 	
-	/**
-	 * 
-	 * @param data	The data of packet received
-	 * @return		The request type, if packet contained a RRQ,WRQ, ACK, DATA, ERROR
-	 */
-	private RequestType validate(byte data[]) {
-		RequestType request;
-		//Find out what kind of request type it is
-		if (data[0] == 0 && data[1] == 1) request = RequestType.READ;
-		else if (data[0] == 0 && data[1] == 2) request = RequestType.WRITE; 
-		else if(data[0] == 0 && data[1] == 3) request = RequestType.DATA;
-		else if(data[0] == 0 && data[1] == 4) request = RequestType.ACK;
-		else if(data[0] == 0 && data[1] == 5 && data[2] == 0 && data[3] == 3) request = RequestType.DISKFULL;
-		else request = RequestType.INVALID;
-		if(request == RequestType.READ || request == RequestType.WRITE) {
-			request = validateFileNameandMode(data, request);	//Get filename and validate packet
-		}
-		String path = HOME_DIRECTORY+ "\\Desktop\\" + fileName;
-		Path path2 = Paths.get(path);
-		if(request == RequestType.READ) {
-			if(!(new File(path).isFile())) {
-				request = RequestType.FILENOTFOUND; //check if client is trying to read from a file that DNE
-				fileName = "";
-			}
-			else if(!(Files.isReadable(path2))) {
-				request = RequestType.ACCESSDENIED; //check if file is trying to read from a write only file
-				fileName = "";
-			}
-		} else if(request == RequestType.WRITE) {
-			if(new File(path).isFile()) {
-				request = RequestType.FILEEXISTS; // Check if file is trying to write to existing file
-				fileName = "";
-			}
-		}		
-		return request;
-	}
 	
-	/**
-	 * 
-	 * @param data		the packet to get filename from
-	 * @param request	the initial request
-	 * @return			The possibly changed request
-	 */
-	private RequestType validateFileNameandMode(byte[] data, RequestType request) {
-		String mode = "";
-		int i = FILE_NAME_START;
-		fileName = "";
-		//Append filename if request was read or write
-		while(data[i] != 0){
-			fileName += (char)data[i];
-			i++;
-		}
-		i++; 
-		//Append mode if request was read or write
-		while(data[i] != 0){
-			mode += (char)data[i];
-			i++;
-		}
-		if(fileName.length() == 0 || mode.length() == 0) request = RequestType.INVALID;
-		return request;
-	}
 
 	
 	/**
@@ -284,7 +220,7 @@ public class FileTransferServer extends Host implements Runnable {
 	/**
 	 * 
 	 * @param opCode Opcode and specific error code for the Error
-	 * @param message	Errong message
+	 * @param message	Error message
 	 * @return	byte array of 2 parameters combined
 	 */
 	private byte[] arrayCombiner(byte opCode[], String message) {
@@ -301,12 +237,6 @@ public class FileTransferServer extends Host implements Runnable {
 		  return outputStream.toByteArray(); 
 	}
 	
-	/*
-	 * Stops the server
-	 */
-	private void stopServer() {
-		receiveSocket.close(); 
-	}
 	
 	/**
 	 * Ongoing: prompts the user to quit, if so, closes down the main thread thus 
@@ -326,6 +256,7 @@ public class FileTransferServer extends Host implements Runnable {
 						System.out.println("Server no longer accepting new client connections");
 						serverShutdown = true;
 						//receiveSocket.close();
+						reader.close();
 					}
 				}
 			}

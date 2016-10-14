@@ -15,7 +15,6 @@ public abstract class Host {
 	  public static final int DATA_START = 0;
 	  public static final int DATA_END = 512;
 	  public static final String HOME_DIRECTORY = System.getProperty("user.home"); 
-	  public enum RequestType {READ, WRITE, DATA, ACK, INVALID, FILEEXISTS, DISKFULL, ACCESSDENIED, FILENOTFOUND,SHUTDOWN}
 	  protected Printer p = new Printer();
 	  protected String fileName = "";
 	  protected DatagramPacket sendPacket, receivePacket;
