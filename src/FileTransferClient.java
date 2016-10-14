@@ -83,6 +83,11 @@ public class FileTransferClient extends Host{
 		
 	}
 	
+	/**
+	 * Parses inputs from the user
+	 * 
+	 * @param input: The string entered in the console command line
+	 */
 	private void parser(String input){
 		switch(input){
 		case "quit": 
@@ -124,29 +129,7 @@ public class FileTransferClient extends Host{
 	
 	
 	
-	/**
-	 * Check if there is access violation.
-	 * 
-	 * @param socket: the socket to send and receive in the client
-	 * @param sender: name of the sender
-	 * @return
-	 */
-	private boolean accessViolation(File file, String path)
-	{
-		Path path2 = Paths.get(path);
- 		if(!Files.isWritable(path2))
- 		{
- 			System.out.println("The file cannot be written to");
- 			return true;
- 		}
- 		
- 		if(!Files.isReadable(path2))
- 		{
- 			System.out.println("The file cannot be read");
- 			return true;
- 		}
- 		return false;
-	}
+	
 
 	
 	  /**
@@ -163,7 +146,7 @@ public class FileTransferClient extends Host{
 	 	  	File file = new File(path);
 	 		if (fileDoesNotExist(file)){
 	 			promptUser();
-	 		}else if (accessViolation(file, path)){
+	 		}else if (accessViolation(path)){
 	 	  		promptUser();
 	 	  	} else {
 		 		byte[] packetdata = new byte[PACKET_SIZE];
@@ -246,7 +229,9 @@ public class FileTransferClient extends Host{
 		 }
   	}
 	
-	
+	/**
+	 * Handles incoming error packets
+	 */
 	private void handleError(){
 		String error = "";
 		byte data[] = receivePacket.getData(); 
@@ -302,6 +287,12 @@ public class FileTransferClient extends Host{
 		  return outputStream.toByteArray( );
 	}
 	
+	/**
+	 * Checks if a file already exists in the event of a read request. Files cannot be overwritten.
+	 * 
+	 * @param file: the file to be checked
+	 * @return True if the file already exists
+	 */
 	private boolean fileAlreadyExists(File file){
 		if (file.exists()){
 			System.out.println("File already exists. Files cannot be overwritten. \n");
@@ -311,7 +302,11 @@ public class FileTransferClient extends Host{
 	}
 	
 	/**
-	 * Check if file does not exist.
+	 * Checks if the file does not exists
+	 * 
+	 * @param file: The file to be checked
+	 * @return True if the file does not exist
+	 * @throws IOException
 	 */
 	private boolean fileDoesNotExist(File file) throws IOException
 	{
@@ -323,6 +318,14 @@ public class FileTransferClient extends Host{
  		return false;
 	}
 	
+	/**
+	 * Checks if the disk being written to is full.
+	 * 
+	 * @param file: The file that is being received
+	 * @param socket: The socket to send an error packet back to
+	 * @param sender: The name of the sender of a packet
+	 * @return True if the disk is full
+	 */
 	private boolean diskFull(File file, DatagramSocket socket, String sender){
 		if(new File(file.getPath()).getUsableSpace() < PACKET_SIZE){
 			byte[] errorCode = {0,5,0,3};
@@ -343,6 +346,30 @@ public class FileTransferClient extends Host{
  			return true;
 		}
 		return false;
+	}
+	
+	
+	/**
+	 * Checks the permissions of a file.
+	 * 
+	 * @param path: The path for the file to be checked
+	 * @return Returns true if the file has no read or write permissions
+	 */
+	private boolean accessViolation(String path)
+	{
+		Path path2 = Paths.get(path);
+ 		if(!Files.isWritable(path2))
+ 		{
+ 			System.out.println("The file cannot be written to");
+ 			return true;
+ 		}
+ 		
+ 		if(!Files.isReadable(path2))
+ 		{
+ 			System.out.println("The file cannot be read");
+ 			return true;
+ 		}
+ 		return false;
 	}
 	
 	/**
