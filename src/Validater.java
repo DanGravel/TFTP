@@ -9,6 +9,10 @@ public class Validater {
 	String fileName = "";
 	private static final int FILE_NAME_START = 2; // Index where filename starts for RRQ and WRQ
 	
+//	public Validater(String fileName) {
+//		this.fileName = fileName; 
+//	}
+	
 	/**
 	 * 
 	 * @param data	The data of packet received
@@ -34,7 +38,7 @@ public class Validater {
 		String path = System.getProperty("user.home") + "\\Desktop\\" + fileName;
 		Path path2 = Paths.get(path);
 		if(request == RequestType.READ) {
-			if(!(new File(path).isFile())) {
+			if(!(new File(path).exists())) {
 				request = RequestType.FILENOTFOUND; //check if client is trying to read from a file that DNE
 				fileName = "";
 			}
@@ -43,7 +47,7 @@ public class Validater {
 				fileName = "";
 			}
 		} else if(request == RequestType.WRITE) {
-			if(new File(path).isFile()) {
+			if(new File(path).exists()) {
 				request = RequestType.FILEEXISTS; // Check if file is trying to write to existing file
 				fileName = "";
 			}
@@ -60,7 +64,6 @@ public class Validater {
 	private RequestType validateFileNameandMode(byte[] data, RequestType request) {
 		String mode = "";
 		int i = FILE_NAME_START;
-		String fileName = "";
 		//Append filename if request was read or write
 		while(data[i] != 0){
 			fileName += (char)data[i];
