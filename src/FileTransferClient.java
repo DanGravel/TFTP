@@ -159,10 +159,11 @@ public class FileTransferClient extends Host{
 
 	 	  	//check if the file exists
 	 	  	if (!file.exists()){
+	 	  		System.out.println("File does not exist");
 	 	  		return;
 	 	  	}
 	 	  	//check if you can read it
-	 	  	if(!file.canRead()){
+	 	  	if(accessViolation(path)){
 	 	  		return;
 	 	  	}
 	 	  	
@@ -224,7 +225,7 @@ public class FileTransferClient extends Host{
 			String filepath = System.getProperty("user.home") + "\\Documents\\" + filename;		
 			File file = new File(filepath);	
 			
-			if (!file.exists()){
+			if (file.exists()){
 				System.out.println("You already have file " + filename);
 	 	  		return;
 	 	  	}
