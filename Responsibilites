@@ -9,13 +9,16 @@ Iteration 1
 - UCM Diagrams
 - README.md
 
--> Daniel Gravel	
+-> Daniel Gravel
+-Testing differnet errors
 -FileTransferClient.java
--Host.java
   -receiveFile
   -sendFile
-  -createAck
-  -createDataPacket
+  -user prompt
+  -server error handling
+  -client error handling
+ -Host.java
+  -various bug fixes
  -Printer
   -Verbose/Quiet
   
