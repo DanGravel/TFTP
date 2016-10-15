@@ -229,7 +229,7 @@ public class FileTransferClient extends Host{
 				System.out.println("You already have file " + filename);
 	 	  		return;
 	 	  	}
-			if(checkFileSpace()){
+			if(diskFull(file, socket, sender)){
 				return;
 			}
 			
