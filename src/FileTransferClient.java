@@ -129,7 +129,7 @@ public class FileTransferClient extends Host{
 				    	  toSend = Arrays.copyOfRange(filedata, start, upto);
 				      }
 				      packetdata = createDataPacket(toSend, blockNum);
-				      sendaPacket(packetdata,port, socket, sender);
+				      sendaPacket(packetdata, receivePacket.getPort(), socket, sender);
 				      receiveaPacket(sender, socket);
 				      blockNum++;
 				      start += DATA_END;
@@ -162,7 +162,7 @@ public class FileTransferClient extends Host{
 					receiveaPacket(sender, socket);
 					fis.write(Arrays.copyOfRange(receivePacket.getData(), 4, PACKET_SIZE));
 					byte[] ack = createAck(blockNum);
-					sendaPacket(ack, port, socket, sender);
+					sendaPacket(ack, receivePacket.getPort(), socket, sender);
 				} while(!(receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 4));
 				fis.close();
 				} catch(IOException e){
