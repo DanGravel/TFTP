@@ -23,7 +23,7 @@ public class FileTransferServer extends Host implements Runnable {
 	private boolean doneFile; // set when you are at the end of the file;
 	private DatagramSocket sendAndReceiveSocket, receiveSocket;
 	private boolean serverShutdown = false; // boolean to see if server is supposed to be shut down
-	private Validater validater;
+	private Validater validater = new Validater();
 	
 	public FileTransferServer(DatagramPacket packet, int port) {
 		try {
