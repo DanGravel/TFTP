@@ -7,11 +7,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.*;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Scanner;
+
+import javax.swing.filechooser.FileSystemView;
 
 
 /**
@@ -47,7 +50,7 @@ public class FileTransferClient extends Host{
 	public void sendAndReceive() throws IOException {
 	    
 	      if(request == RequestType.READ) {
-	    	  if(mode == Mode.NORMAL){
+	    	  if(mode == Mode.TEST){
 	    		  receiveFile(fileName, sendReceiveSocket,INTERMEDIATE_PORT, "client");	    	  
 	    	  }
 	    	  else{
@@ -55,7 +58,7 @@ public class FileTransferClient extends Host{
 	    	  }  
 	      } 
 	      else {
-	    	  if(mode == Mode.NORMAL){
+	    	  if(mode == Mode.TEST){
 
 	    		 sendFile(fileName, sendReceiveSocket,  INTERMEDIATE_PORT, "client");
 
@@ -222,16 +225,14 @@ public class FileTransferClient extends Host{
 	   * @param sender: name of the sender
 	   */
 		public void receiveFile(String filename, DatagramSocket socket, int port, String sender){
-			String filepath = System.getProperty("user.home") + "\\Documents\\" + filename;		
+			String filepath = System.getProperty("user.home") + "\\Documents\\" + filename;	
 			File file = new File(filepath);	
 			
 			if (file.exists()){
 				System.out.println("You already have file " + filename);
 	 	  		return;
 	 	  	}
-			if(diskFull(file, socket, sender)){
-				return;
-			}
+
 			
 			byte[] RRQ = arrayCombiner(read, filename);
 	 		sendaPacket(RRQ,port, socket, sender);  //send request 			
@@ -241,6 +242,7 @@ public class FileTransferClient extends Host{
 				FileOutputStream fis = new FileOutputStream(file);
 				do{
 					receiveaPacket(sender, socket);
+					if(diskFull(file, socket, sender)) return;
 					if(isError()){
 						handleError();
 						return;
@@ -252,9 +254,9 @@ public class FileTransferClient extends Host{
 					blockNum++;
 				} while(datalength >= 512);
 				fis.close();
-				} catch(IOException e){
-					System.out.println("Failed to receive next part of file");
-				}
+			} catch(IOException e){
+				System.out.println("Failed to receive next part of file");
+			}
 		}
 	/**
 	 * Checks if there is space left for file
@@ -367,7 +369,8 @@ public class FileTransferClient extends Host{
 	 * @return True if the disk is full
 	 */
 	private boolean diskFull(File file, DatagramSocket socket, String sender){
-		if(new File(file.getPath()).getUsableSpace() < PACKET_SIZE){
+		//File parentDirectory = FileSystemView.getFileSystemView().getParentDirectory(file);
+		if(new File(file.getParent()).getUsableSpace() < PACKET_SIZE){
 			byte[] errorCode = {0,5,0,3};
  			String errorMsg = "Client Disk Full";
  			byte[] errMsg = errorMsg.getBytes();
@@ -382,7 +385,7 @@ public class FileTransferClient extends Host{
  			}
  			byte[] error = b.toByteArray();
  			//sendaPacket(error, receivePacket.getPort(), socket, sender);
- 			System.out.println("Disk Is Full");
+ 			System.out.println("\nDisk Is Full\n");
  			return true;
 		}
 		return false;
@@ -423,6 +426,5 @@ public class FileTransferClient extends Host{
 			c.promptUser();
 			if(c.fileName.length() != 0) c.sendAndReceive();
 		}
-		
 	}
 }
