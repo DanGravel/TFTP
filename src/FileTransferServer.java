@@ -142,13 +142,11 @@ public class FileTransferServer extends Host implements Runnable {
 		String path = HOME_DIRECTORY+ "\\Desktop\\" + fileName;
 		File file = new File(path);
 		FileOutputStream fos = null;
-		//TODO This part looks like shit, cant find a proper way to infuse
+		//TODO This part looks like shit, can't find a proper way to infuse
 		//it with the while loop
 		receiveaPacket("Server", sendAndReceiveSocket); // Receive first part of data
 		request = validater.validate(receivePacket.getData()); //Get the request
-		//if(request != RequestType.DATA) request = RequestType.INVALID; //If its not a data packet, its in invalid packet for this  transfer
 		byte[] ack = createRightPacket(request, receivePacket.getData()); //create ACK
-		
 		try {
 			fos = new FileOutputStream(file);
 			while(request == RequestType.DATA) { //If not data, wrong packet
@@ -168,9 +166,6 @@ public class FileTransferServer extends Host implements Runnable {
 		if(request != RequestType.DATA) sendaPacket(ack, receivePacket.getPort(), sendAndReceiveSocket, "Server");	//Error Handling
 	}
 	
-	
-
-	
 	/**
 	 * 
 	 * @param request	Request type of data from received packet
@@ -187,7 +182,6 @@ public class FileTransferServer extends Host implements Runnable {
 			case DATA: 
 				byte getBlockNumber[] = receivePacket.getData();
 				response = createAck(getBlockNumber[2],getBlockNumber[3]);
-				
 				break;
 			case INVALID:
 				response = new byte[]{0, 5, 0, 0}; 
@@ -248,10 +242,8 @@ public class FileTransferServer extends Host implements Runnable {
 			public void run() {
 				Scanner reader = new Scanner(System.in);
 				String key = "";
-				
 				System.out.println("Press q to quit server");
-				while(true) 
-				{
+				while(true) {
 					key = reader.nextLine();
 					if(key.equalsIgnoreCase("q")) {
 						System.out.println("Server no longer accepting new client connections");
@@ -260,10 +252,8 @@ public class FileTransferServer extends Host implements Runnable {
 						reader.close();
 					}
 				}
-			}
-						
+			}				
 		}.start();
-
 	}
 		
 	public static void main(String args[]) {
