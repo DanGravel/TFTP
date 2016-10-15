@@ -70,9 +70,8 @@ public class FileTransferServer extends Host implements Runnable {
 		}
 		byte data[] = receivePacket.getData(); 
 		RequestType request = validater.validate(data); //Find out what kind of packet is sent: RRQ, WRQ, etc.
-		if(request == RequestType.READ || request == RequestType.WRITE) request = RequestType.INVALID; // First packet must be read or write!
+		if(request != RequestType.READ || request != RequestType.WRITE) request = RequestType.INVALID; // First packet must be read or write!
 		byte[] response = createRightPacket(request, data); //Create the right response to the packet
-		
 		switch(request) {
 		case READ:
 			sendNextPartofFile(); //Start file transfer!
@@ -186,7 +185,9 @@ public class FileTransferServer extends Host implements Runnable {
 				response = createAck(0);
 				break;
 			case DATA: 
-				response = createAck(0); //TODO change the 0 to a proper number
+				byte getBlockNumber[] = receivePacket.getData();
+				response = createAck(getBlockNumber[2],getBlockNumber[3]);
+				
 				break;
 			case INVALID:
 				response = new byte[]{0, 5, 0, 0}; 

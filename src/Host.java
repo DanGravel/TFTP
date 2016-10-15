@@ -80,6 +80,12 @@ public abstract class Host {
 
 	  }
 	  
+	  protected byte[] createAck(byte byte1, byte byte2){
+			return (new byte[] {0, 4, byte1, byte2}); //new byte[4]; 
+
+	  }
+	  
+	  
 	  /**
 	   * Creates an empty datapacket with a DATA signal
 	   * 
@@ -87,8 +93,7 @@ public abstract class Host {
 	   * @return a byte array with packet information
 	   */
 	  protected byte[] createDataPacket(int blockNum) {
-		  return (new byte[] {0, 3, (byte) (blockNum), (byte) (blockNum >>> 8)});
-	
+		  return (new byte[] {0, 3, (byte) (blockNum & 0xFF), (byte) ((blockNum >>> 8) & 0xFF)});	
 	  }
 
 	  /**
