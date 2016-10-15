@@ -6,11 +6,11 @@ import java.net.DatagramPacket;
 public class Printer {
 		protected static boolean isVerbose;
 		
-		public boolean isVerbose() {
+		public static boolean isVerbose() {
 			return isVerbose;
 		}
 
-		public void setIsVerbose(boolean isVerbose) {
+		public static void setIsVerbose(boolean isVerbose) {
 			Printer.isVerbose = isVerbose;
 		}
 

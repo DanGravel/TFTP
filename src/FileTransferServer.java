@@ -101,7 +101,7 @@ public class FileTransferServer extends Host implements Runnable {
 		try{
 			fileData = Files.readAllBytes(path);
 		} catch(IOException e){
-			System.out.println("Could not open file to read");
+			System.out.println("Could not open file to read\n");
 		}
 		
 			int endOfFile = fileData.length - 1;
@@ -205,7 +205,7 @@ public class FileTransferServer extends Host implements Runnable {
 				errorMessage = "This file already exists, cannot overwrite";
 				break;
 			default: 
-				System.out.print("Formulating packet");
+				System.out.print("Formulating packet\n");
 		}
 		if(errorMessage != null) { //Check to see if a request was an error and formulate array
 			response = arrayCombiner(response, errorMessage);
@@ -243,11 +243,11 @@ public class FileTransferServer extends Host implements Runnable {
 			public void run() {
 				Scanner reader = new Scanner(System.in);
 				String key = "";
-				System.out.println("Press q to quit server");
+				System.out.println("Press q to quit server\n");
 				while(true) {
 					key = reader.nextLine();
 					if(key.equalsIgnoreCase("q")) {
-						System.out.println("Server no longer accepting new client connections");
+						System.out.println("Server no longer accepting new client connections\n");
 						serverShutdown = true;
 						//receiveSocket.close();
 						reader.close();

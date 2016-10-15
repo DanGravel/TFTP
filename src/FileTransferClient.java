@@ -63,7 +63,9 @@ public class FileTransferClient extends Host{
 //		System.out.println("verbose or quiet?");
 //		String s0 = reader.nextLine();
 //		if(s0.equals("verbose")){
-			p.setIsVerbose(true);
+//			p.setIsVerbose(true);
+			Printer.setIsVerbose(true);
+			System.out.println(Printer.isVerbose() + "\n");
 //		}
 //		else{
 //			p.setIsVerbose(false);
