@@ -23,7 +23,7 @@ public class FileTransferServer extends Host implements Runnable {
 	private boolean doneFile; // set when you are at the end of the file;
 	private DatagramSocket sendAndReceiveSocket, receiveSocket;
 	private boolean serverShutdown = false; // boolean to see if server is supposed to be shut down
-	private Validater validater = new Validater();
+	private Validater validater;
 	
 	public FileTransferServer(DatagramPacket packet, int port) {
 		try {
@@ -36,6 +36,7 @@ public class FileTransferServer extends Host implements Runnable {
 			se.printStackTrace();
 			System.exit(1);
 		}
+		validater = new Validater();
 		doneFile = false;
 		
 }	
@@ -65,14 +66,12 @@ public class FileTransferServer extends Host implements Runnable {
 		try {
 			sendAndReceiveSocket = new DatagramSocket();  //Enable socket
 		} catch (SocketException se) {
-			se.printStackTrace();
-			System.exit(1);
+			System.out.println("Could not bind to any port. Please free up some ports and restart the server");
+			return;
 		}
 		byte data[] = receivePacket.getData(); 
 		RequestType request = validater.validate(data); //Find out what kind of packet is sent: RRQ, WRQ, etc.
-		if(request != RequestType.READ && request != RequestType.WRITE) {
-			request = RequestType.INVALID; // First packet must be read or write!
-		}
+		if(request != RequestType.READ && request != RequestType.WRITE) request = RequestType.INVALID; // First packet must be read or write
 		byte[] response = createRightPacket(request, data); //Create the right response to the packet
 		switch(request) {
 		case READ:
@@ -141,7 +140,7 @@ public class FileTransferServer extends Host implements Runnable {
 			sendaPacket(b, receivePacket.getPort(), sendAndReceiveSocket, "Server");
 			return; 
 		}
-		String path = HOME_DIRECTORY+ "\\Desktop\\" + fileName;
+		String path = HOME_DIRECTORY+ "\\Desktop\\" + validater.getFilename();
 		File file = new File(path);
 		FileOutputStream fos = null;
 		//TODO This part looks like shit, can't find a proper way to infuse
