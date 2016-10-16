@@ -16,7 +16,6 @@ import java.util.Arrays;
  */
 public class FileTransferClient extends Host{
 	private DatagramSocket sendReceiveSocket;
-	private static final int INTERMEDIATE_PORT= 23;
 	private static enum Mode {NORMAL, TEST};
 	private Mode mode;
 	private RequestType request;
@@ -207,8 +206,6 @@ public class FileTransferClient extends Host{
 					return;
 				}
 		 }
- 	  
-
 
 	  	/**
 	   * Used for write requests in the server
@@ -251,19 +248,7 @@ public class FileTransferClient extends Host{
 			} catch(IOException e){
 				System.out.println("Failed to receive next part of file");
 			}
-		}
-	/**
-	 * Checks if there is space left for file
-	 * @return
-	 */
-	private boolean checkFileSpace(){
-		if(new File("C:\\").getUsableSpace() < PACKET_SIZE){
-			System.out.println("Disk Full");
-			return true;
-		}
-		return false;
-	}
-	
+		}	
 
 	/**
 	 * Handles incoming error packets
@@ -324,37 +309,6 @@ public class FileTransferClient extends Host{
 	}
 	
 	/**
-	 * Checks if a file already exists in the event of a read request. Files cannot be overwritten.
-	 * 
-	 * @param file: the file to be checked
-	 * @return True if the file already exists
-	 */
-	private boolean fileAlreadyExists(File file){
-		if (file.exists()){
-			System.out.println("File already exists. Files cannot be overwritten. \n");
-			return true;
-		}
-		return false;
-	}
-	
-	/**
-	 * Checks if the file does not exists
-	 * 
-	 * @param file: The file to be checked
-	 * @return True if the file does not exist
-	 * @throws IOException
-	 */
-	private boolean fileDoesNotExist(File file) throws IOException
-	{
- 		if(!file.exists() && !file.isDirectory())
- 		{
- 			System.out.println("The file name entered does not exist, please try again. \n");
- 			return true;
- 		}
- 		return false;
-	}
-	
-	/**
 	 * Checks if the disk being written to is full.
 	 * 
 	 * @param file: The file that is being received
@@ -363,7 +317,6 @@ public class FileTransferClient extends Host{
 	 * @return True if the disk is full
 	 */
 	private boolean diskFull(File file, DatagramSocket socket, String sender){
-		//File parentDirectory = FileSystemView.getFileSystemView().getParentDirectory(file);
 		if(new File(file.getParent()).getUsableSpace() < PACKET_SIZE){
 			byte[] errorCode = {0,5,0,3};
  			String errorMsg = "Client Disk Full";
@@ -377,8 +330,6 @@ public class FileTransferClient extends Host{
  			} catch (Exception e){
  				e.printStackTrace();
  			}
- 			byte[] error = b.toByteArray();
- 			//sendaPacket(error, receivePacket.getPort(), socket, sender);
  			System.out.println("\nDisk Is Full\n");
  			return true;
 		}
