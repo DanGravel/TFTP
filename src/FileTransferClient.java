@@ -20,6 +20,7 @@ public class FileTransferClient extends Host{
 	private Mode mode;
 	private RequestType request;
 	private String fileName;
+	private static String pathName;
 	private static final byte[] read = {0,1};
 	private static final byte[] write = {0,2};
 	
@@ -150,7 +151,7 @@ public class FileTransferClient extends Host{
 	 * @throws IOException 
 	   */
 	  public void sendFile(String filename, DatagramSocket socket, int port, String sender) throws IOException{
-		  	String path = HOME_DIRECTORY + "\\Documents\\" + filename;
+		    String path = pathName + "\\" + filename;
 	 	  	File file = new File(path);
 
 	 	  	//check if the file exists
@@ -216,7 +217,7 @@ public class FileTransferClient extends Host{
 	   * @param sender: name of the sender
 	   */
 		public void receiveFile(String filename, DatagramSocket socket, int port, String sender){
-			String filepath = System.getProperty("user.home") + "\\Documents\\" + filename;	
+			String filepath = pathName + "\\" + filename;	
 			File file = new File(filepath);	
 			
 			if (file.exists()){
@@ -360,6 +361,17 @@ public class FileTransferClient extends Host{
  		return false;
 	}
 	
+	/*
+	 * Sets the path name.
+	 */
+	private static void pathName() throws IOException
+	{
+		BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+		System.out.println("Enter pathName: ");
+		String p = in.readLine();
+		pathName = p;
+	}
+	
 	/**
 	 * Main.
 	 * @param args
@@ -367,6 +379,7 @@ public class FileTransferClient extends Host{
 	 */
 	public static void main(String args[]) throws IOException {
 		FileTransferClient c = new FileTransferClient();
+		pathName();
 		while(true){
 			c.promptUser();
 			if(c.fileName.length() != 0) c.sendAndReceive();
