@@ -91,7 +91,7 @@ public class FileTransferServer extends Host implements Runnable {
 	 * Sends next part of the file that is 
 	 */
 	private void sendNextPartofFile() {
-		int start, upto; //Since the whole file cannot be sent at once, this is used to submit segments at a time
+		int start, upto; // Since the whole file cannot be sent at once, this is used to submit segments at a time
 		start = DATA_START;
 		upto = DATA_END;
 		int blockNum = 1;
@@ -143,8 +143,7 @@ public class FileTransferServer extends Host implements Runnable {
 		String path = HOME_DIRECTORY+ "\\Desktop\\" + validater.getFilename();
 		File file = new File(path);
 		FileOutputStream fos = null;
-		//TODO This part looks like shit, can't find a proper way to infuse
-		//it with the while loop
+		//TODO can't find a proper way to infuse it with the while loop
 		receiveaPacket("Server", sendAndReceiveSocket); // Receive first part of data
 		request = validater.validate(receivePacket.getData()); //Get the request
 		byte[] ack = createRightPacket(request, receivePacket.getData()); //create ACK
