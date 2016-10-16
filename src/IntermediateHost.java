@@ -1,14 +1,12 @@
 import java.net.*;
 
-public class IntermediateHost extends Host
-{
+public class IntermediateHost extends Host {
 	private DatagramSocket sendSocket, receiveSocket, sendReceiveSocket;
-	
 
 	public IntermediateHost() {
 		try {
-			receiveSocket = new DatagramSocket(INTERMEDIATE_PORT);	
-			sendReceiveSocket = new DatagramSocket();	
+			receiveSocket = new DatagramSocket(INTERMEDIATE_PORT);
+			sendReceiveSocket = new DatagramSocket();
 		} catch (SocketException se) {
 			se.printStackTrace();
 			System.exit(1);
@@ -20,42 +18,41 @@ public class IntermediateHost extends Host
 			System.out.println("Waiting to receive");
 			receiveFromClient();
 			sendToServer();
-			
-			
+
 			int clientPort = receivePacket.getPort();
-			
-            receiveFromServer();	
-          
-	        sendToClient(clientPort);
-			
+
+			receiveFromServer();
+
+			sendToClient(clientPort);
+
 			System.out.println("Simulator: packet sent\n\n");
-			sendSocket.close();
+			// sendSocket.close();
 		}
 	}
-	
-	private void sendToServer(){
+
+	private void sendToServer() {
 		sendaPacket(receivePacket.getData(), FileTransferServer.SERVER_PORT, sendReceiveSocket, "Intermediate");
 	}
-	
-	private void receiveFromClient(){
+
+	private void receiveFromClient() {
 		receiveaPacket("Intermediate", receiveSocket);
 	}
-	
-	private void receiveFromServer(){
+
+	private void receiveFromServer() {
 		receiveaPacket("Intermediate", sendReceiveSocket);
 	}
-	
-	private void sendToClient(int clientPort){
-		  try {	
-  			sendSocket = new DatagramSocket();
-  		} catch (SocketException se) {
-  			se.printStackTrace();
-  		}
-		sendaPacket(receivePacket.getData(), clientPort, sendSocket,"Intermediate");
+
+	private void sendToClient(int clientPort) {
+		try {
+			sendSocket = new DatagramSocket();
+		} catch (SocketException se) {
+			se.printStackTrace();
+		}
+		sendaPacket(receivePacket.getData(), clientPort, sendSocket, "Intermediate");
 	}
-	
-	public static void main (String args[]) {
-		IntermediateHost ih = new IntermediateHost(); 
+
+	public static void main(String args[]) {
+		IntermediateHost ih = new IntermediateHost();
 		ih.sendAndReceive();
 	}
 }

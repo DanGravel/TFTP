@@ -9,12 +9,7 @@ public class Validater {
 	String fileName = "";
 	private static final int FILE_NAME_START = 2; // Index where filename starts for RRQ and WRQ
 	
-//	public Validater(String fileName) {
-//		this.fileName = fileName; 
-//	}
-	
 	/**
-	 * 
 	 * @param data	The data of packet received
 	 * @return		The request type, if packet contained a RRQ,WRQ, ACK, DATA, ERROR
 	 */
@@ -29,7 +24,7 @@ public class Validater {
 		else request = RequestType.INVALID;
 		if(request == RequestType.READ || request == RequestType.WRITE) {
 			request = validateFileNameandMode(data, request);	//Get filename and validate packet
-			if(request != RequestType.INVALID) request = fileValidation(request); //ensure file doesnt exist and has right access rights
+			if(request != RequestType.INVALID) request = fileValidation(request); //ensure file doesn't exist and has right access rights
 		}
 		return request;
 	}
