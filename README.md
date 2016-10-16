@@ -51,3 +51,6 @@ When running in test mode: <br />
      * E.g C:\\\Users\\\kshaminag\\\Desktop\\\Folder
   * Type help when prompted to enter a command by client to see a list of commands you can use
   
+  * Read request will transfer file from Desktop to user specified path
+  * Write request will transfer file from user specified path to Desktop
+  
