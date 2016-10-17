@@ -97,7 +97,7 @@ public class FileTransferServer extends Host implements Runnable {
 		int blockNum = 1;
 		byte[] fileData = null; 
 		byte[] packetdata = new byte[PACKET_SIZE];
-		Path path = Paths.get(HOME_DIRECTORY + "\\Desktop\\" + validater.getFilename());
+		Path path = Paths.get("src\\serverFiles\\" + validater.getFilename()); 
 		try{
 			fileData = Files.readAllBytes(path);
 		} catch(IOException e){
@@ -140,7 +140,7 @@ public class FileTransferServer extends Host implements Runnable {
 			sendaPacket(b, receivePacket.getPort(), sendAndReceiveSocket, "Server");
 			return; 
 		}
-		String path = HOME_DIRECTORY+ "\\Desktop\\" + validater.getFilename();
+		String path = "src\\serverFiles\\" + validater.getFilename(); 
 		File file = new File(path);
 		FileOutputStream fos = null;
 		//TODO can't find a proper way to infuse it with the while loop

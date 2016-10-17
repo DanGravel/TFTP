@@ -30,7 +30,7 @@ public class Validater {
 	}
 	
 	private RequestType fileValidation(RequestType request) {		
-		String path = System.getProperty("user.home") + "\\Desktop\\" + fileName;
+		String path = "src\\serverFiles\\" + fileName; 
 		Path path2 = Paths.get(path);
 		if(request == RequestType.READ) {
 			if(!(new File(path).exists())) {
