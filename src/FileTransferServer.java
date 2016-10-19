@@ -36,7 +36,7 @@ public class FileTransferServer extends Host implements Runnable {
 		}
 		doneFile = false;
 		
-}	
+	}	
 
 	/**
 	 * Main thread, opens sub thread to take care of received files. Continuously waits on socket 69 for packets

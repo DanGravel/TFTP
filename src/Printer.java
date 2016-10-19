@@ -6,11 +6,11 @@ import java.net.DatagramPacket;
 public class Printer {
 		protected static boolean isVerbose;
 		
-		public boolean isVerbose() {
+		public static boolean isVerbose() {
 			return isVerbose;
 		}
 
-		public void setIsVerbose(boolean isVerbose) {
+		public static void setIsVerbose(boolean isVerbose) {
 			Printer.isVerbose = isVerbose;
 		}
 
@@ -21,15 +21,15 @@ public class Printer {
 		 */
 		public void printRequestAndAck(String host,  DatagramPacket sendPacket) {
 			System.out.println(host + ": Packet sent \n");
-	      //if(isVerbose()){
+			if(isVerbose()){
 	    	  printSenderOrReceiverInfo(true, sendPacket, host);
 	    	  System.out.print("Containing: " + new String(sendPacket.getData()));
 	    	  printBytes(sendPacket.getData());
 	    	  System.out.println(host + ": Packet sent \n");
-	      //}
-	     // else{
-	    	//  System.out.println(host + ": Packet sent \n");
-	      //}
+			}
+			else{
+				System.out.println(host + ": Packet sent \n");
+			}
 		}
 		
 		public void printReceivedFile(String host, DatagramPacket packet){

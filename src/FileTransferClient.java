@@ -113,10 +113,10 @@ public class FileTransferClient extends Host{
 			request = RequestType.WRITE;
 			break;
 		case "verbose":
-			p.setIsVerbose(true);
+			Printer.setIsVerbose(true);
 			break;
-		case "!vebose":
-			p.setIsVerbose(false);
+		case "!verbose":
+			Printer.setIsVerbose(false);
 			break;
 		case "help":
 			System.out.println("Commands:"
@@ -209,9 +209,9 @@ public class FileTransferClient extends Host{
 				}while(endofFile == DATA_END); //while you can get a full 512 bytes keep going
 					 
 				fis.close();
-				}catch(IOException e){
-					return;
-				}
+			}catch(IOException e){
+				return;
+			}
 		 }
  	  
 
