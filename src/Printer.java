@@ -7,11 +7,11 @@ public class Printer {
 	protected static boolean isVerbose;
 
 	public static boolean isVerbose() {
-		return isVerbose;
+			return isVerbose;
 	}
 
 	public static void setIsVerbose(boolean isVerbose) {
-		Printer.isVerbose = isVerbose;
+			Printer.isVerbose = isVerbose;
 	}
 
 	/**
