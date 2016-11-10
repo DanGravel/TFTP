@@ -3,6 +3,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 
@@ -50,20 +51,26 @@ public abstract class Host {
    * @param host: the host the packet is sent from
    * @param receiveSocket: the socket that is receiving the packet
    */
-	protected void receiveaPacket(String host, DatagramSocket receiveSocket) {
+	protected void receiveaPacket(String host, DatagramSocket receiveSocket, byte[] packetdata) {
 		byte data[] = new byte[PACKET_SIZE];
 		receivePacket = new DatagramPacket(data, data.length);
-		try {
-			receiveSocket.receive(receivePacket);
-		} catch (IOException e) {
-			System.out.print("IO Exception: likely:");
-			System.out.println("Receive Socket Timed Out.\n" + e);
-			e.printStackTrace();
-			System.exit(1);
+		while(true){
+			try {
+				receiveSocket.receive(receivePacket);
+				break;
+			}catch(SocketTimeoutException e){
+				System.out.println("Havent recieved a response in three seconds resending");
+				sendaPacket(packetdata, SERVER_PORT, receiveSocket, "Client");
+				continue;
+			}catch (IOException e) {
+				System.out.print("IO Exception: likely:");
+				System.out.println("Receive Socket Timed Out.\n" + e);
+				e.printStackTrace();
+				System.exit(1);
+			}
 		}
 		p.printReceiveData(host, receivePacket);
-	}
-	  	
+	}	
   /**
    * creates a byte array with the acknowledgement info
    * 

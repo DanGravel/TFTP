@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.*;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -23,6 +24,7 @@ public class FileTransferClient extends Host{
 	private static String pathName;
 	private static final byte[] read = {0,1};
 	private static final byte[] write = {0,2};
+	private static final int TIMEOUT = 2000;
 	
 	/**
 	 * FileTransferClient Constructor creates a new DatgramSocket.
@@ -90,9 +92,8 @@ public class FileTransferClient extends Host{
 		case "quit":
 			System.exit(0);
 			break;
-		case "serverquit":
-			byte[] s = new byte[]{9,9};
-			sendaPacket(s,69,sendReceiveSocket, "client");
+		case  "pwd":
+			System.out.println(pathName);
 			break;
 		case "normal": 
 			mode = Mode.NORMAL;
@@ -153,7 +154,8 @@ public class FileTransferClient extends Host{
 	  public void sendFile(String filename, DatagramSocket socket, int port, String sender) throws IOException{
 		    String path = pathName + "\\" + filename;
 	 	  	File file = new File(path);
-
+	 	  	sendReceiveSocket.setSoTimeout(TIMEOUT);
+	 	  	
 	 	  	//check if the file exists
 	 	  	if (!file.exists()){
 	 	  		System.out.println("File does not exist");
@@ -168,7 +170,7 @@ public class FileTransferClient extends Host{
 			//sending write request
 			byte[] WRQ = arrayCombiner(write, filename);		
 		 	sendaPacket(WRQ,port, socket, sender);
-		 	receiveaPacket(sender, socket);
+		 	receiveaPacket(sender, socket,WRQ);
 		 	if(isError()){
 				handleError();
 				return;
@@ -192,14 +194,13 @@ public class FileTransferClient extends Host{
 						filedata = new byte[0];
 						packetdata = createDataPacket(filedata, blockNum);
 						sendaPacket(packetdata, receivePacket.getPort(), socket, sender);
-						receiveaPacket(sender, socket);	
+						receiveaPacket(sender, socket, packetdata);	
 						break;
 					}
-					
+					blockNum++;
 					packetdata = createDataPacket(filedata, blockNum);
 					sendaPacket(packetdata, receivePacket.getPort(), socket, sender);
-					receiveaPacket(sender, socket);
-					blockNum++;
+					receiveaPacket(sender, socket, packetdata);
 				}while(endofFile == DATA_END); //while you can get a full 512 bytes keep going
 					 
 				fis.close();
@@ -233,7 +234,7 @@ public class FileTransferClient extends Host{
 			try{
 				FileOutputStream fis = new FileOutputStream(file);
 				do{
-					receiveaPacket(sender, socket);
+					receiveaPacket(sender, socket,RRQ);
 					if(diskFull(file, socket, sender)) return;
 					if(isError()){
 						handleError();
@@ -369,9 +370,24 @@ public class FileTransferClient extends Host{
 		BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
 		System.out.println("Enter pathName: ");
 		String p = in.readLine();
-		pathName = p;
+		if(pathValidation(p)){
+			pathName = p;
+		}
+		else{
+			pathName();
+		}
+
 	}
 	
+	
+	private static boolean pathValidation(String path){
+		try{
+			Paths.get(path);
+		}catch (InvalidPathException | NullPointerException e){
+			return false;
+		}
+		return true;
+	}
 	/**
 	 * Main.
 	 * @param args
