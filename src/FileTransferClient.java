@@ -131,10 +131,14 @@ public class FileTransferClient extends Host{
 	/**
 	 * Checks if the command is a file name, otherwise it is a unrecognized command.
 	 * 
-	 * @param s: The string that is inputted.
+	 * @param s: The string that is entered
 	 */
 	private void stringChecker(String s){
 		if(s.indexOf(".txt") != -1) fileName = s;
+		else if(s.matches("([a-zA-Z]:)?(\\\\[a-zA-Z0-9_.-]+)+\\\\?")) {
+			pathName = s;
+			System.out.println("New system path: " + pathName);
+		}
 		else{ 
 			if(!s.equals("help")){
 			System.out.println("Sorry something you typed was no supported, try 'help'");
