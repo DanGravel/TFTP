@@ -25,6 +25,7 @@ public class FileTransferClient extends Host{
 	private static final byte[] read = {0,1};
 	private static final byte[] write = {0,2};
 	private static final int TIMEOUT = 2000;
+	private static String FILE_PATH_REGEX = "([a-zA-Z]:)?(\\\\[a-zA-Z0-9_.-]+)+\\\\?";
 	
 	/**
 	 * FileTransferClient Constructor creates a new DatgramSocket.
@@ -134,8 +135,10 @@ public class FileTransferClient extends Host{
 	 * @param s: The string that is entered
 	 */
 	private void stringChecker(String s){
-		if(s.indexOf(".txt") != -1) fileName = s;
-		else if(s.matches("([a-zA-Z]:)?(\\\\[a-zA-Z0-9_.-]+)+\\\\?")) {
+		if(s.endsWith(".txt")) {
+			fileName = s;
+		}
+		else if(s.matches(FILE_PATH_REGEX)) {
 			pathName = s;
 			System.out.println("New system path: " + pathName);
 		}
@@ -146,6 +149,21 @@ public class FileTransferClient extends Host{
 		}
 	}
 
+		/**
+		 * 
+		 * @param filename
+		 * @return
+		 */
+		private String createPath(String filename){
+			if(pathName.endsWith("\\")){
+			  	return pathName + filename;
+		    }
+		    else{
+		    	return pathName + "\\" + filename;
+		    }
+		}
+		
+		
 	  /**
 	   * Sends a write request and then sends the file to the server.
 	   * 
@@ -156,7 +174,8 @@ public class FileTransferClient extends Host{
 	 * @throws IOException 
 	   */
 	  public void sendFile(String filename, DatagramSocket socket, int port, String sender) throws IOException{
-		    String path = pathName + "\\" + filename;
+		  	String path = createPath(filename);
+		    
 	 	  	File file = new File(path);
 	 	  	sendReceiveSocket.setSoTimeout(TIMEOUT);
 	 	  	
@@ -222,8 +241,8 @@ public class FileTransferClient extends Host{
 	   * @param sender: name of the sender
 	   */
 		public void receiveFile(String filename, DatagramSocket socket, int port, String sender){
-			String filepath = pathName + "\\" + filename;	
-			File file = new File(filepath);	
+		  	String path = createPath(filename);
+			File file = new File(path);	
 			
 			if (file.exists()){
 				System.out.println("You already have file " + filename);
@@ -372,26 +391,23 @@ public class FileTransferClient extends Host{
 	private static void pathName() throws IOException
 	{
 		BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+		while(true){
 		System.out.println("Enter pathName: ");
-		String p = in.readLine();
-		if(pathValidation(p)){
-			pathName = p;
+			String p = in.readLine();
+			if(p.matches(FILE_PATH_REGEX)){
+				pathName = p;
+				break;
+			}
+			else{
+				System.out.println("Sorry that file path doesnt seem to be valid");
+				pathName();
+				continue;
+			}
 		}
-		else{
-			pathName();
-		}
+	}
+	
+	
 
-	}
-	
-	
-	private static boolean pathValidation(String path){
-		try{
-			Paths.get(path);
-		}catch (InvalidPathException | NullPointerException e){
-			return false;
-		}
-		return true;
-	}
 	/**
 	 * Main.
 	 * @param args
@@ -402,7 +418,7 @@ public class FileTransferClient extends Host{
 		pathName();
 		while(true){
 			c.promptUser();
-			if(c.fileName.length() != 0) c.sendAndReceive();
+			if(c.fileName.length() != 0 && c.mode != null && c.request != null) c.sendAndReceive();
 		}
 	}
 }

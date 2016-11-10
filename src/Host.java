@@ -50,17 +50,21 @@ public abstract class Host {
    * 
    * @param host: the host the packet is sent from
    * @param receiveSocket: the socket that is receiving the packet
+ * @throws IOException 
    */
-	protected void receiveaPacket(String host, DatagramSocket receiveSocket, byte[] packetdata) {
+	protected void receiveaPacket(String host, DatagramSocket receiveSocket, byte[] packetdata) throws IOException {
 		byte data[] = new byte[PACKET_SIZE];
 		receivePacket = new DatagramPacket(data, data.length);
+		int numFailed = 0;
 		while(true){
 			try {
 				receiveSocket.receive(receivePacket);
+				p.printReceiveData(host, receivePacket);
 				break;
 			}catch(SocketTimeoutException e){
 				System.out.println("Havent recieved a response in three seconds resending");
 				sendaPacket(packetdata, SERVER_PORT, receiveSocket, "Client");
+				numFailed++;
 				continue;
 			}catch (IOException e) {
 				System.out.print("IO Exception: likely:");
@@ -69,7 +73,6 @@ public abstract class Host {
 				System.exit(1);
 			}
 		}
-		p.printReceiveData(host, receivePacket);
 	}	
   /**
    * creates a byte array with the acknowledgement info
