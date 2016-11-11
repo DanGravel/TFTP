@@ -50,7 +50,7 @@ public abstract class Host {
    * @param host: the host the packet is sent from
    * @param receiveSocket: the socket that is receiving the packet
    */
-	protected void receiveaPacket(String host, DatagramSocket receiveSocket) {
+	protected DatagramPacket receiveaPacket(String host, DatagramSocket receiveSocket) {
 		byte data[] = new byte[PACKET_SIZE];
 		receivePacket = new DatagramPacket(data, data.length);
 		try {
@@ -62,6 +62,7 @@ public abstract class Host {
 			System.exit(1);
 		}
 		p.printReceiveData(host, receivePacket);
+		return receivePacket; 
 	}
 	  	
   /**

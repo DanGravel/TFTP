@@ -26,6 +26,7 @@ public class FileTransferServer extends Host implements Runnable {
 	private Validater validater;
 	
 	public FileTransferServer(DatagramPacket packet, int port) {
+		Printer.setIsVerbose(true);	//KG FOR TESTING UNTIL PUT INTO PROMPT
 		try {
 	
 			if(port == SERVER_PORT) {
@@ -104,7 +105,7 @@ public class FileTransferServer extends Host implements Runnable {
 			System.out.println("Could not open file to read\n");
 		}
 		
-			int endOfFile = fileData.length - 1;
+			int endOfFile = fileData.length;	//KG CHANGED THIS TO FIX PROB, USED TO BE: int endOfFile = fileData.length - 1;
 			if(fileData.length == 0) {
 				endOfFile = 0; 
 			}
