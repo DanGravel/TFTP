@@ -7,10 +7,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.*;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * File Transfer Client
@@ -26,7 +27,6 @@ public class FileTransferClient extends Host{
 	private static final byte[] write = {0,2};
 	private static final int TIMEOUT = 2000;
 	private static String FILE_PATH_REGEX = "([a-zA-Z]:)?(\\\\[a-zA-Z0-9_.-]+)+\\\\?";
-	
 	/**
 	 * FileTransferClient Constructor creates a new DatgramSocket.
 	 */
@@ -44,22 +44,16 @@ public class FileTransferClient extends Host{
 	 * @throws IOException 
 	 */
 	public void sendAndReceive() throws IOException {
-	    
 	      if(request == RequestType.READ) {
 	    	  if(mode == Mode.TEST){
 	    		  receiveFile(fileName, sendReceiveSocket,INTERMEDIATE_PORT, "client");	    	  
-	    	  }
-	    	  else{
+	    	  }else{
 		    	  receiveFile(fileName, sendReceiveSocket, SERVER_PORT, "client");	    	   
 	    	  }  
-	      } 
-	      else {
+	      }else {
 	    	  if(mode == Mode.TEST){
-
 	    		 sendFile(fileName, sendReceiveSocket,  INTERMEDIATE_PORT, "client");
-
-	    	  }
-	    	  else{
+	    	  }else{
 	    		  sendFile(fileName, sendReceiveSocket, SERVER_PORT, "client");
 	    	  }
 	      }
@@ -80,7 +74,6 @@ public class FileTransferClient extends Host{
 		for (String s : tokens) {
 			parser(s);
 		}
-
 	}
 	
 	/**
@@ -96,6 +89,8 @@ public class FileTransferClient extends Host{
 		case  "pwd":
 			System.out.println(pathName);
 			break;
+		case "ls":
+			getFiles(pathName);
 		case "normal": 
 			mode = Mode.NORMAL;
 			break;
@@ -116,7 +111,7 @@ public class FileTransferClient extends Host{
 			break;
 		case "help":
 			System.out.println("Commands:"
-					+ "quit, severquit\n"
+					+ "quit, pwd,ls\n"
 					+ "General format:"
 					+ "normal/test read/write filename.txt verbose/!verbose");
 		case " ": 
@@ -142,12 +137,11 @@ public class FileTransferClient extends Host{
 			pathName = s;
 			System.out.println("New system path: " + pathName);
 		}
-		else{ 
-			if(!s.equals("help")){
+		else{
 			System.out.println("Sorry something you typed was no supported, try 'help'");
 			}
-		}
 	}
+	
 
 		/**
 		 * 
@@ -225,7 +219,7 @@ public class FileTransferClient extends Host{
 					packetdata = createDataPacket(filedata, blockNum);
 					sendaPacket(packetdata, receivePacket.getPort(), socket, sender);
 					//Check if ACK is what you expect and if you don't get an ACK re-send data
-					if(validateAck(blockNum, receiveaPacket(sender, socket,packetdata))){
+					if(validateAck(blockNum, receiveaPacket(sender, socket, packetdata))){
 						System.out.println("Unexpected ACK");
 						//TODO Need to send error to server
 						return;
@@ -416,7 +410,16 @@ public class FileTransferClient extends Host{
 	}
 	
 	
-
+	private void getFiles(String path){
+		File[] files = new File(path).listFiles();
+		//If this pathname does not denote a directory, then listFiles() returns null. 
+		
+		for (File file : files) {
+		    if (file.isFile()) {
+		    	System.out.println(file.getName());
+		    }
+		}
+	}
 	/**
 	 * Main.
 	 * @param args
