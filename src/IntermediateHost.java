@@ -70,41 +70,18 @@ public class IntermediateHost extends Host {
 		}
 	}
 	
-	public void normal() {
-//		for (;;) {
-//			System.out.println("Waiting to receive");
-//			receiveFromClient();
-//			System.out.println("test");
-//			sendToServer();
-//
-//			int clientPort = receivePacket.getPort();
-//
-//			receiveFromServer();
-//
-//			sendToClient(clientPort);
-//
-//			System.out.println("Simulator: packet sent\n\n");
-//			// sendSocket.close();
-//		}
-		
+	public void normal() {		
 		receiveFromClient();
-		System.out.println("RECEIVED ***");
 		int clientPort = receivePacket.getPort();
 		sendToServer();
 		
-		
-		System.out.println(clientPort + " DKDKDKD");
-		
 		receiveFromServer();
 		int serverThreadPort = receivePacket.getPort();
-		System.out.println(serverThreadPort);
 		
 		sendToClient(clientPort);
 		
 		for(;;) {
-			System.out.println("Entered loop");
 			receiveFromClient();
-			System.out.println("RECEIVED *** LOOP");
 			sendToServerThread(serverThreadPort);
 			
 			receiveFromServer();
@@ -114,7 +91,6 @@ public class IntermediateHost extends Host {
 	}
 
 	private void losePacket() {
-		//for(;;) {
 		RequestType requestType = null;
 			if(packetType == 1 || packetType == 2){ // RRQ or WRQ
 				System.out.println("Losing a request packet");
@@ -133,8 +109,6 @@ public class IntermediateHost extends Host {
 						System.out.println("Losing DATA packet");
 						for(;;) {
 							sendToServer();
-							//int clientPort = receivePacket.getPort();
-							//receiveFromServer();
 							
 							if(foundPacket(receiveFromServer())) {
 								System.out.println("Lost DATA packet # " + packetNum);
@@ -160,10 +134,6 @@ public class IntermediateHost extends Host {
 					}
 				}
 			}
-	//	}
-			
-		
-
 	}
 	
 	private void sendToServerThread(int port){
