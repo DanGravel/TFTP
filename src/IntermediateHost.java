@@ -2,7 +2,7 @@ import java.net.*;
 import java.util.Scanner;
 
 public class IntermediateHost extends Host {
-	private DatagramSocket sendSocket, receiveSocket, sendReceiveSocket;
+	private DatagramSocket sendReceiveSocket;
 	
 	private static int userInput = 88; 
 	private static int packetType = 0; // type of packet to manipulate
@@ -16,8 +16,7 @@ public class IntermediateHost extends Host {
 		validate = new Validater(); 
 		Printer.setIsVerbose(true);
 		try {
-			receiveSocket = new DatagramSocket(INTERMEDIATE_PORT);
-			sendReceiveSocket = new DatagramSocket();
+			sendReceiveSocket = new DatagramSocket(INTERMEDIATE_PORT);
 		} catch (SocketException se) {
 			se.printStackTrace();
 			System.exit(1);
@@ -71,21 +70,47 @@ public class IntermediateHost extends Host {
 		}
 	}
 	
-	private void normal() {
-		for (;;) {
-			System.out.println("Waiting to receive");
+	public void normal() {
+//		for (;;) {
+//			System.out.println("Waiting to receive");
+//			receiveFromClient();
+//			System.out.println("test");
+//			sendToServer();
+//
+//			int clientPort = receivePacket.getPort();
+//
+//			receiveFromServer();
+//
+//			sendToClient(clientPort);
+//
+//			System.out.println("Simulator: packet sent\n\n");
+//			// sendSocket.close();
+//		}
+		
+		receiveFromClient();
+		System.out.println("RECEIVED ***");
+		int clientPort = receivePacket.getPort();
+		sendToServer();
+		
+		
+		System.out.println(clientPort + " DKDKDKD");
+		
+		receiveFromServer();
+		int serverThreadPort = receivePacket.getPort();
+		System.out.println(serverThreadPort);
+		
+		sendToClient(clientPort);
+		
+		for(;;) {
+			System.out.println("Entered loop");
 			receiveFromClient();
-			sendToServer();
-
-			int clientPort = receivePacket.getPort();
-
+			System.out.println("RECEIVED *** LOOP");
+			sendToServerThread(serverThreadPort);
+			
 			receiveFromServer();
-
 			sendToClient(clientPort);
-
-			System.out.println("Simulator: packet sent\n\n");
-			// sendSocket.close();
 		}
+		
 	}
 
 	private void losePacket() {
@@ -108,7 +133,6 @@ public class IntermediateHost extends Host {
 						System.out.println("Losing DATA packet");
 						for(;;) {
 							sendToServer();
-							receiveFromServer(); 
 							//int clientPort = receivePacket.getPort();
 							//receiveFromServer();
 							
@@ -141,13 +165,18 @@ public class IntermediateHost extends Host {
 		
 
 	}
+	
+	private void sendToServerThread(int port){
+		sendaPacket(receivePacket.getData(), port, sendReceiveSocket, "Intermediate");
+
+	}
 
 	private void sendToServer() {
-		sendaPacket(receivePacket.getData(), FileTransferServer.SERVER_PORT, sendReceiveSocket, "Intermediate");
+		sendaPacket(receivePacket.getData(), SERVER_PORT, sendReceiveSocket, "Intermediate");
 	}
 
 	private DatagramPacket receiveFromClient() {
-		return receiveaPacket("Intermediate", receiveSocket);
+		return receiveaPacket("Intermediate", sendReceiveSocket);
 	}
 
 	private DatagramPacket receiveFromServer() {
@@ -155,12 +184,7 @@ public class IntermediateHost extends Host {
 	}
 
 	private void sendToClient(int clientPort) {
-		try {
-			sendSocket = new DatagramSocket();
-		} catch (SocketException se) {
-			se.printStackTrace();
-		}
-		sendaPacket(receivePacket.getData(), clientPort, sendSocket, "Intermediate");
+		sendaPacket(receivePacket.getData(), clientPort, sendReceiveSocket, "Intermediate");
 	}
 	
 	private boolean foundPacket(DatagramPacket packet) {
