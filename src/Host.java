@@ -50,21 +50,20 @@ public abstract class Host {
    * 
    * @param host: the host the packet is sent from
    * @param receiveSocket: the socket that is receiving the packet
+ * @return 
  * @throws IOException 
    */
-	protected void receiveaPacket(String host, DatagramSocket receiveSocket, byte[] packetdata) throws IOException {
+	protected DatagramPacket receiveaPacket(String host, DatagramSocket receiveSocket, byte[] packetdata){
 		byte data[] = new byte[PACKET_SIZE];
 		receivePacket = new DatagramPacket(data, data.length);
-		int numFailed = 0;
 		while(true){
 			try {
 				receiveSocket.receive(receivePacket);
 				p.printReceiveData(host, receivePacket);
-				break;
+				return receivePacket;
 			}catch(SocketTimeoutException e){
 				System.out.println("Havent recieved a response in three seconds resending");
 				sendaPacket(packetdata, SERVER_PORT, receiveSocket, "Client");
-				numFailed++;
 				continue;
 			}catch (IOException e) {
 				System.out.print("IO Exception: likely:");
@@ -73,7 +72,26 @@ public abstract class Host {
 				System.exit(1);
 			}
 		}
-	}	
+
+	}
+	
+	  protected DatagramPacket receiveaPacket(String host, DatagramSocket receiveSocket) {
+		  byte data[] = new byte[512];
+	      receivePacket = new DatagramPacket(data, data.length);
+	      try { 
+	         receiveSocket.receive(receivePacket);
+	         p.printReceiveData(host, receivePacket);
+	      }catch(SocketTimeoutException e){
+			System.out.println("Havent recieved a response try again");
+	      }  
+	      catch(IOException e) {
+	    	 System.out.print("IO Exception: likely:");
+	         System.out.println("Receive Socket Timed Out.\n" + e);
+	         e.printStackTrace();
+	         System.exit(1);
+	      }
+	      return receivePacket;
+	  }
   /**
    * creates a byte array with the acknowledgement info
    * 
@@ -134,7 +152,14 @@ public abstract class Host {
 		}
 		return false;
 	}
-	   
+	
+	protected boolean validateAck(int blockNum, DatagramPacket packet){
+		if(packet.getData()[2] != (byte) (blockNum >>> 8) && packet.getData()[3] != (byte)(blockNum)){
+			return false;
+		}
+		return true;
+	}
+	
 	protected int getSize() {
 		byte[] wholePacket = Arrays.copyOf(receivePacket.getData(), receivePacket.getData().length);
 		int endOfPacket = 4;

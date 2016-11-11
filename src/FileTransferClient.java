@@ -193,7 +193,9 @@ public class FileTransferClient extends Host{
 			//sending write request
 			byte[] WRQ = arrayCombiner(write, filename);		
 		 	sendaPacket(WRQ,port, socket, sender);
-		 	receiveaPacket(sender, socket,WRQ);
+		 	//if server doesn't respond return and re-prompt 
+		 	if(receiveaPacket(sender, socket).getData()[0] == 0x00) return;
+		 	
 		 	if(isError()){
 				handleError();
 				return;
@@ -217,13 +219,19 @@ public class FileTransferClient extends Host{
 						filedata = new byte[0];
 						packetdata = createDataPacket(filedata, blockNum);
 						sendaPacket(packetdata, receivePacket.getPort(), socket, sender);
-						receiveaPacket(sender, socket, packetdata);	
+						receiveaPacket(sender, socket);	
 						break;
 					}
-					blockNum++;
 					packetdata = createDataPacket(filedata, blockNum);
 					sendaPacket(packetdata, receivePacket.getPort(), socket, sender);
-					receiveaPacket(sender, socket, packetdata);
+					//Check if ACK is what you expect and if you don't get an ACK re-send data
+					if(validateAck(blockNum, receiveaPacket(sender, socket,packetdata))){
+						System.out.println("Unexpected ACK");
+						//TODO Need to send error to server
+						return;
+					}
+					
+					blockNum++;
 				}while(endofFile == DATA_END); //while you can get a full 512 bytes keep going
 					 
 				fis.close();
@@ -251,13 +259,13 @@ public class FileTransferClient extends Host{
 
 			
 			byte[] RRQ = arrayCombiner(read, filename);
-	 		sendaPacket(RRQ,port, socket, sender);  //send request 			
+	 		sendaPacket(RRQ,port, socket, sender);  //send request 	
+			receiveaPacket(sender, socket, RRQ); //if it doesnt get a response from the server it tries again
 	 		int blockNum = 1;	
 	 		int datalength;
 			try{
 				FileOutputStream fis = new FileOutputStream(file);
 				do{
-					receiveaPacket(sender, socket,RRQ);
 					if(diskFull(file, socket, sender)) return;
 					if(isError()){
 						handleError();
@@ -267,6 +275,7 @@ public class FileTransferClient extends Host{
 					fis.write(Arrays.copyOfRange(receivePacket.getData(), 4, datalength));
 					byte[] ack = createAck(blockNum);
 					sendaPacket(ack, receivePacket.getPort(), socket, sender);
+					receiveaPacket(sender, socket);
 					blockNum++;
 				} while(datalength >= 512);
 				fis.close();
