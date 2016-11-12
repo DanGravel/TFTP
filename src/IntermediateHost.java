@@ -13,7 +13,7 @@ public class IntermediateHost extends Host {
 	
 	public IntermediateHost() {
 		validate = new Validater(); 
-		Printer.setIsVerbose(true);
+		Printer.setIsVerbose(true); //TODO remove hardcoding for this
 		try {
 			sendReceiveSocket = new DatagramSocket(INTERMEDIATE_PORT);
 		} catch (SocketException se) {
@@ -27,7 +27,7 @@ public class IntermediateHost extends Host {
 	 * 1 - Lose packet
 	 * 2 - Delay packet
 	 */
-	public void sendAndReceive() {
+	public void sendAndReceive() { //TODO account for errors in user input
 		System.out.println("Press 0 for normal mode, 1 to lose a packet, 2 to delay a packet");
 		@SuppressWarnings("resource")
 		Scanner s = new Scanner(System.in);
