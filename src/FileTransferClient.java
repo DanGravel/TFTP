@@ -185,6 +185,7 @@ public class FileTransferClient extends Host{
 		 	sendaPacket(WRQ,port, socket, sender);
 		 	//if you dont get a response on initial request re-prompt
 		 	if(receiveaPacket(sender, socket).getData().length == 1) return;
+		 	
 		 	if(isError()){
 				handleError();
 				return;
@@ -216,10 +217,12 @@ public class FileTransferClient extends Host{
 					packetdata = createDataPacket(filedata, blockNum);
 					sendaPacket(packetdata, receivePacket.getPort(), socket, sender);
 					DatagramPacket tmp = receiveaPacket(sender, socket, filedata);
+					
 					byte[] tmpData = tmp.getData();
 					int tmpBlck = ((tmpData[2] & 0xff) << 8) | (tmpData[3] & 0xff);
 					//if block number is lower then current block ignore
-					while(tmpBlck < blockNum){
+					
+					while(tmpBlck < blockNum && tmpData.length > 2){
 						if(tmpBlck > blockNum){
 							System.out.println("Received a very wrong ACK");
 							return;
@@ -237,7 +240,7 @@ public class FileTransferClient extends Host{
 					return;
 				}
 		 }
-
+	  
 	  	/**
 	   * Used for write requests in the server
 	   * 
@@ -260,10 +263,11 @@ public class FileTransferClient extends Host{
 	 		sendaPacket(RRQ,port, socket, sender);  //send request 			
 	 		int blockNum = 1;	
 	 		int datalength;
+	 		byte[] ack = RRQ;
 			try{
 				FileOutputStream fis = new FileOutputStream(file);
 				do{
-					receiveaPacket(sender, socket);
+					receiveaPacket(sender, socket, ack);
 					if(diskFull(file, socket, sender)) return;
 					if(isError()){
 						handleError();
@@ -271,7 +275,7 @@ public class FileTransferClient extends Host{
 					}
 					datalength = getSize();
 					fis.write(Arrays.copyOfRange(receivePacket.getData(), 4, datalength));
-					byte[] ack = createAck(blockNum);
+					ack = createAck(blockNum);
 					sendaPacket(ack, receivePacket.getPort(), socket, sender);
 					blockNum++;
 				} while(datalength >= 512);
