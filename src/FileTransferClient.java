@@ -214,7 +214,20 @@ public class FileTransferClient extends Host{
 					
 					packetdata = createDataPacket(filedata, blockNum);
 					sendaPacket(packetdata, receivePacket.getPort(), socket, sender);
-					receiveaPacket(sender, socket, filedata);
+					DatagramPacket tmp = receiveaPacket(sender, socket, filedata);
+					byte[] tmpData = tmp.getData();
+					int tmpBlck = ((tmpData[2] & 0xff) << 8) | (tmpData[3] & 0xff);
+					//if block number is lower then current block ignore
+					while(tmpBlck < blockNum){
+						if(tmpBlck > blockNum){
+							System.out.println("Received a very wrong ACK");
+							return;
+						}
+						tmp = receiveaPacket(sender, socket, filedata);
+						tmpData = tmp.getData();
+						tmpBlck = ((tmpData[2] & 0xff) << 8) | (tmpData[3] & 0xff);
+					}
+					
 					blockNum++;
 				}while(endofFile == DATA_END); //while you can get a full 512 bytes keep going
 					 
