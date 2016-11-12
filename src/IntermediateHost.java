@@ -125,6 +125,13 @@ public class IntermediateHost extends Host {
 								
 							}
 							System.out.println("Lost DATA packet # " + packetNum);	
+						}
+						for(;;) {
+							System.out.println("FUCK");
+					        receiveFromClient();
+						    sendToServerThread(serverThreadPort);
+						    receiveFromServer();
+						    sendToClient(clientPort); 
 						}		
 					}
 					else if (packetType == 4) { // ACK
@@ -148,6 +155,7 @@ public class IntermediateHost extends Host {
 							System.out.println("Lost ACK packet # " + packetNum);
 						}
 						for(;;) {
+							System.out.println("FUCK");
 							receiveFromServer();
 							sendToClient(clientPort);
 							receiveFromClient();
@@ -326,6 +334,7 @@ public class IntermediateHost extends Host {
 						}
 					}
 					for(;;) {	// continue normal passing of packets
+						System.out.println("FUCK");
 						sendToServerThread(serverThreadPort);
 						receiveFromServer();
 						sendToClient(clientPort);

@@ -23,6 +23,8 @@ public class FileTransferClient extends Host{
 	private static String pathName;
 	private static final byte[] read = {0,1};
 	private static final byte[] write = {0,2};
+	private static final int TIMEOUT = 2000;
+	private static String FILE_PATH_REGEX = "([a-zA-Z]:)?(\\\\[a-zA-Z0-9_.-]+)+\\\\?";
 	
 	/**
 	 * FileTransferClient Constructor creates a new DatgramSocket.
@@ -30,6 +32,7 @@ public class FileTransferClient extends Host{
 	public FileTransferClient() {
 		try {
 			sendReceiveSocket = new DatagramSocket();
+			sendReceiveSocket.setSoTimeout(TIMEOUT);
 		} catch (SocketException se) {
 			se.printStackTrace();
 			System.exit(1);
@@ -45,18 +48,15 @@ public class FileTransferClient extends Host{
 	      if(request == RequestType.READ) {
 	    	  if(mode == Mode.TEST){
 	    		  receiveFile(fileName, sendReceiveSocket,INTERMEDIATE_PORT, "client");	    	  
-	    	  }
-	    	  else{
+	    	  }else{
 		    	  receiveFile(fileName, sendReceiveSocket, SERVER_PORT, "client");	    	   
 	    	  }  
-	      } 
-	      else {
+	      } else {
 	    	  if(mode == Mode.TEST){
 
 	    		 sendFile(fileName, sendReceiveSocket,  INTERMEDIATE_PORT, "client");
 
-	    	  }
-	    	  else{
+	    	  }else{
 	    		  sendFile(fileName, sendReceiveSocket, SERVER_PORT, "client");
 	    	  }
 	      }
@@ -90,9 +90,11 @@ public class FileTransferClient extends Host{
 		case "quit":
 			System.exit(0);
 			break;
-		case "serverquit":
-			byte[] s = new byte[]{9,9};
-			sendaPacket(s,69,sendReceiveSocket, "client");
+		case  "pwd":
+			System.out.println(pathName);
+			break;
+		case "ls":
+			getFiles(pathName);
 			break;
 		case "normal": 
 			mode = Mode.NORMAL;
@@ -133,13 +135,26 @@ public class FileTransferClient extends Host{
 	 * @param s: The string that is inputted.
 	 */
 	private void stringChecker(String s){
-		if(s.indexOf(".txt") != -1) fileName = s;
-		else{ 
-			if(!s.equals("help")){
+		if(s.endsWith(".txt")) {
+			fileName = s;
+		}
+		else if(s.matches(FILE_PATH_REGEX)) {
+			pathName = s;
+			System.out.println("New system path: " + pathName);
+		}
+		else{
 			System.out.println("Sorry something you typed was no supported, try 'help'");
 			}
-		}
 	}
+	
+	private static String createPath(String filename){
+		if(pathName.endsWith("\\")){
+		  	return pathName + filename;
+	    }else{
+	    	return pathName + "\\" + filename;
+	    }
+	}
+
 
 	  /**
 	   * Sends a write request and then sends the file to the server.
@@ -151,7 +166,7 @@ public class FileTransferClient extends Host{
 	 * @throws IOException 
 	   */
 	  public void sendFile(String filename, DatagramSocket socket, int port, String sender) throws IOException{
-		    String path = pathName + "\\" + filename;
+		    String path = createPath(filename);
 	 	  	File file = new File(path);
 
 	 	  	//check if the file exists
@@ -199,7 +214,7 @@ public class FileTransferClient extends Host{
 					
 					packetdata = createDataPacket(filedata, blockNum);
 					sendaPacket(packetdata, receivePacket.getPort(), socket, sender);
-					receiveaPacket(sender, socket);
+					receiveaPacket(sender, socket, filedata);
 					blockNum++;
 				}while(endofFile == DATA_END); //while you can get a full 512 bytes keep going
 					 
@@ -218,7 +233,7 @@ public class FileTransferClient extends Host{
 	   * @param sender: name of the sender
 	   */
 		public void receiveFile(String filename, DatagramSocket socket, int port, String sender){
-			String filepath = pathName + "\\" + filename;	
+			String filepath = createPath(filename);	
 			File file = new File(filepath);	
 			
 			if (file.exists()){
@@ -338,7 +353,16 @@ public class FileTransferClient extends Host{
 		return false;
 	}
 	
-	
+	private void getFiles(String path){
+		File[] files = new File(path).listFiles();
+		//If this pathname does not denote a directory, then listFiles() returns null. 
+		
+		for (File file : files) {
+		    if (file.isFile()) {
+		    	System.out.println(file.getName());
+		    }
+		}
+}
 	/**
 	 * Checks the permissions of a file.
 	 * 
@@ -361,17 +385,27 @@ public class FileTransferClient extends Host{
  		}
  		return false;
 	}
-	
+
 	/*
 	 * Sets the path name.
 	 */
 	private static void pathName() throws IOException
 	{
 		BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+		while(true){
 		System.out.println("Enter pathName: ");
-		String p = in.readLine();
-		pathName = p;
-	}
+			String p = in.readLine();
+			if(p.matches(FILE_PATH_REGEX)){
+				pathName = p;
+				break;
+			}
+			else{
+				System.out.println("Sorry that file path doesnt seem to be valid");
+				pathName();
+				continue;
+			}
+		}
+}
 	
 	/**
 	 * Main.
