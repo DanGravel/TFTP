@@ -56,8 +56,8 @@ When running in test mode: <br />
   * In the client you will be asked for a path, this is the path to where you
   want to save files and upload from.
   * The available commands for the client are
-  quit - exits the client
-  pwd - present working directory
+   * quit - exits the client
+   * pwd - present working directory
    * ls - list of files in directory
    * normal - sends packets from client directly to server
    * test - sends file to intermediate host which forwards to server
