@@ -58,13 +58,13 @@ When running in test mode: <br />
   * The available commands for the client are
   quit - exits the client
   pwd - present working directory
-  ls - list of files in directory
-  normal - sends packets from client directly to server
-  test - sends file to intermediate host which forwards to server
-  read - reads a file from server
-  write - writes a file to server
-  verbose - prints all data
-  !verbose - prints minimum amount of information
-  help - shows commands and sample queries
+   * ls - list of files in directory
+   * normal - sends packets from client directly to server
+   * test - sends file to intermediate host which forwards to server
+   * read - reads a file from server
+   * write - writes a file to server
+   * verbose - prints all data
+   * !verbose - prints minimum amount of information
+   * help - shows commands and sample queries
   * An example of a command is normal/test read/write filename.txt verbose/!verbose
   * If at anytime you want to change directories simply type in the new directory
