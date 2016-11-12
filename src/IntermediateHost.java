@@ -136,6 +136,9 @@ public class IntermediateHost extends Host {
 					else if (packetType == 4) { // ACK
 						System.out.println("Losing ACK Packet");
 						serverThreadPort = receiveFromServer().getPort(); // receive DATA packet
+						
+						//MAYBE CHANGE TO serverThreadPort = receivePacket.getPort();
+						
 						sendToClient(clientPort);
 						
 						DatagramPacket ack = receiveFromClient();
@@ -154,10 +157,11 @@ public class IntermediateHost extends Host {
 							System.out.println("Lost ACK packet # " + packetNum);
 						}
 						for(;;) {
-							receiveFromServer();
-							sendToClient(clientPort);
 							receiveFromClient();
 							sendToServerThread(serverThreadPort);
+							
+							receiveFromServer();
+							sendToClient(clientPort);
 						}
 					}
 				}
@@ -192,9 +196,9 @@ public class IntermediateHost extends Host {
 					else if(packetType == 4){ // ACK
 						System.out.println("Losing ACK packet");
 						
-						DatagramPacket data1 = receiveFromServer();
-						serverThreadPort = data1.getPort(); 
-						if(foundPacket(data1)) {
+						DatagramPacket ack = receiveFromServer();
+						serverThreadPort = ack.getPort(); 
+						if(foundPacket(ack)) {
 							System.out.println("Lost ACK packet # " + packetNum);
 						}
 						else {
@@ -211,10 +215,10 @@ public class IntermediateHost extends Host {
 						}
 						
 						for(;;) {
+							receiveFromServer();
+							sendToClient(clientPort);
 							receiveFromClient();
 							sendToServerThread(serverThreadPort);
-							receiveFromServer(); 
-							sendToClient(clientPort);
 						}
 						
 					}
