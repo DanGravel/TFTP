@@ -183,7 +183,7 @@ public class FileTransferClient extends Host{
 			//sending write request
 			byte[] WRQ = arrayCombiner(write, filename);		
 		 	sendaPacket(WRQ,port, socket, sender);
-		 	//if you dont get a response on initial request re-prompt
+		 	//if you don't get a response on initial request re-prompt
 		 	if(receiveaPacket(sender, socket).getData().length == 1) return;
 		 	
 		 	if(isError()){

@@ -51,7 +51,7 @@ public abstract class Host {
 	   * @param host: the host the packet is sent from
 	   * @param receiveSocket: the socket that is receiving the packet
 	   */
-	protected DatagramPacket receiveaPacket(String host, DatagramSocket receiveSocket, byte[] packetdata){
+	protected DatagramPacket receiveaPacket(String host, DatagramSocket receiveSocket, byte[] packetdata) throws SocketTimeoutException{
 		byte data[] = new byte[PACKET_SIZE];
 		receivePacket = new DatagramPacket(data, data.length);
 		while(true){
@@ -59,10 +59,10 @@ public abstract class Host {
 				receiveSocket.receive(receivePacket);
 				p.printReceiveData(host, receivePacket);
 				return receivePacket;
-			}catch(SocketTimeoutException e){
-				System.out.println("Havent recieved a response in three seconds resending");
+			//}catch(SocketTimeoutException e){
+				//System.out.println("Havent recieved a response in three seconds resending");
 				//sendaPacket(packetdata, SERVER_PORT, receiveSocket, "Client");
-				sendaPacket(packetdata, receivePacket.getPort(), receiveSocket, "Client");
+				//sendaPacket(packetdata, receivePacket.getPort(), receiveSocket, "Client");
 				
 				//continue;
 			}catch (IOException e) {
@@ -81,18 +81,17 @@ public abstract class Host {
    * @param host: the host the packet is sent from
    * @param receiveSocket: the socket that is receiving the packet
    */
-	  protected DatagramPacket receiveaPacket(String host, DatagramSocket receiveSocket) {
+	  protected DatagramPacket receiveaPacket(String host, DatagramSocket receiveSocket) throws SocketTimeoutException{
 		  byte data[] = new byte[PACKET_SIZE];
 	      receivePacket = new DatagramPacket(data, data.length);
 	      try { 
 	         receiveSocket.receive(receivePacket);
 	         p.printReceiveData(host, receivePacket);
-	      }catch(SocketTimeoutException e){
-			System.out.println("Havent recieved a response try again");
-			byte data1[] = new byte[1];
-			receivePacket = new DatagramPacket(data1,data1.length);
-	      }  
-	      catch(IOException e) {
+	      //}catch(SocketTimeoutException e){
+			//System.out.println("Havent recieved a response try again");
+			//byte data1[] = new byte[1];
+			//receivePacket = new DatagramPacket(data1,data1.length);
+	      }  catch(IOException e) {
 	    	 System.out.print("IO Exception: likely:");
 	         System.out.println("Receive Socket Timed Out.\n" + e);
 	         e.printStackTrace();
