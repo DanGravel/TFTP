@@ -72,7 +72,13 @@ public abstract class Host {
    * @return byte array with ack signal
    */
 	protected byte[] createAck(int blockNum) {
-		return (new byte[] { 0, 4, (byte) (blockNum & 0xFF), (byte) ((blockNum >> 8) & 0xFF) }); // new byte[4];
+		//return (new byte[] { 0, 4, (byte) (blockNum & 0xFF), (byte) ((blockNum >> 8) & 0xFF) }); // new byte[4];
+		byte[] ack = new byte[4];
+		ack[0] = 0;
+		ack[1] = 4;
+		ack[2] = (byte) ((blockNum - (blockNum % 256))/256);
+		ack[3] = (byte)(blockNum % 256);
+		return ack;
 
 	}
 

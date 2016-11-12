@@ -176,7 +176,8 @@ public class FileTransferClient extends Host{
 		 
 			try{
 				FileInputStream fis = new FileInputStream(file);
-				int blockNum = 0;
+				//int blockNum = 0;	CHANGE KG
+				int blockNum = 1; 
 				int endofFile = 0;
 				
 				do{
