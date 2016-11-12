@@ -61,8 +61,7 @@ public abstract class Host {
 				return receivePacket;
 			}catch(SocketTimeoutException e){
 				System.out.println("Havent recieved a response in three seconds resending");
-				//sendaPacket(packetdata, SERVER_PORT, receiveSocket, "Client");
-				sendaPacket(packetdata, receivePacket.getPort(), receiveSocket, "Client");
+				sendaPacket(packetdata, INTERMEDIATE_PORT, receiveSocket, "Client");
 				
 				//continue;
 			}catch (IOException e) {
