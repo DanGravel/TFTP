@@ -20,7 +20,7 @@ public class Printer {
 		 * @param sendPacket 	The packet that is going to be sent
 		 */
 		public void printRequestAndAck(String host,  DatagramPacket sendPacket) {
-			System.out.println(host + ": Packet sent \n");
+			//System.out.println(host + ": Packet sent \n");
 			if(isVerbose()){
 	    	  printSenderOrReceiverInfo(true, sendPacket, host);
 	    	  System.out.print("Containing: " + new String(sendPacket.getData()));
