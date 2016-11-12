@@ -8,13 +8,12 @@ public class IntermediateHost extends Host {
 	private static int packetType = 0; // type of packet to manipulate
 	private static int packetNum = 0; 
 	private static int delayTime = 0;
-	private static boolean packetOne = true; 
 	
 	private Validater validate; 
 	
 	public IntermediateHost() {
 		validate = new Validater(); 
-		Printer.setIsVerbose(true);
+		Printer.setIsVerbose(true); //TODO remove hardcoding for this
 		try {
 			sendReceiveSocket = new DatagramSocket(INTERMEDIATE_PORT);
 		} catch (SocketException se) {
@@ -28,7 +27,7 @@ public class IntermediateHost extends Host {
 	 * 1 - Lose packet
 	 * 2 - Delay packet
 	 */
-	public void sendAndReceive() {
+	public void sendAndReceive() { //TODO account for errors in user input
 		System.out.println("Press 0 for normal mode, 1 to lose a packet, 2 to delay a packet");
 		@SuppressWarnings("resource")
 		Scanner s = new Scanner(System.in);
@@ -58,7 +57,7 @@ public class IntermediateHost extends Host {
 			packetType = s.nextInt();
 			
 			if(packetType == 3 || packetType == 4){
-				System.out.println("Enter the packet number you want to lose:");
+				System.out.println("Enter the packet number you want to delay:");
 				packetNum = s.nextInt();
 			} else {
 				packetNum = 1; // delaying first packet since RRQ or WRQ
@@ -66,7 +65,7 @@ public class IntermediateHost extends Host {
 			
 			System.out.println("Enter delay in milliseconds: ");
 			delayTime = s.nextInt(); 
-			
+			delay();
 		}
 	}
 	
@@ -91,49 +90,340 @@ public class IntermediateHost extends Host {
 	}
 
 	private void losePacket() {
+		int serverThreadPort = 0; 
+		boolean lost; 
+		
 		RequestType requestType = null;
 			if(packetType == 1 || packetType == 2){ // RRQ or WRQ
 				System.out.println("Losing a request packet");
 				receiveFromClient();
 			}
 			else {
-				if(packetOne) {
-					requestType = validate.validate(receiveFromClient().getData()); 
-				}
-				packetOne = false; 
+				requestType = validate.validate(receiveFromClient().getData()); // receive request packet
+				int clientPort = receivePacket.getPort();
+			
+				sendToServer();	// send request
 				
 				if(requestType == RequestType.READ) {
 				
 					if(packetType == 3) { // DATA
-				
 						System.out.println("Losing DATA packet");
-						for(;;) {
-							sendToServer();
-							
-							if(foundPacket(receiveFromServer())) {
-								System.out.println("Lost DATA packet # " + packetNum);
-							}
-							
-							receiveFromServer(); // wait for server to resend DATA
+						
+						DatagramPacket data1 = receiveFromServer();
+						serverThreadPort = data1.getPort(); 
+						if(foundPacket(data1)) {
+							System.out.println("Lost DATA packet # " + packetNum);
 						}
+						else {
+							lost = false;
+							while(!lost) {
+								sendToClient(clientPort);
+								receiveFromClient();
+								sendToServerThread(serverThreadPort);
+								
+								lost = foundPacket(receiveFromServer());
+								
+							}
+							System.out.println("Lost DATA packet # " + packetNum);	
+						}
+						for(;;) {
+							receiveFromServer();
+							sendToClient(clientPort); 
+					        receiveFromClient();
+						    sendToServerThread(serverThreadPort);
+						    
+						}		
 					}
 					else if (packetType == 4) { // ACK
 						System.out.println("Losing ACK Packet");
-						if(packetOne){
+						serverThreadPort = receiveFromServer().getPort(); // receive DATA packet
+						
+						//MAYBE CHANGE TO serverThreadPort = receivePacket.getPort();
+						
+						sendToClient(clientPort);
+						
+						DatagramPacket ack = receiveFromClient();
+						if(foundPacket(ack)) {
+							System.out.println("Lost ACK packet # " + packetNum);
+						}
+						else {
+							lost = false; 
+							while(!lost) {
+								sendToServerThread(serverThreadPort);
+								receiveFromServer(); 
+								
+								sendToClient(clientPort);
+								lost = foundPacket(receiveFromClient());
+							}
+							System.out.println("Lost ACK packet # " + packetNum);
+						}
+						for(;;) {
 							receiveFromClient();
+							sendToServerThread(serverThreadPort);
+							
+							receiveFromServer();
+							sendToClient(clientPort);
 						}
-						packetOne = false; 
-						if(foundPacket(receiveFromClient())) {
-							// don't do anything
+					}
+				}
+				else if (requestType == RequestType.WRITE) {
+					if(packetType == 3) { // DATA
+						System.out.println("Losing DATA Packet");
+						serverThreadPort = receiveFromServer().getPort(); // receive ack
+						sendToClient(clientPort);
+						
+						DatagramPacket data = receiveFromClient();
+						if(foundPacket(data)) {
+							System.out.println("Lost DATA packet # " + packetNum);
 						}
-						else { // not packet we want to lose, so send it 
-							sendToServer();
+						else {
+							lost = false; 
+							while(!lost) {
+								sendToServerThread(serverThreadPort);
+								receiveFromServer();
+								
+								sendToClient(clientPort);
+								lost = foundPacket(receiveFromClient());
+							}
+							System.out.println("Lost DATA packet # " + packetNum);
+						}
+						for(;;) {
+							receiveFromServer();
+							sendToClient(clientPort);
+							receiveFromClient();
+							sendToServerThread(serverThreadPort);
+						}
+					}
+					else if(packetType == 4){ // ACK
+						System.out.println("Losing ACK packet");
+						
+						DatagramPacket ack = receiveFromServer();
+						serverThreadPort = ack.getPort(); 
+						if(foundPacket(ack)) {
+							System.out.println("Lost ACK packet # " + packetNum);
+						}
+						else {
+							lost = false;
+							while(!lost) {
+								sendToClient(clientPort);
+								receiveFromClient();
+								sendToServerThread(serverThreadPort);
+								
+								lost = foundPacket(receiveFromServer());
+								
+							}
+							System.out.println("Lost ACK packet # " + packetNum);	
 						}
 						
+						for(;;) {
+							receiveFromServer();
+							sendToClient(clientPort);
+							receiveFromClient();
+							sendToServerThread(serverThreadPort);
+						}
+						
+					}
+				}
+			}
+	}
+	
+	private void delay() {
+		int serverThreadPort = 0; 
+		boolean delayed; 
+		RequestType requestType = null;
+		
+		if(packetType == 1 || packetType == 2){ // RRQ or WRQ
+			System.out.println("Delay a request packet");
+			receiveFromClient();
+			int clientPort = receivePacket.getPort();
+			
+			try {
+				Thread.sleep(delayTime);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			sendToServer();
+			
+			receiveFromServer();
+			serverThreadPort = receivePacket.getPort();
+			
+			sendToClient(clientPort);
+			
+			for(;;) {
+				receiveFromClient();
+				sendToServerThread(serverThreadPort);
+				
+				receiveFromServer();
+				sendToClient(clientPort);
+			}
+		}
+		else {
+			requestType = validate.validate(receiveFromClient().getData()); // receive request packet
+			int clientPort = receivePacket.getPort();
+		
+			sendToServer();	// send request
+			
+			if(requestType == RequestType.READ) {
+				if(packetType == 3) { // DATA
+					System.out.println("Delay DATA Packet");
+					DatagramPacket data1 = receiveFromServer(); 
+					serverThreadPort = data1.getPort();
+					
+					if(foundPacket(data1)) {
+						try {
+							Thread.sleep(delayTime);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+					else {
+						delayed = false; 
+						while(!delayed) {
+							sendToClient(clientPort);
+							receiveFromClient();
+							sendToServerThread(serverThreadPort);
+							
+							delayed = foundPacket(receiveFromServer());
+						}
+						try {
+							Thread.sleep(delayTime);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+					for(;;) {	// continue normal passing of packets
+						sendToClient(clientPort);
+						receiveFromClient();
+						sendToServerThread(serverThreadPort);
+						receiveFromServer();
+					}
+				}
+				else if(packetType == 4) { // ACK
+					System.out.println("Delay ACK packet");
+					
+					DatagramPacket data1 = receiveFromServer();
+					serverThreadPort = data1.getPort(); 
+					sendToClient(clientPort);
+					
+					if(foundPacket(receiveFromClient())) {
+						System.out.println("Delay ACK packet # " + packetNum);
+						try {
+							Thread.sleep(delayTime);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+					else {
+						delayed = false;
+						while(!delayed) {
+							sendToServerThread(serverThreadPort);
+							receiveFromServer();
+							sendToClient(clientPort);
+							
+							delayed = foundPacket(receiveFromClient());
+							
+						}
+						System.out.println("Delay ACK packet # " + packetNum);
+						try {
+							Thread.sleep(delayTime);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+					for(;;) {	// continue normal passing of packets
+						System.out.println("FUCK");
+						sendToServerThread(serverThreadPort);
+						receiveFromServer();
+						sendToClient(clientPort);
+						receiveFromClient();
+					}
+				}
+			}
+			else if(requestType == RequestType.WRITE) {
+				if(packetType == 3) { // DATA
+					System.out.println("Delay DATA packet");
+					
+					serverThreadPort = receiveFromServer().getPort(); // receive ack
+					sendToClient(clientPort);
+					
+					if(foundPacket(receiveFromClient())) {
+						System.out.println("Delay DATA packet # " + packetNum);
+						try {
+							Thread.sleep(delayTime);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+					else {
+						delayed = false;
+						while(!delayed) {
+							sendToServerThread(serverThreadPort);
+							receiveFromServer();
+							sendToClient(clientPort);
+							
+							delayed = foundPacket(receiveFromClient());
+							
+						}
+						System.out.println("Delay DATA packet # " + packetNum);
+						try {
+							Thread.sleep(delayTime);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+					for(;;) {	// continue normal passing of packets
+						sendToServerThread(serverThreadPort);
+						receiveFromServer();
+						sendToClient(clientPort);
+						receiveFromClient();
+					}
+				}
+				else if(packetType == 4) { // ACK
+					System.out.println("Delay ACK Packet");
+					DatagramPacket ack = receiveFromServer();
+					serverThreadPort = ack.getPort();
+					
+					if(foundPacket(ack)) {
+						try {
+							Thread.sleep(delayTime);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+					else {
+						delayed = false; 
+						while(!delayed) {
+							sendToClient(clientPort);
+							receiveFromClient();
+							sendToServerThread(serverThreadPort);
+							
+							delayed = foundPacket(receiveFromServer());
+						}
+						try {
+							Thread.sleep(delayTime);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+					for(;;) {	// continue normal passing of packets
+						sendToClient(clientPort);
+						receiveFromClient();
+						sendToServerThread(serverThreadPort);
 						receiveFromServer();
 					}
 				}
 			}
+		}
 	}
 	
 	private void sendToServerThread(int port){
@@ -168,9 +458,11 @@ public class IntermediateHost extends Host {
 		
 		if(packType == packetType) {
 			if(block[0] == checkBlkNum[0] && block[1] == checkBlkNum[1]) {
+				System.out.println("**Block number: " + block[0] + block[1]);
 				return true; 
 			}
 		}
+		System.out.println("**Block number: " + block[0] + block[1]);
 		return false; 
 	}
 	

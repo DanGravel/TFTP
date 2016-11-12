@@ -3,6 +3,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 
@@ -44,26 +45,62 @@ public abstract class Host {
 		}
 	}
 	  
+	 /**
+	   * Method used to receive a packet from a certain host
+	   * 
+	   * @param host: the host the packet is sent from
+	   * @param receiveSocket: the socket that is receiving the packet
+	   */
+	protected DatagramPacket receiveaPacket(String host, DatagramSocket receiveSocket, byte[] packetdata){
+		byte data[] = new byte[PACKET_SIZE];
+		receivePacket = new DatagramPacket(data, data.length);
+		while(true){
+			try {
+				receiveSocket.receive(receivePacket);
+				p.printReceiveData(host, receivePacket);
+				return receivePacket;
+			}catch(SocketTimeoutException e){
+				System.out.println("Havent recieved a response in three seconds resending");
+				//sendaPacket(packetdata, SERVER_PORT, receiveSocket, "Client");
+				sendaPacket(packetdata, receivePacket.getPort(), receiveSocket, "Client");
+				
+				//continue;
+			}catch (IOException e) {
+				System.out.print("IO Exception: likely:");
+				System.out.println("Receive Socket Timed Out.\n" + e);
+				e.printStackTrace();
+				System.exit(1);
+			}
+		}
+
+}
+	
   /**
    * Method used to receive a packet from a certain host
    * 
    * @param host: the host the packet is sent from
    * @param receiveSocket: the socket that is receiving the packet
    */
-	protected DatagramPacket receiveaPacket(String host, DatagramSocket receiveSocket) {
-		byte data[] = new byte[PACKET_SIZE];
-		receivePacket = new DatagramPacket(data, data.length);
-		try {
-			receiveSocket.receive(receivePacket);
-		} catch (IOException e) {
-			System.out.print("IO Exception: likely:");
-			System.out.println("Receive Socket Timed Out.\n" + e);
-			e.printStackTrace();
-			System.exit(1);
-		}
-		p.printReceiveData(host, receivePacket);
-		return receivePacket; 
-	}
+	  protected DatagramPacket receiveaPacket(String host, DatagramSocket receiveSocket) {
+		  byte data[] = new byte[PACKET_SIZE];
+	      receivePacket = new DatagramPacket(data, data.length);
+	      try { 
+	         receiveSocket.receive(receivePacket);
+	         p.printReceiveData(host, receivePacket);
+	      }catch(SocketTimeoutException e){
+			System.out.println("Havent recieved a response try again");
+			byte data1[] = new byte[1];
+			receivePacket = new DatagramPacket(data1,data1.length);
+	      }  
+	      catch(IOException e) {
+	    	 System.out.print("IO Exception: likely:");
+	         System.out.println("Receive Socket Timed Out.\n" + e);
+	         e.printStackTrace();
+	         System.exit(1);
+	      }
+	      return receivePacket;
+	  }
+	
 	  	
   /**
    * creates a byte array with the acknowledgement info
@@ -72,7 +109,13 @@ public abstract class Host {
    * @return byte array with ack signal
    */
 	protected byte[] createAck(int blockNum) {
-		return (new byte[] { 0, 4, (byte) (blockNum & 0xFF), (byte) ((blockNum >> 8) & 0xFF) }); // new byte[4];
+		//return (new byte[] { 0, 4, (byte) (blockNum & 0xFF), (byte) ((blockNum >> 8) & 0xFF) }); // new byte[4];
+		byte[] ack = new byte[4];
+		ack[0] = 0;
+		ack[1] = 4;
+		ack[2] = (byte) ((blockNum - (blockNum % 256))/256);
+		ack[3] = (byte)(blockNum % 256);
+		return ack;
 
 	}
 
