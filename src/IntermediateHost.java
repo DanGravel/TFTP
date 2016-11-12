@@ -434,12 +434,27 @@ public class IntermediateHost extends Host {
 		sendaPacket(receivePacket.getData(), SERVER_PORT, sendReceiveSocket, "Intermediate");
 	}
 
-	private DatagramPacket receiveFromClient(){
-		return receiveaPacket("Intermediate", sendReceiveSocket);
+
+	private DatagramPacket receiveFromClient() {
+		DatagramPacket returnPacket = null;
+		try {
+			 returnPacket = receiveaPacket("Intermediate", sendReceiveSocket);
+		} catch (SocketTimeoutException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return returnPacket;
 	}
 
 	private DatagramPacket receiveFromServer() {
-		return receiveaPacket("Intermediate", sendReceiveSocket);
+		DatagramPacket returnPacket = null;
+		try {
+			 returnPacket = receiveaPacket("Intermediate", sendReceiveSocket);
+		} catch (SocketTimeoutException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return returnPacket;
 	}
 
 	private void sendToClient(int clientPort) {

@@ -191,6 +191,7 @@ public class FileTransferClient extends Host{
 		 		return;
 		 	}
 		 	
+
 		 	
 		 	if(isError()){
 				handleError();

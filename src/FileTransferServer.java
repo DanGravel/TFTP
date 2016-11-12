@@ -9,8 +9,6 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Scanner;
 
-import javax.xml.crypto.Data;
-
 
 /**
  * 
@@ -21,13 +19,14 @@ import javax.xml.crypto.Data;
 public class FileTransferServer extends Host implements Runnable {
 	
 	private static final int START_FILE_DATA = 4; // Index where the file data starts for DATA packets
-	//private static final int TIMEOUT = 3000;
+	private static final int TIMEOUT = 3000;
 	private boolean doneFile; // set when you are at the end of the file;
 	private DatagramSocket sendAndReceiveSocket, receiveSocket;
 	private boolean serverShutdown = false; // boolean to see if server is supposed to be shut down
 	private Validater validater;
 	
 	public FileTransferServer(DatagramPacket packet, int port) {
+		Printer.setIsVerbose(true);	//KG FOR TESTING UNTIL PUT INTO PROMPT
 		try {
 	
 			if(port == SERVER_PORT) {
@@ -81,7 +80,7 @@ public class FileTransferServer extends Host implements Runnable {
 			break;
 		case WRITE:
 			sendaPacket(response, receivePacket.getPort(), sendAndReceiveSocket, "Server"); //Sends an ACK
-			receiveNextPartofFile(response);	//Star receive file
+			receiveNextPartofFile();	//Star receive file
 		default: 
 			sendaPacket(response, receivePacket.getPort(), sendAndReceiveSocket, "Server"); //Handles all errors
 		}
@@ -106,18 +105,18 @@ public class FileTransferServer extends Host implements Runnable {
 			System.out.println("Could not open file to read\n");
 		}
 		
-			int endOfFile = fileData.length - 1;
+			int endOfFile = fileData.length;	//KG CHANGED THIS TO FIX PROB, USED TO BE: int endOfFile = fileData.length - 1;
 			if(fileData.length == 0) {
 				endOfFile = 0; 
 			}
 			byte[] toSend;
 			RequestType request;
-//			try {
-//				//sendAndReceiveSocket.setSoTimeout(TIMEOUT);
-////			} catch (SocketException e1) {
-////				// TODO Auto-generated catch block
-////				e1.printStackTrace();
-//			}
+			try {
+				sendAndReceiveSocket.setSoTimeout(TIMEOUT);
+			} catch (SocketException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 			do {
 				if (upto > fileData.length) { //If trying to access an index out of file array length
 					toSend = Arrays.copyOfRange(fileData, start, endOfFile); //only go to end of file
@@ -129,19 +128,19 @@ public class FileTransferServer extends Host implements Runnable {
 				sendaPacket(packetdata, receivePacket.getPort(), sendAndReceiveSocket, "Server");
 				start += DATA_END - 1; //Increment to next block of data
 				upto += DATA_END;
-				DatagramPacket received;
-				int tmpBlkNum = 0;
-				try{
+				DatagramPacket received = null;
+				try {
 					received = receiveaPacket("Server", sendAndReceiveSocket);
-					tmpBlkNum = getBlockNum(received.getData());
-				}catch(SocketTimeoutException e) {}
-				
-				
+				} catch (SocketTimeoutException e){
+				}
+				int tmpBlkNum = getBlockNum(received.getData());
 				while(tmpBlkNum < blockNum){
 					try{
 						received = receiveaPacket("Server", sendAndReceiveSocket);
-						tmpBlkNum = getBlockNum(received.getData());
-					}catch(SocketTimeoutException e) {}
+					} catch (SocketTimeoutException e){
+						
+					}
+					tmpBlkNum = getBlockNum(received.getData());
 				}
 				blockNum++; //Next block
 		      	byte data[] = receivePacket.getData(); 
@@ -151,9 +150,8 @@ public class FileTransferServer extends Host implements Runnable {
 	
 	/**
 	 * Receive next part of file and either save it to a new file, or append to existing
-	 * @throws SocketException 
 	 */
-	private void receiveNextPartofFile(byte[] response){
+	private void receiveNextPartofFile() {
 		RequestType request = null; 
 		if(new File("C:\\").getUsableSpace() < PACKET_SIZE) { //Error handling if disk full
 			request = RequestType.DISKFULL;
@@ -161,14 +159,16 @@ public class FileTransferServer extends Host implements Runnable {
 			sendaPacket(b, receivePacket.getPort(), sendAndReceiveSocket, "Server");
 			return; 
 		}
-
 		String path = "src\\serverFiles\\" + validater.getFilename(); 
 		File file = new File(path);
 		FileOutputStream fos = null;
 		//TODO can't find a proper way to infuse it with the while loop
-		try{
+		try {
 			receiveaPacket("Server", sendAndReceiveSocket);
-		}catch(SocketTimeoutException e){}
+		}catch (SocketTimeoutException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 		request = validater.validate(receivePacket.getData()); //Get the request
 		byte[] ack = createRightPacket(request, receivePacket.getData()); //create ACK
 		try {
@@ -179,11 +179,11 @@ public class FileTransferServer extends Host implements Runnable {
 				byte[] data = Arrays.copyOfRange(wholePacket,START_FILE_DATA, endOfPacket); //ignore op code and only get file data
 				fos.write(data); //Write this to file
 				sendaPacket(ack, receivePacket.getPort(), sendAndReceiveSocket, "Server"); //SEND ACK
-				try{
+				try {
 					receiveaPacket("Server", sendAndReceiveSocket);
-				}
-				catch(SocketTimeoutException e){
-					
+				} catch (SocketTimeoutException e){
+					System.out.println("Did not receive data, re-sending ACK");
+					sendaPacket(ack, receivePacket.getPort(), sendAndReceiveSocket, "Server");
 				}
 				request = validater.validate(receivePacket.getData());
 				ack = createRightPacket(request, receivePacket.getData()); 
@@ -196,8 +196,7 @@ public class FileTransferServer extends Host implements Runnable {
 	}
 	
 	private int getBlockNum(byte [] data){
-		byte [] blockNum = new byte[]{data[2], data[3]};
-		return Integer.parseInt(new String(blockNum));
+		return (data[2] & 0xff) << 8 | (data[3] & 0xff);
 	}
 	
 	/**
@@ -306,4 +305,4 @@ public class FileTransferServer extends Host implements Runnable {
 		
 	}
 }
-  
+
