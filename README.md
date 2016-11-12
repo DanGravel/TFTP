@@ -23,19 +23,19 @@ Tanzim Zaman <br />
   * If RRQ, responds with acknowledgement packet <br />
   * If WRQ, responds with data packet <br />
   * extends Host.java <br />
-  
+
 ####Host.java: <br />
   * Abstract class that maintains all send and receive methods <br />
-  
+
 ####Printer.java: <br />
   * Takes care of all print messages to show what is happening with client/intermediate/server <br />
-  
+
 ####RequestType.java
   * Class with enums of all different types of packets
 
 ####Validater.java
   * Class which contains all validation methods for packet type, validity of file, and a method that parses out filename and mode
-  
+
 ###Instructions <br />
 When running in normal mode: <br />
 1. Run main for FileTransferServer <br />
@@ -46,11 +46,25 @@ When running in test mode: <br />
 2. Run main for IntermediateHost <br />
 3. Run main for FileTransferClient <br />
 
-  * Will be prompted by client to enter a pathname. 
-     * You must enter the full path name with "\\\" rather than "/". 
-     * E.g C:\\\Users\\\kshaminag\\\Desktop\\\Folder
+  * Will be prompted by client to enter a pathname.
+     * You must enter the path name with "\\\" rather than "/".
+     * E.g C:\\\Users\\\kshaminag\\\Desktop\\\Folder or C:\\\Users\\\kshaminag\\\Desktop\\\Folder\\\
   * Type help when prompted to enter a command by client to see a list of commands you can use
-  
+
   * Read request will transfer file from Desktop to user specified path
   * Write request will transfer file from user specified path to Desktop
-  
+  * In the client you will be asked for a path, this is the path to where you
+  want to save files and upload from.
+  * The available commands for the client are
+  quit - exits the client
+  pwd - present working directory
+  ls - list of files in directory
+  normal - sends packets from client directly to server
+  test - sends file to intermediate host which forwards to server
+  read - reads a file from server
+  write - writes a file to server
+  verbose - prints all data
+  !verbose - prints minimum amount of information
+  help - shows commands and sample queries
+  * An example of a command is normal/test read/write filename.txt verbose/!verbose
+  * If at anytime you want to change directories simply type in the new directory

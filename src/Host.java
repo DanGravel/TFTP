@@ -87,6 +87,8 @@ public abstract class Host {
 	         p.printReceiveData(host, receivePacket);
 	      }catch(SocketTimeoutException e){
 			System.out.println("Havent recieved a response try again");
+			byte data1[] = new byte[1];
+			receivePacket = new DatagramPacket(data1,data1.length);
 	      }  
 	      catch(IOException e) {
 	    	 System.out.print("IO Exception: likely:");
