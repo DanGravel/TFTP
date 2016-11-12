@@ -9,9 +9,7 @@ import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * File Transfer Client
@@ -125,7 +123,7 @@ public class FileTransferClient extends Host{
 	}
 	
 	/**
-	 * Checks if the command is a file name, otherwise it is a unrecognized command.
+	 * Checks if the command is a file name or a path.
 	 * 
 	 * @param s: The string that is entered
 	 */
