@@ -8,7 +8,6 @@ public class IntermediateHost extends Host {
 	private static int packetType = 0; // type of packet to manipulate
 	private static int packetNum = 0; 
 	private static int delayTime = 0;
-	private static boolean packetOne = true; 
 	
 	private Validater validate; 
 	
@@ -66,7 +65,7 @@ public class IntermediateHost extends Host {
 			
 			System.out.println("Enter delay in milliseconds: ");
 			delayTime = s.nextInt(); 
-			
+			delay();
 		}
 	}
 	
@@ -100,8 +99,7 @@ public class IntermediateHost extends Host {
 				receiveFromClient();
 			}
 			else {
-				// receive request packet
-				requestType = validate.validate(receiveFromClient().getData());
+				requestType = validate.validate(receiveFromClient().getData()); // receive request packet
 				int clientPort = receivePacket.getPort();
 			
 				sendToServer();	// send request
@@ -131,7 +129,7 @@ public class IntermediateHost extends Host {
 					}
 					else if (packetType == 4) { // ACK
 						System.out.println("Losing ACK Packet");
-						receiveFromServer(); // receive DATA packet
+						serverThreadPort = receiveFromServer().getPort(); // receive DATA packet
 						sendToClient(clientPort);
 						
 						DatagramPacket ack = receiveFromClient();
@@ -149,12 +147,18 @@ public class IntermediateHost extends Host {
 							}
 							System.out.println("Lost ACK packet # " + packetNum);
 						}
+						for(;;) {
+							receiveFromServer();
+							sendToClient(clientPort);
+							receiveFromClient();
+							sendToServerThread(serverThreadPort);
+						}
 					}
 				}
 				else if (requestType == RequestType.WRITE) {
 					if(packetType == 3) { // DATA
 						System.out.println("Losing DATA Packet");
-						receiveFromClient(); // receive ACK packet
+						serverThreadPort = receiveFromServer().getPort(); // receive ack
 						sendToClient(clientPort);
 						
 						DatagramPacket data = receiveFromClient();
@@ -171,6 +175,12 @@ public class IntermediateHost extends Host {
 								lost = foundPacket(receiveFromClient());
 							}
 							System.out.println("Lost DATA packet # " + packetNum);
+						}
+						for(;;) {
+							receiveFromServer();
+							sendToClient(clientPort);
+							receiveFromClient();
+							sendToServerThread(serverThreadPort);
 						}
 					}
 					else if(packetType == 4){ // ACK
@@ -192,10 +202,216 @@ public class IntermediateHost extends Host {
 								
 							}
 							System.out.println("Lost ACK packet # " + packetNum);	
-						}		
+						}
+						
+						for(;;) {
+							receiveFromClient();
+							sendToServerThread(serverThreadPort);
+							receiveFromServer(); 
+							sendToClient(clientPort);
+						}
+						
 					}
 				}
 			}
+	}
+	
+	private void delay() {
+		int serverThreadPort = 0; 
+		boolean delayed; 
+		RequestType requestType = null;
+		
+		if(packetType == 1 || packetType == 2){ // RRQ or WRQ
+			System.out.println("Delay a request packet");
+			receiveFromClient();
+			int clientPort = receivePacket.getPort();
+			
+			try {
+				Thread.sleep(delayTime);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			sendToServer();
+			
+			receiveFromServer();
+			serverThreadPort = receivePacket.getPort();
+			
+			sendToClient(clientPort);
+			
+			for(;;) {
+				receiveFromClient();
+				sendToServerThread(serverThreadPort);
+				
+				receiveFromServer();
+				sendToClient(clientPort);
+			}
+		}
+		else {
+			requestType = validate.validate(receiveFromClient().getData()); // receive request packet
+			int clientPort = receivePacket.getPort();
+		
+			sendToServer();	// send request
+			
+			if(requestType == RequestType.READ) {
+				if(packetType == 3) { // DATA
+					System.out.println("Delay DATA Packet");
+					DatagramPacket data1 = receiveFromServer(); 
+					serverThreadPort = data1.getPort();
+					
+					if(foundPacket(data1)) {
+						try {
+							Thread.sleep(delayTime);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+					else {
+						delayed = false; 
+						while(!delayed) {
+							sendToClient(clientPort);
+							receiveFromClient();
+							sendToServerThread(serverThreadPort);
+							
+							delayed = foundPacket(receiveFromServer());
+						}
+						try {
+							Thread.sleep(delayTime);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+					for(;;) {	// continue normal passing of packets
+						sendToClient(clientPort);
+						receiveFromClient();
+						sendToServerThread(serverThreadPort);
+						receiveFromServer();
+					}
+				}
+				else if(packetType == 4) { // ACK
+					System.out.println("Delay ACK packet");
+					
+					DatagramPacket data1 = receiveFromServer();
+					serverThreadPort = data1.getPort(); 
+					sendToClient(clientPort);
+					
+					if(foundPacket(receiveFromClient())) {
+						System.out.println("Delay ACK packet # " + packetNum);
+						try {
+							Thread.sleep(delayTime);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+					else {
+						delayed = false;
+						while(!delayed) {
+							sendToServerThread(serverThreadPort);
+							receiveFromServer();
+							sendToClient(clientPort);
+							
+							delayed = foundPacket(receiveFromClient());
+							
+						}
+						System.out.println("Delay ACK packet # " + packetNum);
+						try {
+							Thread.sleep(delayTime);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+					for(;;) {	// continue normal passing of packets
+						sendToServerThread(serverThreadPort);
+						receiveFromServer();
+						sendToClient(clientPort);
+						receiveFromClient();
+					}
+				}
+			}
+			else if(requestType == RequestType.WRITE) {
+				if(packetType == 3) { // DATA
+					System.out.println("Delay DATA packet");
+					
+					serverThreadPort = receiveFromServer().getPort(); // receive ack
+					sendToClient(clientPort);
+					
+					if(foundPacket(receiveFromClient())) {
+						System.out.println("Delay DATA packet # " + packetNum);
+						try {
+							Thread.sleep(delayTime);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+					else {
+						delayed = false;
+						while(!delayed) {
+							sendToServerThread(serverThreadPort);
+							receiveFromServer();
+							sendToClient(clientPort);
+							
+							delayed = foundPacket(receiveFromClient());
+							
+						}
+						System.out.println("Delay DATA packet # " + packetNum);
+						try {
+							Thread.sleep(delayTime);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+					for(;;) {	// continue normal passing of packets
+						sendToServerThread(serverThreadPort);
+						receiveFromServer();
+						sendToClient(clientPort);
+						receiveFromClient();
+					}
+				}
+				else if(packetType == 4) { // ACK
+					System.out.println("Delay ACK Packet");
+					DatagramPacket ack = receiveFromServer();
+					serverThreadPort = ack.getPort();
+					
+					if(foundPacket(ack)) {
+						try {
+							Thread.sleep(delayTime);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+					else {
+						delayed = false; 
+						while(!delayed) {
+							sendToClient(clientPort);
+							receiveFromClient();
+							sendToServerThread(serverThreadPort);
+							
+							delayed = foundPacket(receiveFromServer());
+						}
+						try {
+							Thread.sleep(delayTime);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+					for(;;) {	// continue normal passing of packets
+						sendToClient(clientPort);
+						receiveFromClient();
+						sendToServerThread(serverThreadPort);
+						receiveFromServer();
+					}
+				}
+			}
+		}
 	}
 	
 	private void sendToServerThread(int port){
