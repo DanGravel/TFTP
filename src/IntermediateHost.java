@@ -131,8 +131,7 @@ public class IntermediateHost extends Host {
 							sendToClient(clientPort); 
 					        receiveFromClient();
 						    sendToServerThread(serverThreadPort);
-						    
-						}		
+						    						}		
 					}
 					else if (packetType == 4) { // ACK
 						System.out.println("Losing ACK Packet");
@@ -435,7 +434,7 @@ public class IntermediateHost extends Host {
 		sendaPacket(receivePacket.getData(), SERVER_PORT, sendReceiveSocket, "Intermediate");
 	}
 
-	private DatagramPacket receiveFromClient() {
+	private DatagramPacket receiveFromClient(){
 		return receiveaPacket("Intermediate", sendReceiveSocket);
 	}
 

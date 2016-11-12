@@ -1,4 +1,3 @@
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -10,6 +9,8 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Scanner;
 
+import javax.xml.crypto.Data;
+
 
 /**
  * 
@@ -20,13 +21,13 @@ import java.util.Scanner;
 public class FileTransferServer extends Host implements Runnable {
 	
 	private static final int START_FILE_DATA = 4; // Index where the file data starts for DATA packets
+	//private static final int TIMEOUT = 3000;
 	private boolean doneFile; // set when you are at the end of the file;
 	private DatagramSocket sendAndReceiveSocket, receiveSocket;
 	private boolean serverShutdown = false; // boolean to see if server is supposed to be shut down
 	private Validater validater;
 	
 	public FileTransferServer(DatagramPacket packet, int port) {
-		Printer.setIsVerbose(true);	//KG FOR TESTING UNTIL PUT INTO PROMPT
 		try {
 	
 			if(port == SERVER_PORT) {
@@ -40,7 +41,7 @@ public class FileTransferServer extends Host implements Runnable {
 		validater = new Validater();
 		doneFile = false;
 		
-}	
+	}	
 
 	/**
 	 * Main thread, opens sub thread to take care of received files. Continuously waits on socket 69 for packets
@@ -80,7 +81,7 @@ public class FileTransferServer extends Host implements Runnable {
 			break;
 		case WRITE:
 			sendaPacket(response, receivePacket.getPort(), sendAndReceiveSocket, "Server"); //Sends an ACK
-			receiveNextPartofFile();	//Star receive file
+			receiveNextPartofFile(response);	//Star receive file
 		default: 
 			sendaPacket(response, receivePacket.getPort(), sendAndReceiveSocket, "Server"); //Handles all errors
 		}
@@ -105,35 +106,54 @@ public class FileTransferServer extends Host implements Runnable {
 			System.out.println("Could not open file to read\n");
 		}
 		
-			int endOfFile = fileData.length;	//KG CHANGED THIS TO FIX PROB, USED TO BE: int endOfFile = fileData.length - 1;
+			int endOfFile = fileData.length - 1;
 			if(fileData.length == 0) {
 				endOfFile = 0; 
 			}
 			byte[] toSend;
 			RequestType request;
+//			try {
+//				//sendAndReceiveSocket.setSoTimeout(TIMEOUT);
+////			} catch (SocketException e1) {
+////				// TODO Auto-generated catch block
+////				e1.printStackTrace();
+//			}
 			do {
 				if (upto > fileData.length) { //If trying to access an index out of file array length
 					toSend = Arrays.copyOfRange(fileData, start, endOfFile); //only go to end of file
 					doneFile = true; //done sending the whole file!
-			      } else {
-			    	  toSend = Arrays.copyOfRange(fileData, start, upto); //Send part of file
-			      }
-			      packetdata = createDataPacket(toSend, blockNum);
-			      sendaPacket(packetdata, receivePacket.getPort(), sendAndReceiveSocket, "Server");
-			      start += DATA_END - 1; //Increment to next block of data
-			      upto += DATA_END;
-			      blockNum++; //Next block
-			      receiveaPacket("Server", sendAndReceiveSocket); //Attempt to get ack from sender
-			      byte data[] = receivePacket.getData(); 
-			      request = validater.validate(data); //get the request type
-			} while(request == RequestType.ACK && !doneFile); //Only do this a second time (or more) if more data is left AND an ACK was received
+				} else {
+					toSend = Arrays.copyOfRange(fileData, start, upto); //Send part of file
+				}
+				packetdata = createDataPacket(toSend, blockNum);
+				sendaPacket(packetdata, receivePacket.getPort(), sendAndReceiveSocket, "Server");
+				start += DATA_END - 1; //Increment to next block of data
+				upto += DATA_END;
+				DatagramPacket received;
+				int tmpBlkNum = 0;
+				try{
+					received = receiveaPacket("Server", sendAndReceiveSocket);
+					tmpBlkNum = getBlockNum(received.getData());
+				}catch(SocketTimeoutException e) {}
 				
+				
+				while(tmpBlkNum < blockNum){
+					try{
+						received = receiveaPacket("Server", sendAndReceiveSocket);
+						tmpBlkNum = getBlockNum(received.getData());
+					}catch(SocketTimeoutException e) {}
+				}
+				blockNum++; //Next block
+		      	byte data[] = receivePacket.getData(); 
+		      	request = validater.validate(data); //get the request type
+			} while(request == RequestType.ACK && !doneFile); //Only do this a second time (or more) if more data is left AND an ACK was received				
 	}
 	
 	/**
 	 * Receive next part of file and either save it to a new file, or append to existing
+	 * @throws SocketException 
 	 */
-	private void receiveNextPartofFile() {
+	private void receiveNextPartofFile(byte[] response){
 		RequestType request = null; 
 		if(new File("C:\\").getUsableSpace() < PACKET_SIZE) { //Error handling if disk full
 			request = RequestType.DISKFULL;
@@ -141,11 +161,14 @@ public class FileTransferServer extends Host implements Runnable {
 			sendaPacket(b, receivePacket.getPort(), sendAndReceiveSocket, "Server");
 			return; 
 		}
+
 		String path = "src\\serverFiles\\" + validater.getFilename(); 
 		File file = new File(path);
 		FileOutputStream fos = null;
 		//TODO can't find a proper way to infuse it with the while loop
-		receiveaPacket("Server", sendAndReceiveSocket); // Receive first part of data
+		try{
+			receiveaPacket("Server", sendAndReceiveSocket);
+		}catch(SocketTimeoutException e){}
 		request = validater.validate(receivePacket.getData()); //Get the request
 		byte[] ack = createRightPacket(request, receivePacket.getData()); //create ACK
 		try {
@@ -153,10 +176,15 @@ public class FileTransferServer extends Host implements Runnable {
 			while(request == RequestType.DATA) { //If not data, wrong packet
 				byte[] wholePacket = receivePacket.getData();
 				int endOfPacket = getSize();
-				byte[] data = Arrays.copyOfRange(wholePacket,START_FILE_DATA, endOfPacket); //|gnore op code and only get file data
+				byte[] data = Arrays.copyOfRange(wholePacket,START_FILE_DATA, endOfPacket); //ignore op code and only get file data
 				fos.write(data); //Write this to file
 				sendaPacket(ack, receivePacket.getPort(), sendAndReceiveSocket, "Server"); //SEND ACK
-				receiveaPacket("Server", sendAndReceiveSocket);
+				try{
+					receiveaPacket("Server", sendAndReceiveSocket);
+				}
+				catch(SocketTimeoutException e){
+					
+				}
 				request = validater.validate(receivePacket.getData());
 				ack = createRightPacket(request, receivePacket.getData()); 
 			} 
@@ -165,6 +193,11 @@ public class FileTransferServer extends Host implements Runnable {
 			e.printStackTrace();
 		}
 		if(request != RequestType.DATA) sendaPacket(ack, receivePacket.getPort(), sendAndReceiveSocket, "Server");	//Error Handling
+	}
+	
+	private int getBlockNum(byte [] data){
+		byte [] blockNum = new byte[]{data[2], data[3]};
+		return Integer.parseInt(new String(blockNum));
 	}
 	
 	/**
@@ -244,6 +277,7 @@ public class FileTransferServer extends Host implements Runnable {
 				Scanner reader = new Scanner(System.in);
 				String key = "";
 				System.out.println("Press q to quit server\n");
+				System.out.println("Press v to enable verbose\n");
 				while(true) {
 					key = reader.nextLine();
 					if(key.equalsIgnoreCase("q")) {
@@ -251,6 +285,10 @@ public class FileTransferServer extends Host implements Runnable {
 						serverShutdown = true;
 						//receiveSocket.close();
 						reader.close();
+					} else if (key.equalsIgnoreCase("v")){
+						System.out.println("Enabling Verbose\n");
+						Printer.setIsVerbose(true);
+						System.out.println("Press q to quit server\n");
 					}
 				}
 			}				
@@ -268,5 +306,4 @@ public class FileTransferServer extends Host implements Runnable {
 		
 	}
 }
-
   

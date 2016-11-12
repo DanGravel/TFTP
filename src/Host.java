@@ -50,57 +50,19 @@ public abstract class Host {
 	   * 
 	   * @param host: the host the packet is sent from
 	   * @param receiveSocket: the socket that is receiving the packet
+	 * @throws IOException 
 	   */
-	protected DatagramPacket receiveaPacket(String host, DatagramSocket receiveSocket, byte[] packetdata){
+	protected DatagramPacket receiveaPacket(String host, DatagramSocket receiveSocket) throws IOException{
 		byte data[] = new byte[PACKET_SIZE];
 		receivePacket = new DatagramPacket(data, data.length);
-		while(true){
-			try {
-				receiveSocket.receive(receivePacket);
-				p.printReceiveData(host, receivePacket);
-				return receivePacket;
-			}catch(SocketTimeoutException e){
-				System.out.println("Havent recieved a response in three seconds resending");
-				sendaPacket(packetdata, INTERMEDIATE_PORT, receiveSocket, "Client");
-				
+		receiveSocket.receive(receivePacket);
+		p.printReceiveData(host, receivePacket);
+		return receivePacket;
 				//continue;
-			}catch (IOException e) {
-				System.out.print("IO Exception: likely:");
-				System.out.println("Receive Socket Timed Out.\n" + e);
-				e.printStackTrace();
-				System.exit(1);
-			}
 		}
 
-}
 	
-  /**
-   * Method used to receive a packet from a certain host
-   * 
-   * @param host: the host the packet is sent from
-   * @param receiveSocket: the socket that is receiving the packet
-   */
-	  protected DatagramPacket receiveaPacket(String host, DatagramSocket receiveSocket) {
-		  byte data[] = new byte[PACKET_SIZE];
-	      receivePacket = new DatagramPacket(data, data.length);
-	      try { 
-	         receiveSocket.receive(receivePacket);
-	         p.printReceiveData(host, receivePacket);
-	      }catch(SocketTimeoutException e){
-			System.out.println("Havent recieved a response try again");
-			byte data1[] = new byte[1];
-			receivePacket = new DatagramPacket(data1,data1.length);
-	      }  
-	      catch(IOException e) {
-	    	 System.out.print("IO Exception: likely:");
-	         System.out.println("Receive Socket Timed Out.\n" + e);
-	         e.printStackTrace();
-	         System.exit(1);
-	      }
-	      return receivePacket;
-	  }
-	
-	  	
+  
   /**
    * creates a byte array with the acknowledgement info
    * 

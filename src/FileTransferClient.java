@@ -184,7 +184,13 @@ public class FileTransferClient extends Host{
 			byte[] WRQ = arrayCombiner(write, filename);		
 		 	sendaPacket(WRQ,port, socket, sender);
 		 	//if you dont get a response on initial request re-prompt
-		 	if(receiveaPacket(sender, socket).getData().length == 1) return;
+		 	try{
+		 		receiveaPacket(sender, socket);
+		 	}catch(SocketTimeoutException e){
+		 		System.out.println("Didnt recieve a response try again");
+		 		return;
+		 	}
+		 	
 		 	
 		 	if(isError()){
 				handleError();
@@ -216,9 +222,15 @@ public class FileTransferClient extends Host{
 					
 					packetdata = createDataPacket(filedata, blockNum);
 					sendaPacket(packetdata, receivePacket.getPort(), socket, sender);
-					DatagramPacket tmp = receiveaPacket(sender, socket);
+					DatagramPacket tmp;
+					byte[] tmpData;
+					try{
+						tmp = receiveaPacket(sender, socket);
+						tmpData = tmp.getData();
+					}catch(SocketTimeoutException e){
+						tmpData = new byte[1];
+					}
 					
-					byte[] tmpData = tmp.getData();
 					int tmpBlck = 0;
 					if(tmpData.length > 2){
 						tmpBlck = ((tmpData[2] & 0xff) << 8) | (tmpData[3] & 0xff);
@@ -275,7 +287,11 @@ public class FileTransferClient extends Host{
 			try{
 				FileOutputStream fis = new FileOutputStream(file);
 				do{
-					receiveaPacket(sender, socket, ack);
+					try{
+						receiveaPacket(sender, socket);
+					}catch(SocketTimeoutException e){
+						
+					}
 					if(diskFull(file, socket, sender)) return;
 					if(isError()){
 						handleError();
