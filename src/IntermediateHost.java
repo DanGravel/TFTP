@@ -127,10 +127,11 @@ public class IntermediateHost extends Host {
 							System.out.println("Lost DATA packet # " + packetNum);	
 						}
 						for(;;) {
+							receiveFromServer();
+							sendToClient(clientPort); 
 					        receiveFromClient();
 						    sendToServerThread(serverThreadPort);
-						    receiveFromServer();
-						    sendToClient(clientPort); 
+						    
 						}		
 					}
 					else if (packetType == 4) { // ACK

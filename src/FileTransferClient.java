@@ -219,17 +219,25 @@ public class FileTransferClient extends Host{
 					DatagramPacket tmp = receiveaPacket(sender, socket);
 					
 					byte[] tmpData = tmp.getData();
-					int tmpBlck = ((tmpData[2] & 0xff) << 8) | (tmpData[3] & 0xff);
+					int tmpBlck = 0;
+					if(tmpData.length > 2){
+						tmpBlck = ((tmpData[2] & 0xff) << 8) | (tmpData[3] & 0xff);
+					}
 					//if block number is lower then current block ignore
 					
-					while(tmpBlck < blockNum && tmpData.length > 2){
+					while(tmpBlck < blockNum && tmpData.length < 2){
 						if(tmpBlck > blockNum){
 							System.out.println("Received a very wrong ACK");
 							return;
 						}
 						tmp = receiveaPacket(sender, socket);
 						tmpData = tmp.getData();
-						tmpBlck = ((tmpData[2] & 0xff) << 8) | (tmpData[3] & 0xff);
+						if(tmpData.length > 2){
+							tmpBlck = ((tmpData[2] & 0xff) << 8) | (tmpData[3] & 0xff);
+						}
+						else{
+							tmpBlck = 0;
+						}
 					}
 					
 					blockNum++;
