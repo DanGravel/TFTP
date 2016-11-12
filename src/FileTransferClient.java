@@ -216,7 +216,7 @@ public class FileTransferClient extends Host{
 					
 					packetdata = createDataPacket(filedata, blockNum);
 					sendaPacket(packetdata, receivePacket.getPort(), socket, sender);
-					DatagramPacket tmp = receiveaPacket(sender, socket, filedata);
+					DatagramPacket tmp = receiveaPacket(sender, socket);
 					
 					byte[] tmpData = tmp.getData();
 					int tmpBlck = ((tmpData[2] & 0xff) << 8) | (tmpData[3] & 0xff);
@@ -227,7 +227,7 @@ public class FileTransferClient extends Host{
 							System.out.println("Received a very wrong ACK");
 							return;
 						}
-						tmp = receiveaPacket(sender, socket, filedata);
+						tmp = receiveaPacket(sender, socket);
 						tmpData = tmp.getData();
 						tmpBlck = ((tmpData[2] & 0xff) << 8) | (tmpData[3] & 0xff);
 					}
