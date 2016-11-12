@@ -70,11 +70,15 @@ public abstract class Host {
 			//System.out.println("Havent recieved a response try again");
 			//byte data1[] = new byte[1];
 			//receivePacket = new DatagramPacket(data1,data1.length);
-	      }  catch(IOException e) {
+	      }catch(IOException e) {
+	    	 if(e instanceof SocketTimeoutException) {
+                  throw new SocketTimeoutException();
+	    	 }
 	    	 System.out.print("IO Exception: likely:");
 	         System.out.println("Receive Socket Timed Out.\n" + e);
 	         e.printStackTrace();
 	         System.exit(1);
+	  
 	      }
 	      return receivePacket;
 	  }

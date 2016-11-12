@@ -184,14 +184,13 @@ public class FileTransferClient extends Host{
 			byte[] WRQ = arrayCombiner(write, filename);		
 		 	sendaPacket(WRQ,port, socket, sender);
 		 	//if you dont get a response on initial request re-prompt
+		 	
 		 	try{
 		 		receiveaPacket(sender, socket);
 		 	}catch(SocketTimeoutException e){
 		 		System.out.println("Didnt recieve a response try again");
 		 		return;
 		 	}
-		 	
-
 		 	
 		 	if(isError()){
 				handleError();
@@ -237,7 +236,8 @@ public class FileTransferClient extends Host{
 						tmpBlck = ((tmpData[2] & 0xff) << 8) | (tmpData[3] & 0xff);
 					}
 					//if block number is lower then current block ignore
-					
+					//or if the length is < 2 this means the socket timed out
+					//if you get an ACK with a higher block number ya done goofed bad
 					while(tmpBlck < blockNum && tmpData.length < 2){
 						if(tmpBlck > blockNum){
 							System.out.println("Received a very wrong ACK");

@@ -132,6 +132,7 @@ public class FileTransferServer extends Host implements Runnable {
 				try {
 					received = receiveaPacket("Server", sendAndReceiveSocket);
 				} catch (SocketTimeoutException e){
+					
 				}
 				int tmpBlkNum = getBlockNum(received.getData());
 				while(tmpBlkNum < blockNum){
