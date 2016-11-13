@@ -439,7 +439,7 @@ public class IntermediateHost extends Host {
 		DatagramPacket returnPacket = null;
 		try {
 			 returnPacket = receiveaPacket("Intermediate", sendReceiveSocket);
-		} catch (SocketTimeoutException e) {
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -450,7 +450,7 @@ public class IntermediateHost extends Host {
 		DatagramPacket returnPacket = null;
 		try {
 			 returnPacket = receiveaPacket("Intermediate", sendReceiveSocket);
-		} catch (SocketTimeoutException e) {
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

@@ -20,7 +20,7 @@ import java.util.Scanner;
 public class FileTransferServer extends Host implements Runnable {
 	
 	private static final int START_FILE_DATA = 4; // Index where the file data starts for DATA packets
-	private static final int TIMEOUT = 3000;
+	private static final int TIMEOUT = 1500;
 	private boolean doneFile; // set when you are at the end of the file;
 	private DatagramSocket sendAndReceiveSocket, receiveSocket;
 	private boolean serverShutdown = false; // boolean to see if server is supposed to be shut down
@@ -132,13 +132,13 @@ public class FileTransferServer extends Host implements Runnable {
 				DatagramPacket received = null;
 				try {
 					received = receiveaPacket("Server", sendAndReceiveSocket, receivePacket.getData());
-				} catch (SocketTimeoutException e){
+				} catch (Exception e){
 				}
 				int tmpBlkNum = getBlockNum(received.getData());
 				while(tmpBlkNum < blockNum){
 					try{
 						received = receiveaPacket("Server", sendAndReceiveSocket, receivePacket.getData());
-					} catch (SocketTimeoutException e){
+					} catch (Exception e){
 						
 					}
 					tmpBlkNum = getBlockNum(received.getData());
@@ -160,16 +160,22 @@ public class FileTransferServer extends Host implements Runnable {
 			sendaPacket(b, receivePacket.getPort(), sendAndReceiveSocket, "Server");
 			return; 
 		}
+		try {
+			sendAndReceiveSocket.setSoTimeout(TIMEOUT);
+		} catch (SocketException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 		String path = "src\\serverFiles\\" + validater.getFilename(); 
 		File file = new File(path);
 		FileOutputStream fos = null;
 		//TODO can't find a proper way to infuse it with the while loop
 		try {
 			receiveaPacket("Server", sendAndReceiveSocket);
-		} catch (SocketTimeoutException e1) {
-			// TODO Auto-generated catch block
+		} catch (Exception e1) {
 			e1.printStackTrace();
 		}
+
 		request = validater.validate(receivePacket.getData()); //Get the request
 		byte[] ack = createRightPacket(request, receivePacket.getData()); //create ACK
 		try {
@@ -180,11 +186,13 @@ public class FileTransferServer extends Host implements Runnable {
 				byte[] data = Arrays.copyOfRange(wholePacket,START_FILE_DATA, endOfPacket); //ignore op code and only get file data
 				fos.write(data); //Write this to file
 				sendaPacket(ack, receivePacket.getPort(), sendAndReceiveSocket, "Server"); //SEND ACK
+				int lastPort = receivePacket.getPort();
+				DatagramPacket tempPacket = null;
 				try {
-					receiveaPacket("Server", sendAndReceiveSocket);
+					tempPacket = receiveaPacket("Server", sendAndReceiveSocket);
 				} catch (SocketTimeoutException e){
 					System.out.println("Did not receive data, re-sending ACK");
-					sendaPacket(ack, receivePacket.getPort(), sendAndReceiveSocket, "Server");
+					sendaPacket(ack, lastPort, sendAndReceiveSocket, "Server");
 				}
 				request = validater.validate(receivePacket.getData());
 				ack = createRightPacket(request, receivePacket.getData()); 
