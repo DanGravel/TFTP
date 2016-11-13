@@ -30,7 +30,7 @@ public class IntermediateHost extends Host {
 	 * 2 - Delay packet
 	 */
 	public void sendAndReceive() { //TODO account for errors in user input
-		System.out.println("Press 0 for normal mode, 1 to lose a packet, 2 to delay a packet");
+		System.out.println("Press 0 for normal mode, 1 to lose a packet, 2 to delay a packet and 3 to duplicate a packet");
 		@SuppressWarnings("resource")
 		Scanner s = new Scanner(System.in);
 		userInput = s.nextInt(); 
