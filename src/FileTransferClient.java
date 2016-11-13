@@ -219,7 +219,7 @@ public class FileTransferClient extends Host{
 						receiveaPacket(sender, socket);	
 						break;
 					}
-					
+				
 					packetdata = createDataPacket(filedata, blockNum);
 					sendaPacket(packetdata, receivePacket.getPort(), socket, sender);
 					DatagramPacket tmp;
@@ -228,6 +228,7 @@ public class FileTransferClient extends Host{
 						tmp = receiveaPacket(sender, socket);
 						tmpData = tmp.getData();
 					}catch(SocketTimeoutException e){
+						System.out.println("FUCJK");
 						tmpData = new byte[1];
 					}
 					
@@ -237,17 +238,20 @@ public class FileTransferClient extends Host{
 					}
 					//if block number is lower then current block ignore
 					//or if the length is < 2 this means the socket timed out
-					while(tmpBlck < blockNum && tmpData.length < 2){
+					while(tmpBlck < blockNum){
 						tmp = receiveaPacket(sender, socket);
 						tmpData = tmp.getData();
 						if(tmpData.length > 2){
 							tmpBlck = ((tmpData[2] & 0xff) << 8) | (tmpData[3] & 0xff);
+							if(tmpBlck == (blockNum-1)){
+								sendaPacket(packetdata, receivePacket.getPort(), socket, sender);
+								receiveaPacket(sender, socket);
+							}
 						}
 						else{
 							tmpBlck = 0;
 						}
 					}
-					
 					blockNum++;
 				}while(endofFile == DATA_END); //while you can get a full 512 bytes keep going
 					 
