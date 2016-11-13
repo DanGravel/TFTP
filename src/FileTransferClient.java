@@ -286,6 +286,7 @@ public class FileTransferClient extends Host{
 	 		byte[] ack = RRQ;
 	 		DatagramPacket tmp;
 	 		int tmpBlck = 0;
+	 		int tempPort = 0; 
 			try{
 				FileOutputStream fis = new FileOutputStream(file);
 				do{
@@ -297,7 +298,7 @@ public class FileTransferClient extends Host{
 								tmpBlck = ((tmpData[2] & 0xff) << 8) | (tmpData[3] & 0xff);
 							}
 						}catch(SocketTimeoutException e){
-							sendaPacket(ack, receivePacket.getPort(), socket, sender);
+							sendaPacket(ack, tempPort, socket, sender);
 						}
 					}
 					
@@ -310,6 +311,7 @@ public class FileTransferClient extends Host{
 					fis.write(Arrays.copyOfRange(receivePacket.getData(), 4, datalength));
 					ack = createAck(blockNum);
 					sendaPacket(ack, receivePacket.getPort(), socket, sender);
+					tempPort = receivePacket.getPort();
 					blockNum++;
 				} while(datalength >= 512);
 				fis.close();

@@ -82,7 +82,7 @@ public abstract class Host {
    * @param host: the host the packet is sent from
    * @param receiveSocket: the socket that is receiving the packet
    */
-	  protected DatagramPacket receiveaPacket(String host, DatagramSocket receiveSocket) throws SocketTimeoutException, IOException{
+	  protected DatagramPacket receiveaPacket(String host, DatagramSocket receiveSocket) throws SocketTimeoutException, IOException {
 		  byte data[] = new byte[PACKET_SIZE];
 	      receivePacket = new DatagramPacket(data, data.length);
 	      //try { 
@@ -94,7 +94,7 @@ public abstract class Host {
 			//receivePacket = new DatagramPacket(data1,data1.length);
 	      //}  catch(IOException e) {
 	    	 //System.out.print("IO Exception: likely:");
-	         //System.out.println("Receive Socket Timed Out.\n" + e);
+	    	 //System.out.println("Receive Socket Timed Out.\n" + e);
 	         //e.printStackTrace();
 	         //System.exit(1);
 	      //}
