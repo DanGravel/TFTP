@@ -26,8 +26,6 @@ public class Printer {
 			System.out.print("Containing: " + new String(sendPacket.getData()));
 			printBytes(sendPacket.getData());
 			System.out.println(host + ": Packet sent \n");
-		} else {
-			System.out.println(host + ": Packet sent \n");
 		}
 	}
 		

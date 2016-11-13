@@ -237,12 +237,7 @@ public class FileTransferClient extends Host{
 					}
 					//if block number is lower then current block ignore
 					//or if the length is < 2 this means the socket timed out
-					//if you get an ACK with a higher block number ya done goofed bad
 					while(tmpBlck < blockNum && tmpData.length < 2){
-						if(tmpBlck > blockNum){
-							System.out.println("Received a very wrong ACK");
-							return;
-						}
 						tmp = receiveaPacket(sender, socket);
 						tmpData = tmp.getData();
 						if(tmpData.length > 2){
@@ -285,14 +280,23 @@ public class FileTransferClient extends Host{
 	 		int blockNum = 1;	
 	 		int datalength;
 	 		byte[] ack = RRQ;
+	 		DatagramPacket tmp;
+	 		int tmpBlck = 0;
 			try{
 				FileOutputStream fis = new FileOutputStream(file);
 				do{
-					try{
-						receiveaPacket(sender, socket);
-					}catch(SocketTimeoutException e){
-						
+					while(tmpBlck < blockNum){
+						try{
+							tmp = receiveaPacket(sender, socket);
+							byte[] tmpData = tmp.getData();
+							if(tmpData.length > 2){
+								tmpBlck = ((tmpData[2] & 0xff) << 8) | (tmpData[3] & 0xff);
+							}
+						}catch(SocketTimeoutException e){
+							sendaPacket(ack, receivePacket.getPort(), socket, sender);
+						}
 					}
+					
 					if(diskFull(file, socket, sender)) return;
 					if(isError()){
 						handleError();
