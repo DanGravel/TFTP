@@ -15,6 +15,9 @@ Tanzim Zaman <br />
 
 ####IntermediateHost.java: <br />
   * passes messages and responses between server and client in the form of packets when client is running in test mode <br />
+  * loses specified packet
+  * delays specified packet for user specified time
+  * duplicates specified packet after user specified time
   * runs in an infinite loop <br />
   * extends Host.java <br />
 
@@ -47,8 +50,6 @@ When running in test mode: <br />
 3. Run main for FileTransferClient <br />
 
   * Will be prompted by client to enter a pathname.
-     * You must enter the path name with "\\\" rather than "/".
-     * E.g C:\\\Users\\\kshaminag\\\Desktop\\\Folder or C:\\\Users\\\kshaminag\\\Desktop\\\Folder\\\
   * Type help when prompted to enter a command by client to see a list of commands you can use
 
   * Read request will transfer file from Desktop to user specified path
@@ -68,3 +69,5 @@ When running in test mode: <br />
    * help - shows commands and sample queries
   * An example of a command is normal/test read/write filename.txt verbose/!verbose
   * If at anytime you want to change directories simply type in the new directory
+  
+  
