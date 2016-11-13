@@ -1,4 +1,3 @@
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -333,5 +332,3 @@ public class FileTransferServer extends Host implements Runnable {
 		
 	}
 }
-
-  

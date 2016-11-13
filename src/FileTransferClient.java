@@ -224,34 +224,24 @@ public class FileTransferClient extends Host{
 					sendaPacket(packetdata, receivePacket.getPort(), socket, sender);
 					DatagramPacket tmp;
 					byte[] tmpData;
-					try{
-						tmp = receiveaPacket(sender, socket);
-						tmpData = tmp.getData();
-					}catch(SocketTimeoutException e){
-						System.out.println("FUCJK");
-						tmpData = new byte[1];
-						int tmpBlck = 0;
-						while(tmpBlck < blockNum){
-							tmp = receiveaPacket(sender, socket);
-							System.out.println("FUCdfasdfasJK");
-							tmpData = tmp.getData();
-							if(tmpData.length > 2){
-								tmpBlck = ((tmpData[2] & 0xff) << 8) | (tmpData[3] & 0xff);
-								if(tmpBlck == (blockNum-1)){ //check if its right ack
-									System.out.println("TMP: " + tmpBlck + "BLOCK: " + blockNum);
-									for(byte b : packetdata){
-										System.out.print(b);
-									}
+					int tmpBlck = 0;
+					
+						try{
+							receiveaPacket(sender, socket);
+						}catch(SocketTimeoutException e){
+							System.out.println("FUCJK");
+							while(tmpBlck < blockNum){
+								tmpData = new byte[1];	
+								tmp = receiveaPacket(sender, socket);
+								tmpData = tmp.getData();
+								int val = ((tmpData[2] & 0xff) << 8) | (tmpData[3] & 0xff);
+								System.out.println("++++++++++ " + val);
+								if(val <= blockNum){
 									sendaPacket(packetdata, receivePacket.getPort(), socket, sender);
-									receiveaPacket(sender, socket);
+		
 								}
-							}
-							else{
-								tmpBlck = 0;
-							}
 						}
 					}
-					
 					blockNum++;
 				}while(endofFile == DATA_END); //while you can get a full 512 bytes keep going
 					 
