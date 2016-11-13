@@ -65,7 +65,7 @@ public class IntermediateHost extends Host {
 			
 			System.out.println("Enter delay in milliseconds: ");
 			delayTime = s.nextInt(); 
-			delay();
+			delayPacket();
 		}
 	}
 	
@@ -226,7 +226,7 @@ public class IntermediateHost extends Host {
 			}
 	}
 	
-	private void delay() {
+	private void delayPacket() {
 		int serverThreadPort = 0; 
 		boolean delayed; 
 		RequestType requestType = null;
@@ -236,18 +236,11 @@ public class IntermediateHost extends Host {
 			receiveFromClient();
 			int clientPort = receivePacket.getPort();
 			
-			try {
-				Thread.sleep(delayTime);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			delay();
 			
 			sendToServer();
-			
 			receiveFromServer();
 			serverThreadPort = receivePacket.getPort();
-			
 			sendToClient(clientPort);
 			
 			for(;;) {
@@ -264,162 +257,56 @@ public class IntermediateHost extends Host {
 		
 			sendToServer();	// send request
 			
-			if(requestType == RequestType.READ) {
-				if(packetType == 3) { // DATA
-					System.out.println("Delay DATA Packet");
-					DatagramPacket data1 = receiveFromServer(); 
-					serverThreadPort = data1.getPort();
-					
-					if(foundPacket(data1)) {
-						try {
-							Thread.sleep(delayTime);
-						} catch (InterruptedException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-					}
-					else {
-						delayed = false; 
-						while(!delayed) {
-							sendToClient(clientPort);
-							receiveFromClient();
-							sendToServerThread(serverThreadPort);
-							
-							delayed = foundPacket(receiveFromServer());
-						}
-						try {
-							Thread.sleep(delayTime);
-						} catch (InterruptedException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-					}
-					for(;;) {	// continue normal passing of packets
-						sendToClient(clientPort);
-						receiveFromClient();
-						sendToServerThread(serverThreadPort);
-						receiveFromServer();
-					}
+			if((requestType == RequestType.READ && packetType == 3) || (requestType == RequestType.WRITE && packetType == 4)) {
+				DatagramPacket data1 = receiveFromServer(); 
+				serverThreadPort = data1.getPort();
+				
+				if(foundPacket(data1)) {
+					delay();
 				}
-				else if(packetType == 4) { // ACK
-					System.out.println("Delay ACK packet");
-					
-					DatagramPacket data1 = receiveFromServer();
-					serverThreadPort = data1.getPort(); 
-					sendToClient(clientPort);
-					
-					if(foundPacket(receiveFromClient())) {
-						System.out.println("Delay ACK packet # " + packetNum);
-						try {
-							Thread.sleep(delayTime);
-						} catch (InterruptedException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-					}
-					else {
-						delayed = false;
-						while(!delayed) {
-							sendToServerThread(serverThreadPort);
-							receiveFromServer();
-							sendToClient(clientPort);
-							
-							delayed = foundPacket(receiveFromClient());
-							
-						}
-						System.out.println("Delay ACK packet # " + packetNum);
-						try {
-							Thread.sleep(delayTime);
-						} catch (InterruptedException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-					}
-					for(;;) {	// continue normal passing of packets
-						System.out.println("FUCK");
-						sendToServerThread(serverThreadPort);
-						receiveFromServer();
+				else {
+					delayed = false; 
+					while(!delayed) {
 						sendToClient(clientPort);
 						receiveFromClient();
+						sendToServerThread(serverThreadPort);
+						
+						delayed = foundPacket(receiveFromServer());
 					}
+					delay();
+				}
+				for(;;) {	// continue normal passing of packets
+					sendToClient(clientPort);
+					receiveFromClient();
+					sendToServerThread(serverThreadPort);
+					receiveFromServer();
 				}
 			}
-			else if(requestType == RequestType.WRITE) {
-				if(packetType == 3) { // DATA
-					System.out.println("Delay DATA packet");
-					
-					serverThreadPort = receiveFromServer().getPort(); // receive ack
-					sendToClient(clientPort);
-					
-					if(foundPacket(receiveFromClient())) {
-						System.out.println("Delay DATA packet # " + packetNum);
-						try {
-							Thread.sleep(delayTime);
-						} catch (InterruptedException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-					}
-					else {
-						delayed = false;
-						while(!delayed) {
-							sendToServerThread(serverThreadPort);
-							receiveFromServer();
-							sendToClient(clientPort);
-							
-							delayed = foundPacket(receiveFromClient());
-							
-						}
-						System.out.println("Delay DATA packet # " + packetNum);
-						try {
-							Thread.sleep(delayTime);
-						} catch (InterruptedException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-					}
-					for(;;) {	// continue normal passing of packets
-						sendToServerThread(serverThreadPort);
-						receiveFromServer();
-						sendToClient(clientPort);
-						receiveFromClient();
-					}
+			else if((requestType == RequestType.READ && packetType == 4) || (requestType == RequestType.WRITE && packetType == 3)) { 	
+				DatagramPacket data1 = receiveFromServer();
+				serverThreadPort = data1.getPort(); 
+				sendToClient(clientPort);
+				
+				if(foundPacket(receiveFromClient())) {
+					delay();
 				}
-				else if(packetType == 4) { // ACK
-					System.out.println("Delay ACK Packet");
-					DatagramPacket ack = receiveFromServer();
-					serverThreadPort = ack.getPort();
-					
-					if(foundPacket(ack)) {
-						try {
-							Thread.sleep(delayTime);
-						} catch (InterruptedException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-					}
-					else {
-						delayed = false; 
-						while(!delayed) {
-							sendToClient(clientPort);
-							receiveFromClient();
-							sendToServerThread(serverThreadPort);
-							
-							delayed = foundPacket(receiveFromServer());
-						}
-						try {
-							Thread.sleep(delayTime);
-						} catch (InterruptedException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-					}
-					for(;;) {	// continue normal passing of packets
-						sendToClient(clientPort);
-						receiveFromClient();
+				else {
+					delayed = false;
+					while(!delayed) {
 						sendToServerThread(serverThreadPort);
 						receiveFromServer();
+						sendToClient(clientPort);
+						
+						delayed = foundPacket(receiveFromClient());
+						
 					}
+					delay();
+				}
+				for(;;) {	// continue normal passing of packets
+					sendToServerThread(serverThreadPort);
+					receiveFromServer();
+					sendToClient(clientPort);
+					receiveFromClient();
 				}
 			}
 		}
@@ -494,6 +381,15 @@ public class IntermediateHost extends Host {
 		else if(packType == RequestType.ACK) return 4; 
 		else {
 			return 5; 
+		}
+	}
+	
+	private void delay() {
+		try {
+			Thread.sleep(delayTime);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 	
