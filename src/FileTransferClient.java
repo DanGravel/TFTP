@@ -286,7 +286,7 @@ public class FileTransferClient extends Host{
 	 		byte[] ack = RRQ;
 	 		DatagramPacket tmp;
 	 		int tmpBlck = 0;
-	 		int tempPort = 0;
+	 		int tempPort = 0; 
 			try{
 				FileOutputStream fis = new FileOutputStream(file);
 				do{
