@@ -132,22 +132,31 @@ public class FileTransferServer extends Host implements Runnable {
 				upto += DATA_END;
 				DatagramPacket received = null;
 				try {
-					received = receiveaPacket("Server", sendAndReceiveSocket, receivePacket.getData());
+					received = receiveaPacket("Server", sendAndReceiveSocket);
 				} catch (Exception e){
+					byte [] temp= new byte[]{1};
+					received = new DatagramPacket(temp, temp.length);
 				}
-				int tmpBlkNum = getBlockNum(received.getData());
-				
-				while(tmpBlkNum < blockNum){
-					try{
-						received = receiveaPacket("Server", sendAndReceiveSocket, receivePacket.getData());
-					} catch (Exception e){
-						
-					}
+				int tmpBlkNum = 0;
+				if (received.getLength() > 2){
 					tmpBlkNum = getBlockNum(received.getData());
 				}
-				blockNum++; //Next block
+				
+				while(tmpBlkNum < blockNum && received.getLength() < 2){
+					try{
+						received = receiveaPacket("Server", sendAndReceiveSocket);
+					} catch (Exception e){
+						byte [] temp= new byte[]{1};
+						received = new DatagramPacket(temp, temp.length);
+					}
+					if (received.getLength() > 2){
+						tmpBlkNum = getBlockNum(received.getData());
+					}
+					System.out.println("SCHOOL'S OUT BITCHES JK");
+				}
 		      	byte data[] = receivePacket.getData(); 
 		      	request = validater.validate(data); //get the request type
+		      	blockNum++; //Next block
 			} while(request == RequestType.ACK && !doneFile); //Only do this a second time (or more) if more data is left AND an ACK was received				
 	}
 	
@@ -207,6 +216,12 @@ public class FileTransferServer extends Host implements Runnable {
 		if(request != RequestType.DATA) sendaPacket(ack, receivePacket.getPort(), sendAndReceiveSocket, "Server");	//Error Handling
 	}
 	
+	/**
+	 * gets the block number of a packet
+	 * 
+	 * @param data packets data
+	 * @return
+	 */
 	private int getBlockNum(byte [] data){
 		return (data[2] & 0xff) << 8 | (data[3] & 0xff);
 	}
