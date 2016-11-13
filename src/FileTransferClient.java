@@ -195,7 +195,7 @@ public class FileTransferClient extends Host{
 		 	if(isError()){
 				handleError();
 				return;
-			}	
+			}	 
 		 
 			try{
 				FileInputStream fis = new FileInputStream(file);

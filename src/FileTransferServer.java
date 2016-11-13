@@ -20,7 +20,7 @@ import java.util.Scanner;
 public class FileTransferServer extends Host implements Runnable {
 	
 	private static final int START_FILE_DATA = 4; // Index where the file data starts for DATA packets
-	private static final int TIMEOUT = 1500;
+	private static final int TIMEOUT = 2000;
 	private boolean doneFile; // set when you are at the end of the file;
 	private DatagramSocket sendAndReceiveSocket, receiveSocket;
 	private boolean serverShutdown = false; // boolean to see if server is supposed to be shut down
@@ -82,6 +82,7 @@ public class FileTransferServer extends Host implements Runnable {
 		case WRITE:
 			sendaPacket(response, receivePacket.getPort(), sendAndReceiveSocket, "Server"); //Sends an ACK
 			receiveNextPartofFile();	//Star receive file
+			break;
 		default: 
 			sendaPacket(response, receivePacket.getPort(), sendAndReceiveSocket, "Server"); //Handles all errors
 		}
@@ -194,6 +195,7 @@ public class FileTransferServer extends Host implements Runnable {
 				} catch (SocketTimeoutException e){
 					System.out.println("Did not receive data, re-sending ACK");
 					sendaPacket(ack, lastPort, sendAndReceiveSocket, "Server");
+					tempPacket = receiveaPacket("Server", sendAndReceiveSocket);
 				}
 				request = validater.validate(receivePacket.getData());
 				ack = createRightPacket(request, receivePacket.getData()); 
@@ -247,7 +249,8 @@ public class FileTransferServer extends Host implements Runnable {
 				errorMessage = "This file already exists, cannot overwrite";
 				break;
 			default: 
-				System.out.print("Formulating packet\n");
+				response = new byte[]{0, 5, 0, 0}; 
+				errorMessage = "Your packet was invalid";
 		}
 		if(errorMessage != null) { //Check to see if a request was an error and formulate array
 			response = arrayCombiner(response, errorMessage);

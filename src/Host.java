@@ -36,7 +36,7 @@ public abstract class Host {
 			e.printStackTrace();
 			System.exit(1);
 		}
-		p.printRequestAndAck(host, sendPacket);
+		p.printSenderOrReceiverInfo(false, sendPacket, host);
 		try {
 			sendSocket.send(sendPacket);
 		} catch (IOException e) {
@@ -58,8 +58,7 @@ public abstract class Host {
 		while(true){
 			//try {
 				receiveSocket.receive(receivePacket);
-				p.printReceiveData(host, receivePacket);
-				return receivePacket;
+				p.printSenderOrReceiverInfo(true, receivePacket, host);
 			//}catch(SocketTimeoutException e){
 				//System.out.println("Havent recieved a response in three seconds resending");
 				//sendaPacket(packetdata, SERVER_PORT, receiveSocket, "Client");
@@ -88,7 +87,7 @@ public abstract class Host {
 	      receivePacket = new DatagramPacket(data, data.length);
 	      //try { 
 	      	 receiveSocket.receive(receivePacket);
-	         p.printReceiveData(host, receivePacket);
+	         p.printSenderOrReceiverInfo(true, receivePacket, host);
 	      //}catch(SocketTimeoutException e){
 			//System.out.println("Havent recieved a response try again");
 			//byte data1[] = new byte[1];
