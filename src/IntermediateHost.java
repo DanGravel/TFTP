@@ -2,8 +2,7 @@ import java.net.*;
 import java.util.Scanner;
 
 public class IntermediateHost extends Host {
-	private DatagramSocket sendReceiveSocket; // client
-	private DatagramSocket serverSocket; 
+	private DatagramSocket sendReceiveSocket;
 	
 	private static int userInput = 88; 
 	private static int packetType = 0; // type of packet to manipulate
@@ -17,7 +16,6 @@ public class IntermediateHost extends Host {
 		Printer.setIsVerbose(true); //TODO remove hardcoding for this
 		try {
 			sendReceiveSocket = new DatagramSocket(INTERMEDIATE_PORT);
-			serverSocket = new DatagramSocket();
 		} catch (SocketException se) {
 			se.printStackTrace();
 			System.exit(1);
@@ -253,12 +251,12 @@ public class IntermediateHost extends Host {
 	}
 	
 	private void sendToServerThread(int port){
-		sendaPacket(receivePacket.getData(), port, serverSocket, "Intermediate");
+		sendaPacket(receivePacket.getData(), port, sendReceiveSocket, "Intermediate");
 
 	}
 
 	private void sendToServer() {
-		sendaPacket(receivePacket.getData(), SERVER_PORT, serverSocket, "Intermediate");
+		sendaPacket(receivePacket.getData(), SERVER_PORT, sendReceiveSocket, "Intermediate");
 	}
 
 
@@ -276,7 +274,7 @@ public class IntermediateHost extends Host {
 	private DatagramPacket receiveFromServer() {
 		DatagramPacket returnPacket = null;
 		try {
-			 returnPacket = receiveaPacket("Intermediate", serverSocket);
+			 returnPacket = receiveaPacket("Intermediate", sendReceiveSocket);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -332,7 +330,7 @@ public class IntermediateHost extends Host {
 			e.printStackTrace();
 		}
 	}
-
+	
 	public static void main(String args[]) {
 		IntermediateHost ih = new IntermediateHost();
 		ih.sendAndReceive();
