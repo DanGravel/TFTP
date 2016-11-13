@@ -94,136 +94,74 @@ public class IntermediateHost extends Host {
 		boolean lost; 
 		
 		RequestType requestType = null;
-			if(packetType == 1 || packetType == 2){ // RRQ or WRQ
-				System.out.println("Losing a request packet");
-				receiveFromClient();
-			}
-			else {
-				requestType = validate.validate(receiveFromClient().getData()); // receive request packet
-				int clientPort = receivePacket.getPort();
+		if(packetType == 1 || packetType == 2){ // RRQ or WRQ
+			System.out.println("Losing a request packet");
+			receiveFromClient();
+		}
+		else {
+			requestType = validate.validate(receiveFromClient().getData()); // receive request packet
+			int clientPort = receivePacket.getPort();
+		
+			sendToServer();	// send request
 			
-				sendToServer();	// send request
-				
-				if(requestType == RequestType.READ) {
-				
-					if(packetType == 3) { // DATA
-						System.out.println("Losing DATA packet");
-						
-						DatagramPacket data1 = receiveFromServer();
-						serverThreadPort = data1.getPort(); 
-						if(foundPacket(data1)) {
-							System.out.println("Lost DATA packet # " + packetNum);
-						}
-						else {
-							lost = false;
-							while(!lost) {
-								sendToClient(clientPort);
-								receiveFromClient();
-								sendToServerThread(serverThreadPort);
-								
-								lost = foundPacket(receiveFromServer());
-								
-							}
-							System.out.println("Lost DATA packet # " + packetNum);	
-						}
-						for(;;) {
-							receiveFromServer();
-							sendToClient(clientPort); 
-					        receiveFromClient();
-						    sendToServerThread(serverThreadPort);
-						    						}		
-					}
-					else if (packetType == 4) { // ACK
-						System.out.println("Losing ACK Packet");
-						serverThreadPort = receiveFromServer().getPort(); // receive DATA packet
-						
-						//MAYBE CHANGE TO serverThreadPort = receivePacket.getPort();
-						
-						sendToClient(clientPort);
-						
-						DatagramPacket ack = receiveFromClient();
-						if(foundPacket(ack)) {
-							System.out.println("Lost ACK packet # " + packetNum);
-						}
-						else {
-							lost = false; 
-							while(!lost) {
-								sendToServerThread(serverThreadPort);
-								receiveFromServer(); 
-								
-								sendToClient(clientPort);
-								lost = foundPacket(receiveFromClient());
-							}
-							System.out.println("Lost ACK packet # " + packetNum);
-						}
-						for(;;) {
-							receiveFromClient();
-							sendToServerThread(serverThreadPort);
-							
-							receiveFromServer();
-							sendToClient(clientPort);
-						}
-					}
+			if((requestType == RequestType.READ && packetNum == 3) ||(requestType == RequestType.WRITE && packetType == 4)) {
+				DatagramPacket packet = receiveFromServer();
+				serverThreadPort = packet.getPort(); 
+				if(foundPacket(packet)) {
+					System.out.println("Lost packet # " + packetNum);
 				}
-				else if (requestType == RequestType.WRITE) {
-					if(packetType == 3) { // DATA
-						System.out.println("Losing DATA Packet");
-						serverThreadPort = receiveFromServer().getPort(); // receive ack
+				else {
+					lost = false;
+					while(!lost) {
 						sendToClient(clientPort);
+						receiveFromClient();
+						sendToServerThread(serverThreadPort);
 						
-						DatagramPacket data = receiveFromClient();
-						if(foundPacket(data)) {
-							System.out.println("Lost DATA packet # " + packetNum);
-						}
-						else {
-							lost = false; 
-							while(!lost) {
-								sendToServerThread(serverThreadPort);
-								receiveFromServer();
-								
-								sendToClient(clientPort);
-								lost = foundPacket(receiveFromClient());
-							}
-							System.out.println("Lost DATA packet # " + packetNum);
-						}
-						for(;;) {
-							receiveFromServer();
-							sendToClient(clientPort);
-							receiveFromClient();
-							sendToServerThread(serverThreadPort);
-						}
-					}
-					else if(packetType == 4){ // ACK
-						System.out.println("Losing ACK packet");
-						
-						DatagramPacket ack = receiveFromServer();
-						serverThreadPort = ack.getPort(); 
-						if(foundPacket(ack)) {
-							System.out.println("Lost ACK packet # " + packetNum);
-						}
-						else {
-							lost = false;
-							while(!lost) {
-								sendToClient(clientPort);
-								receiveFromClient();
-								sendToServerThread(serverThreadPort);
-								
-								lost = foundPacket(receiveFromServer());
-								
-							}
-							System.out.println("Lost ACK packet # " + packetNum);	
-						}
-						
-						for(;;) {
-							receiveFromServer();
-							sendToClient(clientPort);
-							receiveFromClient();
-							sendToServerThread(serverThreadPort);
-						}
+						lost = foundPacket(receiveFromServer());
 						
 					}
+					System.out.println("Lost packet # " + packetNum);	
+				}
+				for(;;) {
+					receiveFromServer();
+					sendToClient(clientPort); 
+			        receiveFromClient();
+				    sendToServerThread(serverThreadPort);
 				}
 			}
+				
+			else if((requestType == RequestType.READ && packetType == 4) || (requestType == RequestType.WRITE && packetType == 3)) {
+				System.out.println("Losing ACK Packet");
+				serverThreadPort = receiveFromServer().getPort(); // receive DATA packet
+				
+				//MAYBE CHANGE TO serverThreadPort = receivePacket.getPort();
+				
+				sendToClient(clientPort);
+				
+				DatagramPacket ack = receiveFromClient();
+				if(foundPacket(ack)) {
+					System.out.println("Lost packet # " + packetNum);
+				}
+				else {
+					lost = false; 
+					while(!lost) {
+						sendToServerThread(serverThreadPort);
+						receiveFromServer(); 
+						
+						sendToClient(clientPort);
+						lost = foundPacket(receiveFromClient());
+					}
+					System.out.println("Lost packet # " + packetNum);
+				}
+				for(;;) {
+					receiveFromClient();
+					sendToServerThread(serverThreadPort);
+					
+					receiveFromServer();
+					sendToClient(clientPort);
+				}
+			}
+		}
 	}
 	
 	private void delayPacket() {
