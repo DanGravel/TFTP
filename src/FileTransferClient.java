@@ -183,8 +183,14 @@ public class FileTransferClient extends Host{
 			//sending write request
 			byte[] WRQ = arrayCombiner(write, filename);		
 		 	sendaPacket(WRQ,port, socket, sender);
-		 	//if you don't get a response on initial request re-prompt
-		 	if(receiveaPacket(sender, socket).getData().length == 1) return;
+		 	//if you dont get a response on initial request re-prompt
+		 	
+		 	try{
+		 		receiveaPacket(sender, socket);
+		 	}catch(SocketTimeoutException e){
+		 		System.out.println("Didnt recieve a response try again");
+		 		return;
+		 	}
 		 	
 		 	if(isError()){
 				handleError();
@@ -216,20 +222,22 @@ public class FileTransferClient extends Host{
 					
 					packetdata = createDataPacket(filedata, blockNum);
 					sendaPacket(packetdata, receivePacket.getPort(), socket, sender);
-					DatagramPacket tmp = receiveaPacket(sender, socket);
+					DatagramPacket tmp;
+					byte[] tmpData;
+					try{
+						tmp = receiveaPacket(sender, socket);
+						tmpData = tmp.getData();
+					}catch(SocketTimeoutException e){
+						tmpData = new byte[1];
+					}
 					
-					byte[] tmpData = tmp.getData();
 					int tmpBlck = 0;
 					if(tmpData.length > 2){
 						tmpBlck = ((tmpData[2] & 0xff) << 8) | (tmpData[3] & 0xff);
 					}
 					//if block number is lower then current block ignore
-					
+					//or if the length is < 2 this means the socket timed out
 					while(tmpBlck < blockNum && tmpData.length < 2){
-						if(tmpBlck > blockNum){
-							System.out.println("Received a very wrong ACK");
-							return;
-						}
 						tmp = receiveaPacket(sender, socket);
 						tmpData = tmp.getData();
 						if(tmpData.length > 2){
@@ -272,10 +280,23 @@ public class FileTransferClient extends Host{
 	 		int blockNum = 1;	
 	 		int datalength;
 	 		byte[] ack = RRQ;
+	 		DatagramPacket tmp;
+	 		int tmpBlck = 0;
 			try{
 				FileOutputStream fis = new FileOutputStream(file);
 				do{
-					receiveaPacket(sender, socket, ack);
+					while(tmpBlck < blockNum){
+						try{
+							tmp = receiveaPacket(sender, socket);
+							byte[] tmpData = tmp.getData();
+							if(tmpData.length > 2){
+								tmpBlck = ((tmpData[2] & 0xff) << 8) | (tmpData[3] & 0xff);
+							}
+						}catch(SocketTimeoutException e){
+							sendaPacket(ack, receivePacket.getPort(), socket, sender);
+						}
+					}
+					
 					if(diskFull(file, socket, sender)) return;
 					if(isError()){
 						handleError();

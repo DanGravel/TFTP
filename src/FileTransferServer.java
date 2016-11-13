@@ -135,6 +135,7 @@ public class FileTransferServer extends Host implements Runnable {
 				} catch (Exception e){
 				}
 				int tmpBlkNum = getBlockNum(received.getData());
+				
 				while(tmpBlkNum < blockNum){
 					try{
 						received = receiveaPacket("Server", sendAndReceiveSocket, receivePacket.getData());

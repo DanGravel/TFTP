@@ -50,6 +50,7 @@ public abstract class Host {
 	   * 
 	   * @param host: the host the packet is sent from
 	   * @param receiveSocket: the socket that is receiving the packet
+	 * @throws IOException 
 	   */
 	protected DatagramPacket receiveaPacket(String host, DatagramSocket receiveSocket, byte[] packetdata) throws SocketTimeoutException, IOException{
 		byte data[] = new byte[PACKET_SIZE];
@@ -100,8 +101,7 @@ public abstract class Host {
 	      //}
 	      return receivePacket;
 	  }
-	
-	  	
+  
   /**
    * creates a byte array with the acknowledgement info
    * 
