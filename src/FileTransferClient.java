@@ -229,9 +229,8 @@ public class FileTransferClient extends Host{
 						try{
 							receiveaPacket(sender, socket);
 						}catch(SocketTimeoutException e){
-							System.out.println("FUCJK");
-							while(tmpBlck < blockNum){
-								tmpData = new byte[1];	
+//							while(tmpBlck < blockNum){
+//								tmpData = new byte[1];	
 								tmp = receiveaPacket(sender, socket);
 								tmpData = tmp.getData();
 								int val = ((tmpData[2] & 0xff) << 8) | (tmpData[3] & 0xff);
@@ -241,7 +240,7 @@ public class FileTransferClient extends Host{
 		
 								}
 						}
-					}
+					
 					blockNum++;
 				}while(endofFile == DATA_END); //while you can get a full 512 bytes keep going
 					 
