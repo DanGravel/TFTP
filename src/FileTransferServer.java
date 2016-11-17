@@ -194,6 +194,7 @@ public class FileTransferServer extends Host implements Runnable {
 				int endOfPacket = getSize();
 				byte[] data = Arrays.copyOfRange(wholePacket,START_FILE_DATA, endOfPacket); //ignore op code and only get file data
 				fos.write(data); //Write this to file
+				if (endOfPacket < 512) break;
 				sendaPacket(ack, receivePacket.getPort(), sendAndReceiveSocket, "Server"); //SEND ACK
 				int lastPort = receivePacket.getPort();
 				DatagramPacket tempPacket = null;
