@@ -575,6 +575,7 @@ public class IntermediateHost extends Host {
 		}
 	}
 	
+
 	public static void main(String args[]) {
 		IntermediateHost ih = new IntermediateHost();
 		ih.sendAndReceive();

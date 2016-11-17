@@ -25,7 +25,7 @@ public class FileTransferClient extends Host{
 	private static final byte[] write = {0,2};
 	private static final int TIMEOUT = 2000;
 	private static String FILE_PATH_REGEX = "([a-zA-Z]:)?(\\\\[a-zA-Z0-9_.-]+)+\\\\?";
-	
+	private static final int MAX_TIMEOUTS = 4;
 	/**
 	 * FileTransferClient Constructor creates a new DatgramSocket.
 	 */
@@ -185,12 +185,28 @@ public class FileTransferClient extends Host{
 		 	sendaPacket(WRQ,port, socket, sender);
 		 	//if you dont get a response on initial request re-prompt
 		 	
-		 	try{
-		 		receiveaPacket(sender, socket);
-		 	}catch(SocketTimeoutException e){
-		 		System.out.println("Didnt recieve a response try again");
-		 		return;
+		 	boolean response = false;
+		 	int numTimeOuts = 0;
+		 	/*Waits for server response
+		 	*If it times out MAX_TIMEOUTS (4) it aborts the transfer
+		 	*/
+		 	while(!response){
+			 	try{
+			 		receiveaPacket(sender, socket);
+			 		response = true;
+			 	}catch(SocketTimeoutException e){
+			 		System.out.println("Didnt recieve a response from the server");
+			 		numTimeOuts++;
+			 	}
+			 	if(numTimeOuts == MAX_TIMEOUTS){
+			 		System.out.println("Client didnt receive a response from the server 4 times, aborting write");
+			 		return;
+			 	}
+			 	if(!response){
+			 		System.out.println("Waiting for server response");
+			 	}
 		 	}
+		 	
 		 	
 		 	if(isError()){
 				handleError();
@@ -447,8 +463,9 @@ public class FileTransferClient extends Host{
 				continue;
 			}
 		}
-}
+	}
 	
+
 	/**
 	 * Main.
 	 * @param args
