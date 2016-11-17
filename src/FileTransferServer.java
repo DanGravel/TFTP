@@ -151,7 +151,6 @@ public class FileTransferServer extends Host implements Runnable {
 					if (received.getLength() > 2){
 						tmpBlkNum = getBlockNum(received.getData());
 					}
-					System.out.println("SCHOOL'S OUT BITCHES JK");
 				}
 		      	byte data[] = receivePacket.getData(); 
 		      	request = validater.validate(data); //get the request type
