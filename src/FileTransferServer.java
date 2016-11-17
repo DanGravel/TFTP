@@ -320,7 +320,9 @@ public class FileTransferServer extends Host implements Runnable {
 			}				
 		}.start();
 	}
-		
+	
+
+	
 	public static void main(String args[]) {
 		FileTransferServer s = new FileTransferServer(null, SERVER_PORT);
 		s.promptServerOperator();
