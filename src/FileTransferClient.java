@@ -244,10 +244,7 @@ public class FileTransferClient extends Host{
 					
 					try{
 						receiveaPacket(sender, socket);
-						if(isError()){
-							handleError();
-							return;
-						}
+						if(!validAckLength(receivePacket)) System.out.println("WTF");
 						
 					}catch(SocketTimeoutException e){
 //						while(tmpBlck < blockNum){

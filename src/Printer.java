@@ -36,11 +36,17 @@ public class Printer {
     * @param packet		byte array to be printed out
     */
 	private void printBytes(byte packet[]) {
-		System.out.println("In byte format: ");
-
+		System.out.print("In byte format: ");
+		int bytes = 0;
 		for (byte b : packet) {
+			if(bytes >= 4 && b == 0x00 && bytes != 517) {
+				System.out.println("\n");
+				return;
+			}
+			bytes++;
 			System.out.print(b + " ");
 		}
+		if(packet.length > 4) System.out.print("0");
 		System.out.println("\n");
 
 	}

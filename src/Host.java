@@ -179,5 +179,10 @@ public abstract class Host {
 		}
 		return endOfPacket;
 	}
+	
+	protected boolean validAckLength(DatagramPacket packet){
+		if(packet.getLength() != 4) return false;
+		return true;
+	}
 
 }
