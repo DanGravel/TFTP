@@ -242,20 +242,25 @@ public class FileTransferClient extends Host{
 					byte[] tmpData;
 					int tmpBlck = 0;
 					
-						try{
-							receiveaPacket(sender, socket);
-						}catch(SocketTimeoutException e){
-//							while(tmpBlck < blockNum){
-//								tmpData = new byte[1];	
-								tmp = receiveaPacket(sender, socket);
-								tmpData = tmp.getData();
-								int val = ((tmpData[2] & 0xff) << 8) | (tmpData[3] & 0xff);
-								System.out.println("++++++++++ " + val);
-								if(val <= blockNum){
-									sendaPacket(packetdata, receivePacket.getPort(), socket, sender);
-		
-								}
+					try{
+						receiveaPacket(sender, socket);
+						if(isError()){
+							handleError();
+							return;
 						}
+						
+					}catch(SocketTimeoutException e){
+//						while(tmpBlck < blockNum){
+//						tmpData = new byte[1];	
+						tmp = receiveaPacket(sender, socket);
+						tmpData = tmp.getData();
+						int val = ((tmpData[2] & 0xff) << 8) | (tmpData[3] & 0xff);
+						System.out.println("++++++++++ " + val);
+						if(val <= blockNum){
+							sendaPacket(packetdata, receivePacket.getPort(), socket, sender);
+		
+						}
+					}
 					
 					blockNum++;
 				}while(endofFile == DATA_END); //while you can get a full 512 bytes keep going
@@ -465,7 +470,7 @@ public class FileTransferClient extends Host{
 		}
 	}
 	
-
+	
 	/**
 	 * Main.
 	 * @param args
