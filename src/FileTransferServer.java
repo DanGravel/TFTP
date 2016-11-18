@@ -72,7 +72,6 @@ public class FileTransferServer extends Host implements Runnable {
 		}
 		byte data[] = receivePacket.getData(); 
 		RequestType request = validater.validate(data); //Find out what kind of packet is sent: RRQ, WRQ, etc.
-		if(request != RequestType.READ && request != RequestType.WRITE) request = RequestType.INVALID; // First packet must be read or write
 		byte[] response = createRightPacket(request, data); //Create the right response to the packet
 		switch(request) {
 		case READ:
