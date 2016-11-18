@@ -268,7 +268,7 @@ public class FileTransferClient extends Host{
 					return;
 				}
 		 }
-	  
+	   
 	  	/**
 	   * Used for write requests in the server
 	   * 
