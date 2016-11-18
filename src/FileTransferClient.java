@@ -242,6 +242,7 @@ public class FileTransferClient extends Host{
 					//byte[] tmpData;
 					//int tmpBlck = blockNum;
 					numTimeOuts = 0;
+					response = false;
 					while(!response){
 						try{
 							receiveaPacket(sender, socket);
