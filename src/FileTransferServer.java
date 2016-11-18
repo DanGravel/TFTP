@@ -184,13 +184,28 @@ public class FileTransferServer extends Host implements Runnable {
 				sendaPacket(ack, receivePacket.getPort(), sendAndReceiveSocket, "Server"); //SEND ACK
 				if (endOfPacket < 512) break;
 				int lastPort = receivePacket.getPort();
-				DatagramPacket tempPacket = null;
 				try {
-					tempPacket = receiveaPacket("Server", sendAndReceiveSocket);
+					receiveaPacket("Server", sendAndReceiveSocket);
 				} catch (SocketTimeoutException e){
-					System.out.println("Did not receive data, re-sending ACK");
-					sendaPacket(ack, lastPort, sendAndReceiveSocket, "Server");
-					tempPacket = receiveaPacket("Server", sendAndReceiveSocket);
+					//System.out.println("Did not receive data, re-sending ACK");
+					//sendaPacket(ack, lastPort, sendAndReceiveSocket, "Server");
+					//tempPacket = receiveaPacket("Server", sendAndReceiveSocket);
+					boolean received = false;
+					int numTimeOuts = 0;
+					while(!received){
+						sendaPacket(ack, lastPort, sendAndReceiveSocket, "Server");
+						try{
+							receiveaPacket("Server", sendAndReceiveSocket);
+							received = true;
+						} catch(SocketTimeoutException e1){
+							numTimeOuts++;
+							continue;
+						}
+						if (numTimeOuts == 3){
+							System.out.println("The server timed out too many times. Cancelling write.");
+							break;
+						}
+					}
 				}
 				request = validater.validate(receivePacket.getData());
 				ack = createRightPacket(request, receivePacket.getData()); 

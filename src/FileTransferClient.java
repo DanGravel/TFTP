@@ -155,7 +155,6 @@ public class FileTransferClient extends Host{
 	    }
 	}
 
-
 	  /**
 	   * Sends a write request and then sends the file to the server.
 	   * 
