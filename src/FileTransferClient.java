@@ -238,27 +238,27 @@ public class FileTransferClient extends Host{
 				
 					packetdata = createDataPacket(filedata, blockNum);
 					sendaPacket(packetdata, receivePacket.getPort(), socket, sender);
-					DatagramPacket tmp;
-					byte[] tmpData;
-					int tmpBlck = 0;
-					
-					try{
-						receiveaPacket(sender, socket);
-						if(!validAckLength(receivePacket)) System.out.println("WTF");
-						
-					}catch(SocketTimeoutException e){
-//						while(tmpBlck < blockNum){
-//						tmpData = new byte[1];	
-						tmp = receiveaPacket(sender, socket);
-						tmpData = tmp.getData();
-						int val = ((tmpData[2] & 0xff) << 8) | (tmpData[3] & 0xff);
-						System.out.println("++++++++++ " + val);
-						if(val <= blockNum){
+					//DatagramPacket tmp;
+					//byte[] tmpData;
+					//int tmpBlck = blockNum;
+					numTimeOuts = 0;
+					while(!response){
+						try{
+							receiveaPacket(sender, socket);
+							response = false;
+							if(isError()) handleError();
+							if(!validAckLength(receivePacket)) System.out.println("WTF");
+							if(validAckNum(receivePacket,blockNum) || getInt(receivePacket) < blockNum) response = true;	
+							
+						}catch(SocketTimeoutException e){						
 							sendaPacket(packetdata, receivePacket.getPort(), socket, sender);
-		
+							numTimeOuts++;
+						}
+						if(numTimeOuts == 3){
+							System.out.println("Resent data 3 times and didnt get a response");
+							return;
 						}
 					}
-					
 					blockNum++;
 				}while(endofFile == DATA_END); //while you can get a full 512 bytes keep going
 					 
@@ -358,7 +358,8 @@ public class FileTransferClient extends Host{
 			System.out.println(error);
 			break;
 		default: System.out.println("Error?");
-		}	
+		}
+		return;
 	}
 
    /**
