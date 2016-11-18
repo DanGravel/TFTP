@@ -184,5 +184,15 @@ public abstract class Host {
 		if(packet.getLength() != 4) return false;
 		return true;
 	}
+	
+	protected boolean validAckNum(DatagramPacket packet, int num){
+		int val = ((packet.getData()[2] & 0xff) << 8) | (packet.getData()[3] & 0xff);
+		if(val != num) return false;
+		return true;
+	}
+	
+	protected int getInt(DatagramPacket packet){
+		return ((packet.getData()[2] & 0xff) << 8) | (packet.getData()[3] & 0xff);
+	}
 
 }
