@@ -23,7 +23,7 @@ public class FileTransferClient extends Host{
 	private static String pathName;
 	private static final byte[] read = {0,1};
 	private static final byte[] write = {0,2};
-	private static final int TIMEOUT = 30000; //TODO Changed to 30 seconds for debugging puposes, was 2000 
+	private static final int TIMEOUT = 2000; //TODO Changed to 30 seconds for debugging puposes, was 2000 
 	private static String FILE_PATH_REGEX = "([a-zA-Z]:)?(\\\\[a-zA-Z0-9_.-]+)+\\\\?";
 	private static final int MAX_TIMEOUTS = 4;
 	/**
@@ -243,6 +243,7 @@ public class FileTransferClient extends Host{
 					//int tmpBlck = blockNum;
 					numTimeOuts = 0;
 					response = false;
+					int portyo = receivePacket.getPort();
 					while(!response){
 						try{
 							receiveaPacket(sender, socket);
@@ -252,7 +253,7 @@ public class FileTransferClient extends Host{
 							if(validAckNum(receivePacket,blockNum) || getInt(receivePacket) < blockNum) response = true;	
 							
 						}catch(SocketTimeoutException e){						
-							sendaPacket(packetdata, receivePacket.getPort(), socket, sender);
+							sendaPacket(packetdata, portyo, socket, sender);
 							numTimeOuts++;
 						}
 						if(numTimeOuts == 3){
