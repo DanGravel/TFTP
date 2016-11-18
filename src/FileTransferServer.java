@@ -128,27 +128,15 @@ public class FileTransferServer extends Host implements Runnable {
 				sendaPacket(packetdata, receivePacket.getPort(), sendAndReceiveSocket, "Server");
 				start += DATA_END - 1; //Increment to next block of data
 				upto += DATA_END;
+				int tempPort = receivePacket.getPort();
 				DatagramPacket received = null;
-				try {
-					received = receiveaPacket("Server", sendAndReceiveSocket);
-				} catch (Exception e){
-					byte [] temp= new byte[]{1};
-					received = new DatagramPacket(temp, temp.length);
-				}
-				int tmpBlkNum = 0;
-				if (received.getLength() > 2){
-					tmpBlkNum = getBlockNum(received.getData());
-				}
-				
-				while(tmpBlkNum < blockNum && received.getLength() < 2){
-					try{
+				int tempBlkNum = 0;
+				while (tempBlkNum < blockNum){
+					try {
 						received = receiveaPacket("Server", sendAndReceiveSocket);
+						tempBlkNum = getBlockNum(received.getData());
 					} catch (Exception e){
-						byte [] temp= new byte[]{1};
-						received = new DatagramPacket(temp, temp.length);
-					}
-					if (received.getLength() > 2){
-						tmpBlkNum = getBlockNum(received.getData());
+						sendaPacket(packetdata, tempPort, sendAndReceiveSocket, "Server");
 					}
 				}
 		      	byte data[] = receivePacket.getData(); 
