@@ -12,6 +12,7 @@ public abstract class Host {
 	public static final int SERVER_PORT = 69;
 	public static final int INTERMEDIATE_PORT = 23;
 	public static final int PACKET_SIZE = 516;
+	public static final int ACK_PACKET_SIZE = 4; 
 	public static final int DATA_START = 0;
 	public static final int DATA_END = 512;
 	public static final String HOME_DIRECTORY = System.getProperty("user.home");
@@ -100,6 +101,27 @@ public abstract class Host {
 	      //}
 	      return receivePacket;
 	  }
+	  
+	  
+	  protected DatagramPacket receiveaPacket(String host, DatagramSocket receiveSocket, int packetSize) throws SocketTimeoutException, IOException {
+		  byte data[] = new byte[packetSize];
+	      receivePacket = new DatagramPacket(data, data.length);
+	      //try { 
+	      	 receiveSocket.receive(receivePacket);
+	         p.printSenderOrReceiverInfo(true, receivePacket, host);
+	      //}catch(SocketTimeoutException e){
+			//System.out.println("Havent recieved a response try again");
+			//byte data1[] = new byte[1];
+			//receivePacket = new DatagramPacket(data1,data1.length);
+	      //}  catch(IOException e) {
+	    	 //System.out.print("IO Exception: likely:");
+	    	 //System.out.println("Receive Socket Timed Out.\n" + e);
+	         //e.printStackTrace();
+	         //System.exit(1);
+	      //}
+	      return receivePacket;
+	  }
+  
   
   /**
    * creates a byte array with the acknowledgement info
