@@ -156,12 +156,12 @@ public class FileTransferServer extends Host implements Runnable {
 			sendaPacket(b, receivePacket.getPort(), sendAndReceiveSocket, "Server");
 			return; 
 		}
-		try {
+		/*try {
 			sendAndReceiveSocket.setSoTimeout(TIMEOUT);
 		} catch (SocketException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
-		}
+		}*/
 		String path = "src\\serverFiles\\" + validater.getFilename(); 
 		File file = new File(path);
 		FileOutputStream fos = null;
@@ -171,7 +171,7 @@ public class FileTransferServer extends Host implements Runnable {
 		} catch (Exception e1) {
 			e1.printStackTrace();
 		}
-
+		int blockNum = 1;
 		request = validater.validate(receivePacket.getData()); //Get the request
 		byte[] ack = createRightPacket(request, receivePacket.getData()); //create ACK
 		try {
@@ -183,27 +183,35 @@ public class FileTransferServer extends Host implements Runnable {
 				fos.write(data); //Write this to file
 				sendaPacket(ack, receivePacket.getPort(), sendAndReceiveSocket, "Server"); //SEND ACK
 				if (endOfPacket < 512) break;
+				blockNum++;
+				int tempBlockNum = 0;
 				int lastPort = receivePacket.getPort();
-				try {
-					receiveaPacket("Server", sendAndReceiveSocket);
-				} catch (SocketTimeoutException e){
-					//System.out.println("Did not receive data, re-sending ACK");
-					//sendaPacket(ack, lastPort, sendAndReceiveSocket, "Server");
-					//tempPacket = receiveaPacket("Server", sendAndReceiveSocket);
-					boolean received = false;
-					int numTimeOuts = 0;
-					while(!received){
-						sendaPacket(ack, lastPort, sendAndReceiveSocket, "Server");
-						try{
-							receiveaPacket("Server", sendAndReceiveSocket);
-							received = true;
-						} catch(SocketTimeoutException e1){
-							numTimeOuts++;
-							continue;
-						}
-						if (numTimeOuts == 3){
-							System.out.println("The server timed out too many times. Cancelling write.");
-							break;
+				while (tempBlockNum < blockNum){
+					//receiveaPacket("Server", sendAndReceiveSocket);
+					//tempBlockNum = getBlockNum(receivePacket.getData());
+					try {
+						receiveaPacket("Server", sendAndReceiveSocket);
+						tempBlockNum = getBlockNum(receivePacket.getData());
+					} catch (SocketTimeoutException e){
+						//System.out.println("Did not receive data, re-sending ACK");
+						//sendaPacket(ack, lastPort, sendAndReceiveSocket, "Server");
+						//tempPacket = receiveaPacket("Server", sendAndReceiveSocket);
+						boolean received = false;
+						int numTimeOuts = 0;
+						while(!received){
+							sendaPacket(ack, lastPort, sendAndReceiveSocket, "Server");
+							try{
+								receiveaPacket("Server", sendAndReceiveSocket);
+								tempBlockNum = getBlockNum(receivePacket.getData());
+								received = true;
+							} catch(SocketTimeoutException e1){
+								numTimeOuts++;
+								continue;
+							}
+							if (numTimeOuts == 3){
+								System.out.println("The server timed out too many times. Cancelling write.");
+								break;
+							}
 						}
 					}
 				}
