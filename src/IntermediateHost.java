@@ -1,3 +1,4 @@
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.*;
 import java.util.Scanner;
@@ -12,7 +13,7 @@ public class IntermediateHost extends Host {
 	private static int packetType = 0; // type of packet to manipulate
 	private static int packetNum = 0; 
 	private static int delayTime = 0;
-	private static int toClientOrServer = 0; 
+	private static int corruptRequest = 0;
 	
 	private Validater validate; 
 	
@@ -34,7 +35,7 @@ public class IntermediateHost extends Host {
 	 * 2 - Delay packet
 	 */
 	public void sendAndReceive() { //TODO account for errors in user input
-		System.out.println("Press 0 for normal mode, 1 to lose a packet, 2 to delay a packet, 3 to duplicate a packet, 4 to change the TID");
+		System.out.println("Press 0 for normal mode, 1 to lose a packet, 2 to delay a packet, 3 to duplicate a packet, 4 to change the TID, 5 to corrupt request packet, 6 to change opcode");
 		@SuppressWarnings("resource")
 		Scanner s = new Scanner(System.in);
 		userInput = s.nextInt(); 
@@ -101,6 +102,22 @@ public class IntermediateHost extends Host {
 				packetNum = s.nextInt();
 			}
 			invalidTID();
+		}
+		
+		else if (userInput == 5) {
+			System.out.println("Intermediate host will corrupt request packet");
+			System.out.println("\tPress 1 to remove filename");
+			System.out.println("\tPress 2 to remove mode");
+			System.out.println("\tPress 3 remove delimeter 1");
+			System.out.println("\tPress 4 remove delimeter 2");
+			corruptRequest = s.nextInt();
+			
+			corruptRequest();
+		}
+		
+		else if(userInput == 6) {
+			System.out.println("Intermediate host will change the opcode of a packet");
+			
 		}
 	}
 	
@@ -677,7 +694,90 @@ public class IntermediateHost extends Host {
 			}
 		}
 	
-	
+	private void corruptRequest() {
+		RequestType r = validate.validate(receiveFromClient(PACKET_SIZE).getData());
+		int clientPort = receivePacket.getPort();
+		
+		byte[] data = receivePacket.getData();
+		
+		int serverThreadPort = 0;
+		
+		byte[] newData; 
+		int fileNameLength = 0;
+		int modeLength = 0;
+		DatagramPacket corruptPacket = null;
+		int newLength = 0;
+		
+		int i = Validater.FILE_NAME_START; 
+		while(data[i] != 0) {
+			fileNameLength++;
+			i++;
+		}
+		
+		if(corruptRequest == 1) { // rm filename
+			newLength = data.length - fileNameLength;
+			newData = new byte[newLength];
+			
+			System.arraycopy(data, 0, newData, 0, 2);
+			System.arraycopy(data, i, newData, 2, newLength-2);
+			
+			corruptPacket = new DatagramPacket(newData, newData.length);
+			sendToServer(corruptPacket);	
+			
+		}
+		else if(corruptRequest == 2) { // rm mode
+			i++;
+			while(data[i] != 0) {
+				modeLength++; 
+				i++; 
+			}
+			
+			newLength = data.length - modeLength;
+			newData = new byte[newLength];
+			
+			int x = fileNameLength + Validater.FILE_NAME_START + 1;
+			System.arraycopy(data, 0, newData, 0, x); 
+			
+			corruptPacket = new DatagramPacket(newData, newData.length);
+			sendToServer(corruptPacket);
+		}
+		
+		else if(corruptRequest == 3) { // rm delim 1
+			newLength = data.length - 1;
+			newData = new byte[newLength];
+			
+			int x = fileNameLength + Validater.FILE_NAME_START;
+			System.arraycopy(data, 0, newData, 0, x);
+			System.arraycopy(data, x+1, newData, x, newLength-x);
+			x++;
+		}
+		
+		else if(corruptRequest == 4) {
+			newLength = data.length - 1;
+			newData = new byte[newLength];
+			
+			System.arraycopy(data, 0, newData, 0, newLength);
+		}
+		
+		if(r == RequestType.WRITE) receiveFromServer(ACK_PACKET_SIZE);
+		else receiveFromServer(PACKET_SIZE);
+		
+		serverThreadPort = receivePacket.getPort();
+		
+		sendToClient(clientPort);
+		
+		for(;;) {
+			if(r == RequestType.READ) receiveFromClient(ACK_PACKET_SIZE);
+			else receiveFromClient(PACKET_SIZE);
+			
+			sendToServerThread(serverThreadPort);
+			
+			if(r == RequestType.WRITE) receiveFromServer(ACK_PACKET_SIZE);
+			else receiveFromServer(PACKET_SIZE);
+			sendToClient(clientPort);
+		}
+
+	}
 	
 	private void sendToServer(DatagramPacket newPacket) {
 		sendaPacket(newPacket.getData(), SERVER_PORT, serverSocket, "Intermediate");
@@ -806,4 +906,7 @@ public class IntermediateHost extends Host {
 		}
 	
 	}
+
+
 }
+
