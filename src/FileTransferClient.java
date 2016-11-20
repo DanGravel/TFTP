@@ -33,7 +33,6 @@ public class FileTransferClient extends Host{
 	public FileTransferClient() {
 		try {
 			sendReceiveSocket = new DatagramSocket();
-			sendReceiveSocket.setSoTimeout(TIMEOUT);
 		} catch (SocketException se) {
 			se.printStackTrace();
 			System.exit(1);
@@ -168,7 +167,7 @@ public class FileTransferClient extends Host{
 	  public void sendFile(String filename, DatagramSocket socket, int port, String sender) throws IOException{
 		    String path = createPath(filename);
 	 	  	File file = new File(path);
-
+			sendReceiveSocket.setSoTimeout(TIMEOUT);
 	 	  	//check if the file exists
 	 	  	if (!file.exists()){
 	 	  		System.out.println("File does not exist");
@@ -279,6 +278,9 @@ public class FileTransferClient extends Host{
 		public void receiveFile(String filename, DatagramSocket socket, int port, String sender){
 			String filepath = createPath(filename);	
 			File file = new File(filepath);	
+			try {
+				sendReceiveSocket.setSoTimeout(5000);
+			} catch (SocketException e1) {e1.printStackTrace();}
 			
 			if (file.exists()){
 				System.out.println("You already have file " + filename);
@@ -291,21 +293,19 @@ public class FileTransferClient extends Host{
 	 		int blockNum = 1;	
 	 		int datalength;
 	 		byte[] ack = RRQ;
-	 		DatagramPacket tmp;
 	 		int tempPort = 0;
 			boolean response = false;
 			int numTimeOuts = 0;
 			try{
 				fis = new FileOutputStream(file);
 				do{
+					response = false;
 					while(!response){
 						try{
-							response = false;
-							tmp = receiveaPacket(sender, socket);
+							receiveaPacket(sender, socket);
 							if(isError()) handleError();
 							if(validPacketNum(receivePacket,blockNum)) response = true;
 						}catch(SocketTimeoutException e){
-							sendaPacket(ack, tempPort, socket, sender);
 							numTimeOuts++;
 							if(numTimeOuts == 3){
 								System.out.println("Timed out 3 times, aborting transfer");
