@@ -105,44 +105,60 @@ public class FileTransferServer extends Host implements Runnable {
 			System.out.println("Could not open file to read\n");
 		}
 		
-			int endOfFile = fileData.length;	//KG CHANGED THIS TO FIX PROB, USED TO BE: int endOfFile = fileData.length - 1;
-			if(fileData.length == 0) {
-				endOfFile = 0; 
+		int endOfFile = fileData.length;	//KG CHANGED THIS TO FIX PROB, USED TO BE: int endOfFile = fileData.length - 1;
+
+		byte[] toSend;
+		RequestType request;
+		try {
+			sendAndReceiveSocket.setSoTimeout(TIMEOUT);
+		} catch (SocketException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		do {
+			if (upto > fileData.length) { //If trying to access an index out of file array length
+				toSend = Arrays.copyOfRange(fileData, start, endOfFile); //only go to end of file
+				doneFile = true; //done sending the whole file!
+			} else {
+				toSend = Arrays.copyOfRange(fileData, start, upto); //Send part of file
 			}
-			byte[] toSend;
-			RequestType request;
-			try {
-				sendAndReceiveSocket.setSoTimeout(TIMEOUT);
-			} catch (SocketException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
+			packetdata = createDataPacket(toSend, blockNum);
+			sendaPacket(packetdata, receivePacket.getPort(), sendAndReceiveSocket, "Server");
+			start += DATA_END - 1; //Increment to next block of data
+			upto += DATA_END;
+			int tempPort = receivePacket.getPort();
+			DatagramPacket received = null;
+			int tempBlkNum = 0;
+			boolean response = false;
+			while(!response){
+				try{	
+					received = receiveaPacket("Server", sendAndReceiveSocket);
+					if(getBlockNum(received.getData()) < blockNum) continue;
+					if(validater.validate(received.getData()) == RequestType.ACK) response = true;
+				} catch (Exception e){
+					sendaPacket(packetdata, tempPort, sendAndReceiveSocket, "Server");
+				}
 			}
-			do {
-				if (upto > fileData.length) { //If trying to access an index out of file array length
-					toSend = Arrays.copyOfRange(fileData, start, endOfFile); //only go to end of file
-					doneFile = true; //done sending the whole file!
-				} else {
-					toSend = Arrays.copyOfRange(fileData, start, upto); //Send part of file
+			
+			/*while (tempBlkNum < blockNum){
+				try {
+					received = receiveaPacket("Server", sendAndReceiveSocket);
+					tempBlkNum = getBlockNum(received.getData());
+				} catch (Exception e){
+					sendaPacket(packetdata, tempPort, sendAndReceiveSocket, "Server");
 				}
-				packetdata = createDataPacket(toSend, blockNum);
-				sendaPacket(packetdata, receivePacket.getPort(), sendAndReceiveSocket, "Server");
-				start += DATA_END - 1; //Increment to next block of data
-				upto += DATA_END;
-				int tempPort = receivePacket.getPort();
-				DatagramPacket received = null;
-				int tempBlkNum = 0;
-				while (tempBlkNum < blockNum){
-					try {
-						received = receiveaPacket("Server", sendAndReceiveSocket);
-						tempBlkNum = getBlockNum(received.getData());
-					} catch (Exception e){
-						sendaPacket(packetdata, tempPort, sendAndReceiveSocket, "Server");
-					}
-				}
-		      	byte data[] = receivePacket.getData(); 
-		      	request = validater.validate(data); //get the request type
-		      	blockNum++; //Next block
-			} while(request == RequestType.ACK && !doneFile); //Only do this a second time (or more) if more data is left AND an ACK was received				
+			}*/
+	      	byte data[] = receivePacket.getData(); 
+	      	request = validater.validate(data); //get the request type
+	      	blockNum++; //Next block
+		} while(request == RequestType.ACK && !doneFile); //Only do this a second time (or more) if more data is left AND an ACK was received		
+		
+		try { //disables timeout
+			sendAndReceiveSocket.setSoTimeout(0);
+		} catch (SocketException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 	}
 	
 	/**
