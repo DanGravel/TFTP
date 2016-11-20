@@ -7,7 +7,7 @@ import java.nio.file.Paths;
 public class Validater {
 	
 	String fileName = "";
-	private static final int FILE_NAME_START = 2; // Index where filename starts for RRQ and WRQ
+	public static final int FILE_NAME_START = 2; // Index where filename starts for RRQ and WRQ
 	
 	/**
 	 * @param data	The data of packet received
@@ -27,6 +27,16 @@ public class Validater {
 			if(request != RequestType.INVALID) request = fileValidation(request); //ensure file doesn't exist and has right access rights
 		}
 		return request;
+	}
+	
+	public String validateFileNameOrModeOrDelimiters(RequestType request, byte data[], String error) {
+		if(request == RequestType.READ || request == RequestType.WRITE) {
+			request = validateFileNameandMode(data, request);	//Get filename and validate packet
+			if(request == RequestType.INVALID) {
+				return "Invalid File Name, Mode, or no Delimiters";
+			}
+		}
+		return error;
 	}
 	
 	private RequestType fileValidation(RequestType request) {		
@@ -60,17 +70,17 @@ public class Validater {
 		String mode = "";
 		int i = FILE_NAME_START;
 		//Append filename if request was read or write
-		while(data[i] != 0){
+		while(data[i] != 0 && i < data.length){
 			fileName += (char)data[i];
 			i++;
 		}
 		i++; 
 		//Append mode if request was read or write
-		while(data[i] != 0){
+		while(data[i] != 0 && i < data.length){
 			mode += (char)data[i];
 			i++;
 		}
-		if(fileName.length() == 0 || mode.length() == 0) request = RequestType.INVALID;
+		if(fileName.length() == 0 || mode.length() == 0 || fileName.length() > 15 || mode.length() > 15) request = RequestType.INVALID;
 		return request;
 	}
 	
