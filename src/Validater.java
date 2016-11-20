@@ -60,13 +60,13 @@ public class Validater {
 		String mode = "";
 		int i = FILE_NAME_START;
 		//Append filename if request was read or write
-		while(data[i] != 0){
+		while(data[i] != 0 && i < data.length){
 			fileName += (char)data[i];
 			i++;
 		}
 		i++; 
 		//Append mode if request was read or write
-		while(data[i] != 0){
+		while(data[i] != 0 && i < data.length){
 			mode += (char)data[i];
 			i++;
 		}
