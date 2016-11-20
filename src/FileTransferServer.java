@@ -253,8 +253,8 @@ public class FileTransferServer extends Host implements Runnable {
 				response = createAck(getBlockNumber[2],getBlockNumber[3]);
 				break;
 			case INVALID:
-				response = new byte[]{0, 5, 0, 0}; 
-				errorMessage = "Your packet was invalid";
+				response = new byte[]{0, 5, 0, 4}; 
+				errorMessage = findTypeOfInvalid(data, request);
 				break;
 			case ACCESSDENIED:
 				response = new byte[]{0, 5, 0, 2};
@@ -280,6 +280,19 @@ public class FileTransferServer extends Host implements Runnable {
 			response = arrayCombiner(response, errorMessage);
 		}
 		return response;
+	}
+	
+	
+	private String findTypeOfInvalid(byte data[], RequestType request) {
+		String error = "There was an error";
+		if(data[0] != 0 || (data[1] != 1 && data[1] != 2 && data[1] != 3 && data[1] != 4)) {
+			error = "Invalid OpCode";
+		} else {
+			error = validater.validateFileNameOrModeOrDelimiters(request, data, error);
+		}
+		
+		return error;
+		
 	}
 	
 	/**
