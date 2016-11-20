@@ -1,3 +1,4 @@
+import java.io.IOException;
 import java.net.*;
 import java.util.Scanner;
 
@@ -228,7 +229,9 @@ public class IntermediateHost extends Host {
 			receiveFromClient(PACKET_SIZE);
 			int clientPort = receivePacket.getPort();
 			
-			delay();
+			try {
+				Thread.sleep(delayTime);
+			} catch (InterruptedException e) {}
 			
 			sendToServer();
 			
@@ -265,7 +268,7 @@ public class IntermediateHost extends Host {
 				serverThreadPort = packet.getPort();
 				
 				if(foundPacket(packet)) {
-					delay();
+					delay(serverThreadPort);
 				}
 				else {
 					delayed = false; 
@@ -281,11 +284,9 @@ public class IntermediateHost extends Host {
 						else delayed = foundPacket(receiveFromServer(ACK_PACKET_SIZE));
 
 					}
-					delay();
+					delay(serverThreadPort);
 				}
-				for(;;) {	// continue normal passing of packets
-					sendToClient(clientPort);
-					
+				for(;;) {	// continue normal passing of packets					
 					if (requestType == RequestType.READ)receiveFromClient(ACK_PACKET_SIZE);
 					else receiveFromClient(PACKET_SIZE);
 					
@@ -293,6 +294,8 @@ public class IntermediateHost extends Host {
 					
 					if(requestType == RequestType.READ) receiveFromServer(PACKET_SIZE);
 					else receiveFromServer(ACK_PACKET_SIZE);
+					
+					sendToClient(clientPort);
 				}
 			}
 			else if((requestType == RequestType.READ && packetType == 4) || (requestType == RequestType.WRITE && packetType == 3)) { 	
@@ -310,7 +313,9 @@ public class IntermediateHost extends Host {
 				else p = receiveFromClient(PACKET_SIZE);
 				
 				if(foundPacket(p)) {
-					delay();
+					//delay(serverThreadPort);
+					Thread delay = new Delay(delayTime, receivePacket.getData(), serverThreadPort, serverSocket);
+					delay.start();
 				}
 				else {
 					delayed = false;
@@ -326,18 +331,22 @@ public class IntermediateHost extends Host {
 						else delayed = foundPacket(receiveFromClient(PACKET_SIZE));
 						
 					}
-					delay();
+					//delay(serverThreadPort);
+					Thread delay = new Delay(delayTime, receivePacket.getData(), serverThreadPort, serverSocket);
+					delay.start();
 				}
 				for(;;) {	// continue normal passing of packets
-					sendToServerThread(serverThreadPort);
-
 					if(requestType == RequestType.READ) receiveFromServer(PACKET_SIZE);
 					else receiveFromServer(ACK_PACKET_SIZE);
-
+					
 					sendToClient(clientPort);
 					
 					if (requestType == RequestType.READ)receiveFromClient(ACK_PACKET_SIZE);
 					else receiveFromClient(PACKET_SIZE);
+					
+					sendToServerThread(serverThreadPort);
+					
+
 				}
 			}
 		}
@@ -660,15 +669,27 @@ public class IntermediateHost extends Host {
 		}
 	}
 	
-	private void delay() {
-//		try {
-//			Thread.sleep(delayTime);
-//		} catch (InterruptedException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-		long start = System.currentTimeMillis();
-		while(System.currentTimeMillis() - start < delayTime){}
+	private void delay(int serverThreadPort) {
+		new Thread() {
+			public void run() {
+				System.out.println("***DELAYED");
+				try {
+					System.out.println("***DELAYED***3");
+					Thread.sleep(delayTime);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				System.out.println("****DELAYED2");
+				
+				sendToServerThread(serverThreadPort);
+				System.out.println("****DELAYED4");
+				
+			}
+		}.start();
+
+//		long start = System.currentTimeMillis();
+//		while(System.currentTimeMillis() - start < delayTime){}
 		
 	}
 	
@@ -676,5 +697,46 @@ public class IntermediateHost extends Host {
 	public static void main(String args[]) {
 		IntermediateHost ih = new IntermediateHost();
 		ih.sendAndReceive();
+	}
+	
+	
+	private class Delay extends Thread {
+		private int delayTime;
+		private byte[] data; 
+		private int sendPort; 
+		private DatagramSocket socket; 
+		private String host = "Intermediate";
+		DatagramPacket sendPacket; 
+		
+		public Delay(int delayTime, byte[] data, int sendPort, DatagramSocket socket) {
+			this.delayTime = delayTime;
+			this.data = data;
+			this.sendPort = sendPort; 
+			this.socket = socket;
+		}
+		
+		public void run() {
+			try {
+				Thread.sleep(delayTime);
+			} catch(InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
+			
+			try {
+				sendPacket = new DatagramPacket(data, data.length, InetAddress.getLocalHost(), sendPort);
+			} catch (UnknownHostException e) {
+				e.printStackTrace();
+			}
+			
+			try {
+				System.out.println("BEFORE");
+				socket.send(sendPacket);
+				System.out.println("AFTER");
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			p.printSenderOrReceiverInfo(false, sendPacket, host);
+		}
+	
 	}
 }
