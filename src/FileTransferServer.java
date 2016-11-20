@@ -162,12 +162,12 @@ public class FileTransferServer extends Host implements Runnable {
 			sendaPacket(b, receivePacket.getPort(), sendAndReceiveSocket, "Server");
 			return; 
 		}
-		try {
+		/*try {
 			sendAndReceiveSocket.setSoTimeout(TIMEOUT);
 		} catch (SocketException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
-		}
+		}*/
 		String path = "src\\serverFiles\\" + validater.getFilename(); 
 		File file = new File(path);
 		FileOutputStream fos = null;
@@ -177,7 +177,7 @@ public class FileTransferServer extends Host implements Runnable {
 		} catch (Exception e1) {
 			e1.printStackTrace();
 		}
-
+		int blockNum = 1;
 		request = validater.validate(receivePacket.getData()); //Get the request
 		byte[] ack = createRightPacket(request, receivePacket.getData()); //create ACK
 		try {
@@ -197,7 +197,11 @@ public class FileTransferServer extends Host implements Runnable {
 				
 				if (endOfPacket < 512) break;
 				blockNum++;
+<<<<<<< HEAD
 				
+=======
+				int tempBlockNum = 0;
+>>>>>>> 7324bc66a6ea4e4c8979414a810a8549387baa2c
 				int lastPort = receivePacket.getPort();
 				while (tempBlockNum < blockNum){
 					//receiveaPacket("Server", sendAndReceiveSocket);

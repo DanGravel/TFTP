@@ -476,12 +476,14 @@ public class IntermediateHost extends Host {
 	
 	private void delayTime(int delayTime)
 	{
-		try {
-			Thread.sleep(delayTime);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+//		try {
+//			Thread.sleep(delayTime);
+//		} catch (InterruptedException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+		long start = System.currentTimeMillis();
+		while(System.currentTimeMillis() - start < delayTime){}
 	}
 	
 	private void sendToServer(DatagramPacket newPacket) {
@@ -567,12 +569,15 @@ public class IntermediateHost extends Host {
 	}
 	
 	private void delay() {
-		try {
-			Thread.sleep(delayTime);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+//		try {
+//			Thread.sleep(delayTime);
+//		} catch (InterruptedException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+		long start = System.currentTimeMillis();
+		while(System.currentTimeMillis() - start < delayTime){}
+		
 	}
 	
 
