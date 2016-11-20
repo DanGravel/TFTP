@@ -29,6 +29,16 @@ public class Validater {
 		return request;
 	}
 	
+	public String validateFileNameOrModeOrDelimiters(RequestType request, byte data[], String error) {
+		if(request == RequestType.READ || request == RequestType.WRITE) {
+			request = validateFileNameandMode(data, request);	//Get filename and validate packet
+			if(request == RequestType.INVALID) {
+				return "Invalid File Name, Mode, or no Delimiters";
+			}
+		}
+		return error;
+	}
+	
 	private RequestType fileValidation(RequestType request) {		
 		String path = "src\\serverFiles\\" + fileName; 
 		Path path2 = Paths.get(path);
@@ -70,7 +80,7 @@ public class Validater {
 			mode += (char)data[i];
 			i++;
 		}
-		if(fileName.length() == 0 || mode.length() == 0) request = RequestType.INVALID;
+		if(fileName.length() == 0 || mode.length() == 0 || fileName.length() > 15 || mode.length() > 15) request = RequestType.INVALID;
 		return request;
 	}
 	
