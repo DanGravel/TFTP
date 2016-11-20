@@ -7,7 +7,7 @@ import java.nio.file.Paths;
 public class Validater {
 	
 	String fileName = "";
-	private static final int FILE_NAME_START = 2; // Index where filename starts for RRQ and WRQ
+	public static final int FILE_NAME_START = 2; // Index where filename starts for RRQ and WRQ
 	
 	/**
 	 * @param data	The data of packet received
