@@ -149,12 +149,6 @@ public class FileTransferServer extends Host implements Runnable {
 	 * Receive next part of file and either save it to a new file, or append to existing
 	 */
 	private void receiveNextPartofFile() {
-		try {
-			sendAndReceiveSocket.setSoTimeout(300000);
-		} catch (SocketException e2) {
-			// TODO Auto-generated catch block
-			e2.printStackTrace();
-		}
 		RequestType request = null; 
 		if(new File("C:\\").getUsableSpace() < PACKET_SIZE) { //Error handling if disk full
 			request = RequestType.DISKFULL;
@@ -182,26 +176,15 @@ public class FileTransferServer extends Host implements Runnable {
 		byte[] ack = createRightPacket(request, receivePacket.getData()); //create ACK
 		try {
 			fos = new FileOutputStream(file);
-			int blockNum = 1;
-			int tempBlockNum = 0;
 			while(request == RequestType.DATA) { //If not data, wrong packet
 				byte[] wholePacket = receivePacket.getData();
 				int endOfPacket = getSize();
 				byte[] data = Arrays.copyOfRange(wholePacket,START_FILE_DATA, endOfPacket); //ignore op code and only get file data
-				
-				
-				
 				fos.write(data); //Write this to file
 				sendaPacket(ack, receivePacket.getPort(), sendAndReceiveSocket, "Server"); //SEND ACK
-				
-				
 				if (endOfPacket < 512) break;
 				blockNum++;
-<<<<<<< HEAD
-				
-=======
 				int tempBlockNum = 0;
->>>>>>> 7324bc66a6ea4e4c8979414a810a8549387baa2c
 				int lastPort = receivePacket.getPort();
 				while (tempBlockNum < blockNum){
 					//receiveaPacket("Server", sendAndReceiveSocket);
