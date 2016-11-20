@@ -131,7 +131,9 @@ public class IntermediateHost extends Host {
 		RequestType requestType = null;
 		if(packetType == 1 || packetType == 2){ // RRQ or WRQ
 			System.out.println("Losing a request packet");
-			receiveFromClient(PACKET_SIZE);
+			receiveFromClient(PACKET_SIZE);			
+			normal(); 
+			
 		}
 		else {
 			requestType = validate.validate(receiveFromClient(PACKET_SIZE).getData()); // receive request packet
@@ -565,18 +567,7 @@ public class IntermediateHost extends Host {
 		}
 		
 	}
-	
-	private void delayTime(int delayTime)
-	{
-//		try {
-//			Thread.sleep(delayTime);
-//		} catch (InterruptedException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-		long start = System.currentTimeMillis();
-		while(System.currentTimeMillis() - start < delayTime){}
-	}
+
 	
 	private void sendToServer(DatagramPacket newPacket) {
 		sendaPacket(newPacket.getData(), SERVER_PORT, serverSocket, "Intermediate");
