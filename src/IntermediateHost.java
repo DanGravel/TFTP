@@ -425,8 +425,6 @@ public class IntermediateHost extends Host {
 				    
 				    for(;;)
 				    {
-				    	
-						//sendToClient(clientPort);
 						receiveFromClient(ACK_PACKET_SIZE);
 						sendToServerThread(serverThreadPort);
 						receiveFromServer(PACKET_SIZE);
@@ -437,42 +435,45 @@ public class IntermediateHost extends Host {
 				else if (packetType == 4) //ACK ~
 				{
 					System.out.println("\n*Duplicating a ACK packet*\n");
-					DatagramPacket ack = receiveFromClient(PACKET_SIZE); 
+					serverThreadPort = receiveFromServer(PACKET_SIZE).getPort();
+					sendToClient(clientPort);
+
+					DatagramPacket ack = receiveFromClient(ACK_PACKET_SIZE); 
 				    clientPort = receivePacket.getPort();
-				    sendToServer(); //Send WRQ
-				    receiveFromServer(PACKET_SIZE);
-				    serverThreadPort = receiveFromServer(PACKET_SIZE).getPort(); 
+				    
 					if(foundPacket(ack)) 
 					{
 						System.out.println("Duplicated ACK packet # " + packetNum);
+						sendToServerThread(serverThreadPort);
+						Thread duplicate = new Delay(delayTime, ack.getData(), serverThreadPort, serverSocket);
+						duplicate.start();
 					}
 					else
 					{
 						dupli = false;
 				    	while(!dupli) 
 				    	{
-				    		sendToClient(clientPort); //send ack 0
-				    		dupli = foundPacket(receiveFromClient(ACK_PACKET_SIZE)); //get data 1
-						    DatagramPacket newPacket = receivePacket;// SAVE ack 0
-						    delayTime(delayTime);
-						    sendToServerThread(serverThreadPort); 
-						    receiveFromServer(PACKET_SIZE); 
-						    sendToClient(clientPort, newPacket); 
-						 
+				    		sendToServerThread(serverThreadPort);
+				    		receiveFromServer(PACKET_SIZE);
+				    		sendToClient(clientPort);
+				    		
+				    		ack = receiveFromClient(ACK_PACKET_SIZE);
+				    		dupli = foundPacket(ack);						 
 
 						}
 						System.out.println("Duplicated ACK packet # " + packetNum);
+				    	sendToServerThread(serverThreadPort);
+						Thread duplicate = new Delay(delayTime, ack.getData(), serverThreadPort, serverSocket);
+						duplicate.start();
 					}
 					
 					for(;;)
 					{
-					    receiveFromClient(ACK_PACKET_SIZE);
-				    	sendToServerThread(serverThreadPort);
-				    	receiveFromServer(PACKET_SIZE);
-				    	sendToClient(clientPort);
+						receiveFromServer(PACKET_SIZE);
+						sendToClient(clientPort);
+						receiveFromClient(ACK_PACKET_SIZE);
+						sendToServerThread(serverThreadPort);
 			       }
-					
-					
 				}
 				
 			}
@@ -480,79 +481,83 @@ public class IntermediateHost extends Host {
 			{
 				if(packetType == 3) // DATA ~
 				{ 
-					System.out.println("\n*Duplicating a DATA packet*\n");
-					DatagramPacket ack = receiveFromClient(PACKET_SIZE);//get request
-				    clientPort = receivePacket.getPort();
-				    sendToServer(); 
-				    receiveFromServer(PACKET_SIZE);
-				    serverThreadPort = receivePacket.getPort();
-				    DatagramPacket newPacket = receivePacket; //SAVE data
-				    if(foundPacket(ack))
-				    {
-						System.out.println("Duplicated DATA packet # " + packetNum);
-					}
-				    else
-				    {
-				    	dupli = false;
-				    	while(!dupli) 
-				    	{
-				    		sendToClient(clientPort); // send data 1
-				    		delayTime(delayTime);
-				    		dupli = foundPacket(receiveFromClient(ACK_PACKET_SIZE)); //get ack
-						    sendToServerThread(serverThreadPort);  //send ack
-						    receiveFromServer(PACKET_SIZE); //get data 2
-						    sendToClient(clientPort, newPacket); // send data 1
-						    receiveFromClient(ACK_PACKET_SIZE);
-						}
-						System.out.println("Duplicated DATA packet # " + packetNum);	
-				    }
-				    
-				    for(;;)
-				    {
-				       sendToServerThread(serverThreadPort);
-				       receiveFromServer(PACKET_SIZE);
-				       sendToClient(clientPort);
-				       receiveFromClient(ACK_PACKET_SIZE);
-				    }
-					
-				}
-				else if(packetType == 4)// ACK
-				{ 
 					System.out.println("\n*Duplicating a ACK packet*\n");
-					receiveFromClient(PACKET_SIZE); //get WRQ
+					serverThreadPort = receiveFromServer(ACK_PACKET_SIZE).getPort();
+					sendToClient(clientPort);
+
+					DatagramPacket ack = receiveFromClient(PACKET_SIZE); 
 				    clientPort = receivePacket.getPort();
-				    sendToServer(); //Send WRQ
-				    DatagramPacket data1 = receiveFromServer(ACK_PACKET_SIZE);
-				    serverThreadPort = data1.getPort(); 
-					if(foundPacket(data1)) 
+				    
+					if(foundPacket(ack)) 
 					{
 						System.out.println("Duplicated ACK packet # " + packetNum);
+						sendToServerThread(serverThreadPort);
+						Thread duplicate = new Delay(delayTime, ack.getData(), serverThreadPort, serverSocket);
+						duplicate.start();
 					}
 					else
 					{
 						dupli = false;
 				    	while(!dupli) 
 				    	{
-				    		sendToClient(clientPort); //send ack 0
-						    receiveFromClient(PACKET_SIZE); //get data 1
-						    DatagramPacket newPacket = receivePacket;// SAVE ack 0
-						    sendToServerThread(serverThreadPort); //send data 1
-						    dupli = foundPacket(receiveFromServer(ACK_PACKET_SIZE)); // get ack 1
-						    delayTime(delayTime);
-						    sendToClient(clientPort, newPacket); // send ACK 0
-						    receiveFromClient(PACKET_SIZE); //get response
+				    		sendToServerThread(serverThreadPort);
+				    		receiveFromServer(ACK_PACKET_SIZE);
+				    		sendToClient(clientPort);
+				    		
+				    		ack = receiveFromClient(PACKET_SIZE);
+				    		dupli = foundPacket(ack);						 
 
 						}
 						System.out.println("Duplicated ACK packet # " + packetNum);
+						Thread duplicate = new Delay(delayTime, ack.getData(), serverThreadPort, serverSocket);
+						duplicate.start();
 					}
 					
 					for(;;)
 					{
-				    	sendToServerThread(serverThreadPort);
-				    	receiveFromServer(ACK_PACKET_SIZE);
+						receiveFromServer(ACK_PACKET_SIZE);
+						sendToClient(clientPort);
+						receiveFromClient(PACKET_SIZE);
+						sendToServerThread(serverThreadPort);
+			       }					
+				}
+				else if(packetType == 4)// ACK
+				{ 
+					System.out.println("\n*Duplicating a ACK packet*\n");
+					DatagramPacket duplicatePacket = receiveFromServer(ACK_PACKET_SIZE);
+					serverThreadPort = receivePacket.getPort();
+				    if(foundPacket(duplicatePacket)) 
+				    {
 				    	sendToClient(clientPort);
-				    	receiveFromClient(PACKET_SIZE);
-			       }
+						System.out.println("Duplicated DATA packet # " + packetNum);
+						Thread delay = new Delay(delayTime, duplicatePacket.getData(), clientPort, sendReceiveSocket);
+						delay.start();
+					}
+				    else
+				    {
+				    	dupli = false;
+				    	while(!dupli) 
+				    	{
+				    		sendToClient(clientPort); 
+						    receiveFromClient(PACKET_SIZE); 
+						    sendToServerThread(serverThreadPort); 
+						    dupli = foundPacket(receiveFromServer(ACK_PACKET_SIZE)); 
+
+						}
+				    	sendToClient(clientPort);
+						System.out.println("Duplicated DATA packet # " + packetNum);	
+						duplicatePacket = receivePacket;
+						Thread delay = new Delay(delayTime, duplicatePacket.getData(), clientPort, sendReceiveSocket);
+						delay.start();
+				    }
+				    
+				    for(;;)
+				    {
+						receiveFromClient(PACKET_SIZE);
+						sendToServerThread(serverThreadPort);
+						receiveFromServer(ACK_PACKET_SIZE);
+						sendToClient(clientPort);
+				    }
 				    
 				}
 			}
