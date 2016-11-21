@@ -436,32 +436,32 @@ public class IntermediateHost extends Host {
 		   Thread delay = new Delay(delayTime, newPacket.getData(), SERVER_PORT, serverSocket);
 		   delay.start();
 		   
-		   for(;;) {
-			   if(requestType == RequestType.READ) serverThreadPort = receiveFromServer(PACKET_SIZE).getPort();
-			   else serverThreadPort = receiveFromServer(ACK_PACKET_SIZE).getPort();
-			   
-			   sendToClient(clientPort);
-			   
-			   if(requestType == RequestType.READ) receiveFromClient(ACK_PACKET_SIZE);
-			   else receiveFromClient(PACKET_SIZE); 
-		   }
+//		   for(;;) {
+//			   if(requestType == RequestType.READ) serverThreadPort = receiveFromServer(PACKET_SIZE).getPort();
+//			   else serverThreadPort = receiveFromServer(ACK_PACKET_SIZE).getPort();
+//			   
+//			   sendToClient(clientPort);
+//			   
+//			   if(requestType == RequestType.READ) receiveFromClient(ACK_PACKET_SIZE);
+//			   else receiveFromClient(PACKET_SIZE); 
+//		   }
 	       
-//			if(requestType == RequestType.WRITE) {
-//				for(;;) {				
-//					receiveFromClient(PACKET_SIZE);
-//					sendToServerThread(serverThreadPort);
-//					receiveFromServer(ACK_PACKET_SIZE);
-//					sendToClient(clientPort); 
-//				}
-//			}
-//			else {
-//				for(;;) {
-//					receiveFromServer(PACKET_SIZE);
-//					sendToClient(clientPort); 
-//					receiveFromClient(ACK_PACKET_SIZE);
-//					sendToServerThread(serverThreadPort);
-//				}
-//			}
+			if(requestType == RequestType.WRITE) {
+				for(;;) {				
+					receiveFromClient(PACKET_SIZE);
+					sendToServerThread(serverThreadPort);
+					receiveFromServer(ACK_PACKET_SIZE);
+					sendToClient(clientPort); 
+				}
+			}
+			else {
+				for(;;) {
+					receiveFromServer(PACKET_SIZE);
+					sendToClient(clientPort); 
+					receiveFromClient(ACK_PACKET_SIZE);
+					sendToServerThread(serverThreadPort);
+				}
+			}
 		
 		}
 		else
