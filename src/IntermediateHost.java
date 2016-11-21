@@ -838,7 +838,7 @@ public class IntermediateHost extends Host {
 			}
  		}
 		
-		else if()
+		//else if()
 	}
 	
 	private void sendToServer(DatagramPacket newPacket) {
