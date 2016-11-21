@@ -28,10 +28,12 @@ public class FileTransferClient extends Host{
 	private static String FILE_PATH_REGEX = "([a-zA-Z]:)?(\\\\[a-zA-Z0-9_.-]+)+\\\\?";
 	private static final int MAX_TIMEOUTS = 4;
 	private FileOutputStream fis;
+	private Validater validater;
 	/**
 	 * FileTransferClient Constructor creates a new DatgramSocket.
 	 */
 	public FileTransferClient() {
+		validater = new Validater();
 		try {
 			sendReceiveSocket = new DatagramSocket();
 		} catch (SocketException se) {
@@ -257,6 +259,11 @@ public class FileTransferClient extends Host{
 								String errorMsg = "Packet to large";
 								sendError(errorMsg, receivePacket.getPort(),socket,sender,4);
 							}
+							if(!isValidOpCode(receivePacket)){
+								String errorMsg = "Invalid op code";
+								sendError(errorMsg, receivePacket.getPort(),socket,sender,4);
+							}
+														
 							if(validAckNum(receivePacket,blockNum)) response = true;	
 							
 						}catch(SocketTimeoutException e){			 			

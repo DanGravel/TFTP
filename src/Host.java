@@ -252,5 +252,10 @@ public abstract class Host {
 		byte[] bytes = errorMsg.getBytes();
 		sendaPacket(createErrorPacket(bytes,error), port, socket, sender);
 	}
-
+	
+	protected  boolean isValidOpCode(DatagramPacket packet){
+		if(packet.getData()[0] != 0 && packet.getData()[1] > 5) return false; 
+		return true;
+	}
+	
 }
