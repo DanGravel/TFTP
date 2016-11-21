@@ -49,14 +49,14 @@ public class FileTransferServer extends Host implements Runnable {
 	public void sendAndReceive() throws Exception {
 		System.out.println("Server: Waiting for Packet.\n");
 		for (;;) {	
-			if(serverShutdown) return;
+			if(serverShutdown) System.exit(0);
 			System.out.println("Waiting..."); // so we know we're waiting
-			if(serverShutdown) return;
+			if(serverShutdown) System.exit(0);
 			receiveaPacket("Server", receiveSocket);   
 			Thread thread = new Thread(new FileTransferServer(receivePacket, 0)); //create a connection manager to deal with file transfer
 			thread.start();
 			Thread.sleep(1000);
-			if(serverShutdown) return;
+			if(serverShutdown)System.exit(0);
 		}
 	}
 	
