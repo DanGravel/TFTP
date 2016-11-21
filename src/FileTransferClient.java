@@ -303,6 +303,9 @@ public class FileTransferClient extends Host{
 					while(!response){
 						try{
 							receiveaPacket(sender, socket);
+							if(getInt(receivePacket) < blockNum){
+								sendaPacket(ack, receivePacket.getPort(), socket, sender);
+							}
 							if(isError()) handleError();
 							if(validPacketNum(receivePacket,blockNum)) response = true;
 						}catch(SocketTimeoutException e){
