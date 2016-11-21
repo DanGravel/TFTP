@@ -917,7 +917,7 @@ public class IntermediateHost extends Host {
  		}
 	}
 	
-	
+	/*
 	private void changeOpCode() {
 		RequestType requestType = validate.validate(receiveFromClient(PACKET_SIZE).getData());
 		int clientPort = receivePacket.getPort();
@@ -980,7 +980,7 @@ public class IntermediateHost extends Host {
 				sendToClient(clientPort);
 			}
 		}
-	}
+	}*/
 	
 	private void sendToServer(DatagramPacket newPacket) {
 		sendaPacket(newPacket.getData(), SERVER_PORT, serverSocket, "Intermediate");
