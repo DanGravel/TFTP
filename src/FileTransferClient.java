@@ -309,8 +309,9 @@ public class FileTransferClient extends Host{
 							if(isError()) handleError();
 							if(validPacketNum(receivePacket,blockNum)) response = true;
 						}catch(SocketTimeoutException e){
+					 		System.out.println("Didnt recieve a response from the server");
 							numTimeOuts++;
-							if(numTimeOuts == 10){
+							if(numTimeOuts == 4){
 								System.out.println("Timed out 3 times, aborting transfer");
 								return;
 							}
