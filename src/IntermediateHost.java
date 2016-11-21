@@ -159,32 +159,19 @@ public class IntermediateHost extends Host {
 		int clientPort = receivePacket.getPort();
 		sendToServer();
 		
-		if(r == RequestType.WRITE) {
-			receiveFromServer(ACK_PACKET_SIZE);
-		}
-		else {
-			receiveFromServer(PACKET_SIZE);
-		}
+		if(r == RequestType.WRITE) receiveFromServer(ACK_PACKET_SIZE);
+		else receiveFromServer(PACKET_SIZE);
 		int serverThreadPort = receivePacket.getPort();
-		
 		sendToClient(clientPort);
 		
 		for(;;) {
-			if(r == RequestType.READ) {
-				receiveFromClient(ACK_PACKET_SIZE);
-			}
-			else {
-				receiveFromClient(PACKET_SIZE);
-			}
-			
+			if(r == RequestType.READ) receiveFromClient(ACK_PACKET_SIZE);
+			else receiveFromClient(PACKET_SIZE);
+
 			sendToServerThread(serverThreadPort);
 			
-			if(r == RequestType.WRITE) {
-				receiveFromServer(ACK_PACKET_SIZE);
-			}
-			else {
-				receiveFromServer(PACKET_SIZE);
-			}
+			if(r == RequestType.WRITE) receiveFromServer(ACK_PACKET_SIZE);
+			else receiveFromServer(PACKET_SIZE);
 			sendToClient(clientPort);
 		}
 		
@@ -224,29 +211,14 @@ public class IntermediateHost extends Host {
 						
 						sendToServerThread(serverThreadPort);
 						
-						
 						if(requestType == RequestType.READ) lost = foundPacket(receiveFromServer(PACKET_SIZE));
 						else lost = foundPacket(receiveFromServer(ACK_PACKET_SIZE));
 						
 					}
 					System.out.println("Lost packet # " + packetNum);	
 				}
-				if(requestType == RequestType.WRITE) {
-					for(;;) {				
-						receiveFromClient(PACKET_SIZE);
-						sendToServerThread(serverThreadPort);
-						receiveFromServer(ACK_PACKET_SIZE);
-						sendToClient(clientPort); 
-					}
-				}
-				else {
-					for(;;) {
-						receiveFromServer(PACKET_SIZE);
-						sendToClient(clientPort); 
-						receiveFromClient(ACK_PACKET_SIZE);
-						sendToServerThread(serverThreadPort);
-					}
-				}
+				
+				finishTransfer(requestType, clientPort, serverThreadPort);
 			}
 				
 			else if((requestType == RequestType.READ && packetType == 4) || (requestType == RequestType.WRITE && packetType == 3)) {				
@@ -276,24 +248,8 @@ public class IntermediateHost extends Host {
 					}
 					System.out.println("Lost packet # " + packetNum);
 				}
-				if(requestType == RequestType.WRITE) {
-					for(;;) {				
-						receiveFromClient(PACKET_SIZE);
-						sendToServerThread(serverThreadPort);
-						receiveFromServer(ACK_PACKET_SIZE);
-						sendToClient(clientPort); 
-					}
-				}
-				else {
-					for(;;) {
-						System.out.println("MADE IT HERE");
-						receiveFromServer(PACKET_SIZE);
-						System.out.println("MADE IT HERE2(((");
-						sendToClient(clientPort); 
-						receiveFromClient(ACK_PACKET_SIZE);
-						sendToServerThread(serverThreadPort);
-					}
-				}
+				
+				finishTransfer(requestType, clientPort, serverThreadPort);
 			}
 		}
 	}
@@ -361,23 +317,9 @@ public class IntermediateHost extends Host {
 
 					}
 					new Delay(delayTime, receivePacket.getData(), serverThreadPort, serverSocket).start();
-				}				
-				if(requestType == RequestType.WRITE) {
-					for(;;) {				
-						receiveFromClient(PACKET_SIZE);
-						sendToServerThread(serverThreadPort);
-						receiveFromServer(ACK_PACKET_SIZE);
-						sendToClient(clientPort); 
-					}
 				}
-				else {
-					for(;;) {
-						receiveFromServer(PACKET_SIZE);
-						sendToClient(clientPort); 
-						receiveFromClient(ACK_PACKET_SIZE);
-						sendToServerThread(serverThreadPort);
-					}
-				}
+				
+				finishTransfer(requestType, clientPort, serverThreadPort);
 			}
 			else if((requestType == RequestType.READ && packetType == 4) || (requestType == RequestType.WRITE && packetType == 3)) { 	
 				DatagramPacket packet = null;
@@ -412,27 +354,11 @@ public class IntermediateHost extends Host {
 						else delayed = foundPacket(receiveFromClient(PACKET_SIZE));
 						
 					}
-					//delay(serverThreadPort);
 					Thread delay = new Delay(delayTime, receivePacket.getData(), serverThreadPort, serverSocket);
 					delay.start();
 				}
 				
-				if(requestType == RequestType.WRITE) {
-					for(;;) {				
-						receiveFromClient(PACKET_SIZE);
-						sendToServerThread(serverThreadPort);
-						receiveFromServer(ACK_PACKET_SIZE);
-						sendToClient(clientPort); 
-					}
-				}
-				else {
-					for(;;) {
-						receiveFromServer(PACKET_SIZE);
-						sendToClient(clientPort); 
-						receiveFromClient(ACK_PACKET_SIZE);
-						sendToServerThread(serverThreadPort);
-					}
-				}
+				finishTransfer(requestType, clientPort, serverThreadPort);
 			}
 		}
 	}
@@ -1027,6 +953,25 @@ public class IntermediateHost extends Host {
 				sendToServerThread(serverThreadPort, largerPacket);
 				receiveFromServer(PACKET_SIZE);
 				sendToClient(clientPort);
+			}
+		}
+	}
+	
+	private void finishTransfer(RequestType requestType, int clientPort, int serverThreadPort) {
+		if(requestType == RequestType.WRITE) {
+			for(;;) {				
+				receiveFromClient(PACKET_SIZE);
+				sendToServerThread(serverThreadPort);
+				receiveFromServer(ACK_PACKET_SIZE);
+				sendToClient(clientPort); 
+			}
+		}
+		else {
+			for(;;) {
+				receiveFromServer(PACKET_SIZE);
+				sendToClient(clientPort); 
+				receiveFromClient(ACK_PACKET_SIZE);
+				sendToServerThread(serverThreadPort);
 			}
 		}
 	}
