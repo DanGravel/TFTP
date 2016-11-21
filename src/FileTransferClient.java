@@ -249,7 +249,7 @@ public class FileTransferClient extends Host{
 							if(!validAckLength(receivePacket)) System.out.println("WTF");
 							if(validAckNum(receivePacket,blockNum)) response = true;	
 							
-						}catch(SocketTimeoutException e){						
+						}catch(SocketTimeoutException e){			 			
 							sendaPacket(packetdata, portyo, socket, sender);
 							numTimeOuts++;
 						}
