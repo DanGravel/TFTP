@@ -13,6 +13,7 @@ import java.util.Arrays;
 
 /**
  * File Transfer Client
+ * As long as you dont touch anything it works
  */
 public class FileTransferClient extends Host{
 	private DatagramSocket sendReceiveSocket;
@@ -23,7 +24,7 @@ public class FileTransferClient extends Host{
 	private static String pathName;
 	private static final byte[] read = {0,1};
 	private static final byte[] write = {0,2};
-	private static final int TIMEOUT = 2000; //TODO Changed to 30 seconds for debugging puposes, was 2000 
+	private static final int TIMEOUT = 2000; 
 	private static String FILE_PATH_REGEX = "([a-zA-Z]:)?(\\\\[a-zA-Z0-9_.-]+)+\\\\?";
 	private static final int MAX_TIMEOUTS = 4;
 	private FileOutputStream fis;
@@ -69,7 +70,7 @@ public class FileTransferClient extends Host{
 	private void promptUser() throws IOException {
 		fileName = "";
 		BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-		System.out.println("Enter command: ");
+		System.out.println("Enter command (help if you dont know what you doin'): ");
 		String r = in.readLine();
 		String delims = "[ ]+";
 		String[] tokens = r.split(delims);
@@ -116,7 +117,7 @@ public class FileTransferClient extends Host{
 			break;
 		case "help":
 			System.out.println("Commands:"
-					+ "quit, severquit\n"
+					+ "quit, pwd, ls , normal, test , read, write , verbose, !verbose\n"
 					+ "General format:"
 					+ "normal/test read/write filename.txt verbose/!verbose");
 		case " ": 
@@ -246,6 +247,12 @@ public class FileTransferClient extends Host{
 							receiveaPacket(sender, socket);
 							response = false;
 							if(isError()) handleError();
+							
+							if(receivePacket.getPort() != INTERMEDIATE_PORT && receivePacket.getPort() != SERVER_PORT){ //checks the TID of an incoming packet
+								String errorMsg = "Invalid TID";
+								sendError(errorMsg, receivePacket.getPort(),socket,sender);
+							}
+							
 							if(!validAckLength(receivePacket)) System.out.println("WTF");
 							if(validAckNum(receivePacket,blockNum)) response = true;	
 							
@@ -303,6 +310,10 @@ public class FileTransferClient extends Host{
 					while(!response){
 						try{
 							receiveaPacket(sender, socket);
+							if(receivePacket.getPort() != INTERMEDIATE_PORT && receivePacket.getPort() != SERVER_PORT){	//checks TID of incoming packets							
+								String errorMsg = "Invalid TID";
+								sendError(errorMsg, receivePacket.getPort(),socket,sender);
+							}
 							if(getInt(receivePacket) < blockNum){
 								sendaPacket(ack, receivePacket.getPort(), socket, sender);
 							}
@@ -345,6 +356,8 @@ public class FileTransferClient extends Host{
 		if(data[2] == 0 && data[3] == 1) request = RequestType.FILENOTFOUND;
 		else if(data[2] == 0 && data[3] == 2) request = RequestType.ACCESSDENIED;
 		else if(data[2] == 0 && data[3] == 3) request = RequestType.DISKFULL;
+		else if(data[2] == 0 && data[3] == 4) request = RequestType.ILLEGALTFTPOPERATION;
+		else if(data[2] == 0 && data[3] == 5) request = RequestType.INVALID_TID;
 		else if(data[2] == 0 && data[3] == 6) request = RequestType.FILEEXISTS;
 		
 		int i = 3; //start of error message
@@ -364,6 +377,12 @@ public class FileTransferClient extends Host{
 			System.out.println(error);
 			break;
 		case FILEEXISTS:
+			System.out.println(error);
+			break;
+		case ILLEGALTFTPOPERATION:
+			System.out.println(error);
+			break;
+		case INVALID_TID:
 			System.out.println(error);
 			break;
 		default: System.out.println("Error?");
@@ -456,7 +475,7 @@ public class FileTransferClient extends Host{
  		return false;
 	}
 
-	/*
+	/**
 	 * Sets the path name.
 	 */
 	private static void pathName() throws IOException
