@@ -45,7 +45,7 @@ public class IntermediateHost extends Host {
 		// lose a packet
 		else if(userInput == 1) {
 			System.out.println("Intermediate host will be losing a packet");
-			System.out.println("Select type of packet to lose (RRQ - 1, WRQ - 2, DATA - 3, ACK - 4)");
+			System.out.println("Select type of packet to lose (Request - 1, DATA - 3, ACK - 4)");
 			packetType = s.nextInt(); 
 			
 			if(packetType == 3 || packetType == 4){
@@ -59,7 +59,7 @@ public class IntermediateHost extends Host {
 		}
 		//delay a packet
 		else if (userInput == 2) {
-			System.out.println("Intermediate host will be delaying a packet\n Enter the type of packet you'd like to delay (RRQ - 1, WRQ - 2, DATA - 3, ACK - 4)");
+			System.out.println("Intermediate host will be delaying a packet\n Enter the type of packet you'd like to delay (Request - 1, DATA - 3, ACK - 4)");
 			packetType = s.nextInt();
 			
 			if(packetType == 3 || packetType == 4){
@@ -76,12 +76,12 @@ public class IntermediateHost extends Host {
 		//duplicate a packet
 		else if (userInput == 3) {
 			System.out.println("Intermediate host will be duplicating a packet");
-			System.out.println("Select type of packet to duplicate (RRQ - 1, WRQ - 2, DATA - 3, ACK - 4)");
+			System.out.println("Select type of packet to duplicate (Request - 1, DATA - 3, ACK - 4)");
 			packetType = s.nextInt();
 			System.out.println("Enter delay in milliseconds between duplicates: ");
 			delayTime = s.nextInt(); 
 			if(packetType == 3 || packetType == 4){
-				System.out.println("Enter the packet number you want to lose:");
+				System.out.println("Enter the packet number you want to duplicate:");
 				packetNum = s.nextInt();
 			} else {
 				packetNum = 1; // losing first packet since RRQ or WRQ
@@ -116,7 +116,7 @@ public class IntermediateHost extends Host {
 		
 		else if(userInput == 6) {
 			System.out.println("Intermediate host will change the opcode of a packet");
-			System.out.println("Select packet for which opcode will be corrupted (RRQ - 1, WRQ - 2, DATA - 3, ACK - 4)");
+			System.out.println("Select packet for which opcode will be corrupted (Request - 1, DATA - 3, ACK - 4)");
 			packetType = s.nextInt();
 			if(packetType == 3 || packetType == 4){
 				System.out.println("Enter the packet number you want to lose:");
@@ -177,7 +177,7 @@ public class IntermediateHost extends Host {
 		boolean lost; 
 		
 		RequestType requestType = null;
-		if(packetType == 1 || packetType == 2){ // RRQ or WRQ
+		if(packetType == 1){ // RRQ or WRQ
 			System.out.println("Losing a request packet");
 			receiveFromClient(PACKET_SIZE);			
 			normal(); 
@@ -285,7 +285,7 @@ public class IntermediateHost extends Host {
 		boolean delayed; 
 		RequestType requestType = null;
 		
-		if(packetType == 1 || packetType == 2){ // RRQ or WRQ
+		if(packetType == 1){ // RRQ or WRQ
 			System.out.println("Delay a request packet");
 			requestType = validate.validate(receiveFromClient(PACKET_SIZE).getData());
 			int clientPort = receivePacket.getPort();
@@ -425,7 +425,7 @@ public class IntermediateHost extends Host {
 		boolean dupli; 
 		
 		RequestType requestType = null;
-		if(packetType == 1 || packetType == 2)
+		if(packetType == 1)
 		{
 		   System.out.println("\n*Duplicating a REQUEST packet*\n");
 		   receiveFromClient(PACKET_SIZE); //get RRQ/WRQ
@@ -435,16 +435,6 @@ public class IntermediateHost extends Host {
 			
 		   Thread delay = new Delay(delayTime, newPacket.getData(), SERVER_PORT, serverSocket);
 		   delay.start();
-		   
-//		   for(;;) {
-//			   if(requestType == RequestType.READ) serverThreadPort = receiveFromServer(PACKET_SIZE).getPort();
-//			   else serverThreadPort = receiveFromServer(ACK_PACKET_SIZE).getPort();
-//			   
-//			   sendToClient(clientPort);
-//			   
-//			   if(requestType == RequestType.READ) receiveFromClient(ACK_PACKET_SIZE);
-//			   else receiveFromClient(PACKET_SIZE); 
-//		   }
 	       
 			if(requestType == RequestType.WRITE) {
 				for(;;) {				
@@ -508,25 +498,7 @@ public class IntermediateHost extends Host {
                         sendToServerThread(serverThreadPort);
                         receiveFromServer(PACKET_SIZE);
                         sendToClient(clientPort);
-
 				    }
-				    
-//					if(requestType == RequestType.WRITE) {
-//						for(;;) {				
-//							receiveFromClient(PACKET_SIZE);
-//							sendToServerThread(serverThreadPort);
-//							receiveFromServer(ACK_PACKET_SIZE);
-//							sendToClient(clientPort); 
-//						}
-//					}
-//					else {
-//						for(;;) {
-//							receiveFromServer(PACKET_SIZE);
-//							sendToClient(clientPort); 
-//							receiveFromClient(ACK_PACKET_SIZE);
-//							sendToServerThread(serverThreadPort);
-//						}
-//					}
 	
 				}
 				else if (packetType == 4) //ACK ~
@@ -571,24 +543,6 @@ public class IntermediateHost extends Host {
                         receiveFromClient(ACK_PACKET_SIZE);
                         sendToServerThread(serverThreadPort);
                    }
-
-					
-//					if(requestType == RequestType.WRITE) {
-//						for(;;) {				
-//							receiveFromClient(PACKET_SIZE);
-//							sendToServerThread(serverThreadPort);
-//							receiveFromServer(ACK_PACKET_SIZE);
-//							sendToClient(clientPort); 
-//						}
-//					}
-//					else {
-//						for(;;) {
-//							receiveFromServer(PACKET_SIZE);
-//							sendToClient(clientPort); 
-//							receiveFromClient(ACK_PACKET_SIZE);
-//							sendToServerThread(serverThreadPort);
-//						}
-//					}
 				}
 				
 			}
