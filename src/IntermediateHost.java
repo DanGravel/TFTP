@@ -1,9 +1,8 @@
-import java.io.ByteArrayOutputStream;
+
 import java.io.IOException;
 import java.net.*;
 import java.util.Scanner;
 
-import org.junit.runner.Request;
 
 public class IntermediateHost extends Host {
 	private DatagramSocket sendReceiveSocket;
@@ -14,6 +13,7 @@ public class IntermediateHost extends Host {
 	private static int packetNum = 0; 
 	private static int delayTime = 0;
 	private static int corruptRequest = 0;
+	private static byte[] wrongOpCode = new byte[2];
 	
 	private Validater validate; 
 	
@@ -117,6 +117,22 @@ public class IntermediateHost extends Host {
 		
 		else if(userInput == 6) {
 			System.out.println("Intermediate host will change the opcode of a packet");
+			System.out.println("Select packet for which opcode will be corrupted (RRQ - 1, WRQ - 2, DATA - 3, ACK - 4)");
+			packetType = s.nextInt();
+			if(packetType == 3 || packetType == 4){
+				System.out.println("Enter the packet number you want to lose:");
+				packetNum = s.nextInt();
+			} else {
+				packetNum = 1; // losing first packet since RRQ or WRQ
+				
+			}
+			System.out.println("Enter the first byte of the opcode you'd like to change it to: ");
+			wrongOpCode[0] = s.nextByte();
+			
+			System.out.println("Enter the second byte of the opcode you'd like to change it to: ");
+			wrongOpCode[1] = s.nextByte();
+			
+			changeOpCode();
 			
 		}
 	}
@@ -787,6 +803,42 @@ public class IntermediateHost extends Host {
 			sendToClient(clientPort);
 		}
 
+	}
+	
+	private void changeOpCode() {
+		RequestType r = validate.validate(receiveFromClient(PACKET_SIZE).getData());
+		int clientPort = receivePacket.getPort();
+		int serverThreadPort = 0;
+		DatagramPacket wrongOp = null;
+		
+		if(packetType == 1 || packetType == 2) { // change request
+			byte[] data = receivePacket.getData();
+			data[0] = wrongOpCode[0];
+			data[1] = wrongOpCode[1];
+			
+			wrongOp = new DatagramPacket(data, data.length);
+			sendToServer(wrongOp);
+			
+			if(r == RequestType.WRITE) receiveFromServer(ACK_PACKET_SIZE);
+			else receiveFromServer(PACKET_SIZE);
+			
+			serverThreadPort = receivePacket.getPort();
+			
+			sendToClient(clientPort);
+			
+			for(;;) {
+				if(r == RequestType.READ) receiveFromClient(ACK_PACKET_SIZE);
+				else receiveFromClient(PACKET_SIZE);
+				
+				sendToServerThread(serverThreadPort);
+				
+				if(r == RequestType.WRITE) receiveFromServer(ACK_PACKET_SIZE);
+				else receiveFromServer(PACKET_SIZE);
+				sendToClient(clientPort);
+			}
+ 		}
+		
+		else if()
 	}
 	
 	private void sendToServer(DatagramPacket newPacket) {
