@@ -250,10 +250,13 @@ public class FileTransferClient extends Host{
 							
 							if(receivePacket.getPort() != INTERMEDIATE_PORT && receivePacket.getPort() != SERVER_PORT){ //checks the TID of an incoming packet
 								String errorMsg = "Invalid TID";
-								sendError(errorMsg, receivePacket.getPort(),socket,sender);
+								sendError(errorMsg, receivePacket.getPort(),socket,sender,5);
 							}
 							
-							if(!validAckLength(receivePacket)) System.out.println("WTF");
+							if(!validAckLength(receivePacket)) {
+								String errorMsg = "Packet to large";
+								sendError(errorMsg, receivePacket.getPort(),socket,sender,4);
+							}
 							if(validAckNum(receivePacket,blockNum)) response = true;	
 							
 						}catch(SocketTimeoutException e){			 			
@@ -312,7 +315,7 @@ public class FileTransferClient extends Host{
 							receiveaPacket(sender, socket);
 							if(receivePacket.getPort() != INTERMEDIATE_PORT && receivePacket.getPort() != SERVER_PORT){	//checks TID of incoming packets							
 								String errorMsg = "Invalid TID";
-								sendError(errorMsg, receivePacket.getPort(),socket,sender);
+								sendError(errorMsg, receivePacket.getPort(),socket,sender,5);
 							}
 							if(getInt(receivePacket) < blockNum){
 								sendaPacket(ack, receivePacket.getPort(), socket, sender);

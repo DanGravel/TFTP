@@ -8,7 +8,7 @@ To https://github.com/DanGravel/TFTP.git
 C:\Users\Gravel\Desktop\New folder\TFTP [Iteration2 =]> git branch
 * Iteration2
   ServerErrorHandling
-  clientErrrrWindows PowerShell
+  clientErrrrrWindows PowerShell
 Copyright (C) 2015 Microsoft Corporation. All rights reserved.
 
 C:\Users\Gravel\Documents\GitHub [master]> cd ..
@@ -19,4 +19,4 @@ C:\Users\Gravel\Desktop\project-fightingartichokes-1 [master = +0 ~1 -0 !]> git 
 Already up-to-date.
 C:\Users\Gravel\Desktop\project-fightingartichokes-1 [master = +0 ~1 -0 !]> git pull
 Already up-to-date.
-C:\Users\Gravel\Desktop\project-fiiggh
+C:\Users\Gravel\Desktop\project-ffiiggh

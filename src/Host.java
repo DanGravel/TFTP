@@ -247,10 +247,10 @@ public abstract class Host {
 		return false;
 	}
 	
-	protected void sendError(String msg, int port, DatagramSocket socket, String sender){
+	protected void sendError(String msg, int port, DatagramSocket socket, String sender, int error){
 		String errorMsg = msg;
 		byte[] bytes = errorMsg.getBytes();
-		sendaPacket(createErrorPacket(bytes,5), port, socket, sender);
+		sendaPacket(createErrorPacket(bytes,error), port, socket, sender);
 	}
 
 }
