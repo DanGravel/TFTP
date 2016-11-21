@@ -134,6 +134,10 @@ public class IntermediateHost extends Host {
 			changeOpCode();
 			
 		}
+		else {
+			System.out.println("That's not a valid input, shutting down intermediate host.");
+			System.exit(0);
+		}
 	}
 	
 	public void normal() {		
