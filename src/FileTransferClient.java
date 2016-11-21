@@ -250,20 +250,20 @@ public class FileTransferClient extends Host{
 							response = false;
 							if(isError()) handleError();
 							
-							if(receivePacket.getPort() != INTERMEDIATE_PORT && receivePacket.getPort() != SERVER_PORT){ //checks the TID of an incoming packet
-								String errorMsg = "Invalid TID";
-								sendError(errorMsg, receivePacket.getPort(),socket,sender,5);
-							}
-							
-							if(!validAckLength(receivePacket)) {
-								String errorMsg = "Packet to large";
-								sendError(errorMsg, receivePacket.getPort(),socket,sender,4);
-							}
-							if(!isValidOpCode(receivePacket)){
-								String errorMsg = "Invalid op code";
-								sendError(errorMsg, receivePacket.getPort(),socket,sender,4);
-							}
-														
+//							if(receivePacket.getPort() != INTERMEDIATE_PORT && receivePacket.getPort() != SERVER_PORT){ //checks the TID of an incoming packet
+//								String errorMsg = "Invalid TID";
+//								sendError(errorMsg, receivePacket.getPort(),socket,sender,5);
+//							}
+//							
+//							if(!validAckLength(receivePacket)) {
+//								String errorMsg = "Packet to large";
+//								sendError(errorMsg, receivePacket.getPort(),socket,sender,4);
+//							}
+//							if(!isValidOpCode(receivePacket)){
+//								String errorMsg = "Invalid op code";
+//								sendError(errorMsg, receivePacket.getPort(),socket,sender,4);
+//							}
+//														
 							if(validAckNum(receivePacket,blockNum)) response = true;	
 							
 						}catch(SocketTimeoutException e){			 			
@@ -320,10 +320,10 @@ public class FileTransferClient extends Host{
 					while(!response){
 						try{
 							receiveaPacket(sender, socket);
-							if(receivePacket.getPort() != INTERMEDIATE_PORT && receivePacket.getPort() != SERVER_PORT){	//checks TID of incoming packets							
-								String errorMsg = "Invalid TID";
-								sendError(errorMsg, receivePacket.getPort(),socket,sender,5);
-							}
+//							if(receivePacket.getPort() != INTERMEDIATE_PORT && receivePacket.getPort() != SERVER_PORT){	//checks TID of incoming packets							
+//								String errorMsg = "Invalid TID";
+//								sendError(errorMsg, receivePacket.getPort(),socket,sender,5);
+//							}
 							if(getInt(receivePacket) < blockNum){
 								sendaPacket(ack, receivePacket.getPort(), socket, sender);
 							}
