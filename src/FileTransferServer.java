@@ -124,7 +124,7 @@ public class FileTransferServer extends Host implements Runnable {
 			}
 			packetdata = createDataPacket(toSend, blockNum);
 			sendaPacket(packetdata, receivePacket.getPort(), sendAndReceiveSocket, "Server");
-			start += DATA_END - 1; //Increment to next block of data
+			start += DATA_END; //Increment to next block of data
 			upto += DATA_END;
 			int tempPort = receivePacket.getPort();
 			DatagramPacket received = null;
