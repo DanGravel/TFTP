@@ -23,12 +23,11 @@ public class FileTransferServer extends Host implements Runnable {
 	private boolean doneFile; // set when you are at the end of the file;
 	private DatagramSocket sendAndReceiveSocket, receiveSocket;
 	private boolean serverShutdown = false; // boolean to see if server is supposed to be shut down
+	private boolean inATransfer = false;
 	private Validater validater;
 	
 	public FileTransferServer(DatagramPacket packet, int port) {
-		Printer.setIsVerbose(true);	//KG FOR TESTING UNTIL PUT INTO PROMPT
-		try {
-	
+		try { 
 			if(port == SERVER_PORT) {
 				receiveSocket = new DatagramSocket(SERVER_PORT);
 			}
@@ -78,7 +77,9 @@ public class FileTransferServer extends Host implements Runnable {
 			sendNextPartofFile(); //Start file transfer!
 			break;
 		case WRITE:
+			if (inATransfer) break;
 			sendaPacket(response, receivePacket.getPort(), sendAndReceiveSocket, "Server"); //Sends an ACK
+			inATransfer = true;
 			receiveNextPartofFile();	//Star receive file
 			break;
 		default: 
@@ -139,15 +140,6 @@ public class FileTransferServer extends Host implements Runnable {
 					sendaPacket(packetdata, tempPort, sendAndReceiveSocket, "Server");
 				}
 			}
-			
-			/*while (tempBlkNum < blockNum){
-				try {
-					received = receiveaPacket("Server", sendAndReceiveSocket);
-					tempBlkNum = getBlockNum(received.getData());
-				} catch (Exception e){
-					sendaPacket(packetdata, tempPort, sendAndReceiveSocket, "Server");
-				}
-			}*/
 	      	byte data[] = receivePacket.getData(); 
 	      	request = validater.validate(data); //get the request type
 	      	blockNum++; //Next block
@@ -188,6 +180,8 @@ public class FileTransferServer extends Host implements Runnable {
 			e1.printStackTrace();
 		}
 		int blockNum = 1;
+		
+		DatagramPacket prevPacket = null;
 		request = validater.validate(receivePacket.getData()); //Get the request
 		byte[] ack = createRightPacket(request, receivePacket.getData()); //create ACK
 		try {
@@ -196,7 +190,7 @@ public class FileTransferServer extends Host implements Runnable {
 				byte[] wholePacket = receivePacket.getData();
 				int endOfPacket = getSize();
 				byte[] data = Arrays.copyOfRange(wholePacket,START_FILE_DATA, endOfPacket); //ignore op code and only get file data
-				fos.write(data); //Write this to file
+				fos.write(data); //Write this to fileData
 				sendaPacket(ack, receivePacket.getPort(), sendAndReceiveSocket, "Server"); //SEND ACK
 				if (endOfPacket < 512) break;
 				blockNum++;
@@ -236,6 +230,7 @@ public class FileTransferServer extends Host implements Runnable {
 						}
 					}
 				}
+				prevPacket = receivePacket;
 				request = validater.validate(receivePacket.getData());
 				ack = createRightPacket(request, receivePacket.getData()); 
 			} 
@@ -243,6 +238,7 @@ public class FileTransferServer extends Host implements Runnable {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		inATransfer = false;
 		if(request != RequestType.DATA) sendaPacket(ack, receivePacket.getPort(), sendAndReceiveSocket, "Server");	//Error Handling
 	}
 	

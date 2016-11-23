@@ -1,0 +1,22 @@
+C:\Users\Gravel\Desktop\project-fightingartichokes-1Delta compression using up to 4 threads.
+Compressing objects: 100% (14/14), done.
+Writing objects: 100% (14/14), 13.84 KiB | 0 bytes/s, done.
+Total 14 (delta 7), reused 0 (delta 0)
+remote: Resolving deltas: 100% (7/7), completed with 7 local objects.
+To https://github.com/DanGravel/TFTP.git
+   b6f043b..a6c0a39  Iteration2 -> Iteration2
+C:\Users\Gravel\Desktop\New folder\TFTP [Iteration2 =]> git branch
+* Iteration2
+  ServerErrorHandling
+  clientErrWindows PowerShell
+Copyright (C) 2015 Microsoft Corporation. All rights reserved.
+
+C:\Users\Gravel\Documents\GitHub [master]> cd ..
+C:\Users\Gravel\Documents> cd ..
+C:\Users\Gravel> cd .\Desktop
+C:\Users\Gravel\Desktop> cd .\project-fightingartichokes-1
+C:\Users\Gravel\Desktop\project-fightingartichokes-1 [master = +0 ~1 -0 !]> git pull
+Already up-to-date.
+C:\Users\Gravel\Desktop\project-fightingartichokes-1 [master = +0 ~1 -0 !]> git pull
+Already up-to-date.
+C:\Users\Gravel\Desktop\project-figh
