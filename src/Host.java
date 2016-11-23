@@ -154,7 +154,25 @@ public abstract class Host {
 	protected byte[] createDataPacket(int blockNum) {
 		return (new byte[] { 0, 3, (byte) (blockNum & 0xFF), (byte) ((blockNum >>> 8) & 0xFF) });
 	}
-
+	
+	
+	protected byte[] createErrorPacket(byte[] data,int error){
+		byte[] d = Arrays.copyOf(data, data.length);
+		byte[] datapacket = {0, 5, (byte) (error >>> 8),(byte) (error)};
+		int i = 0;
+		for(; i < data.length - 1 ; i++){};
+		datalen = i+1;
+		byte[] packetdata = Arrays.copyOfRange(d, 0, datalen);
+			
+		ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
+		try {
+			outputStream.write(datapacket);
+			outputStream.write(packetdata);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		return outputStream.toByteArray();
+	}
   /**
    * overload
    * 
@@ -222,5 +240,22 @@ public abstract class Host {
 	protected int getInt(DatagramPacket packet){
 		return ((packet.getData()[2] & 0xff) << 8) | (packet.getData()[3] & 0xff);
 	}
-
+	
+	protected boolean isFirstData(DatagramPacket packet){
+		if(packet.getData()[0] == 0 && packet.getData()[1] == 3 && 
+				packet.getData()[2] == 0 && packet.getData()[3] == 1) return true;
+		return false;
+	}
+	
+	protected void sendError(String msg, int port, DatagramSocket socket, String sender, int error){
+		String errorMsg = msg;
+		byte[] bytes = errorMsg.getBytes();
+		sendaPacket(createErrorPacket(bytes,error), port, socket, sender);
+	}
+	
+	protected  boolean isValidOpCode(DatagramPacket packet){
+		if(packet.getData()[0] != 0 && packet.getData()[1] > 5) return false; 
+		return true;
+	}
+	
 }

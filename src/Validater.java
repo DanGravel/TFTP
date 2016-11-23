@@ -66,7 +66,7 @@ public class Validater {
 	 * @param request	the initial request
 	 * @return			The possibly changed request
 	 */
-	private RequestType validateFileNameandMode(byte[] data, RequestType request) {
+	public RequestType validateFileNameandMode(byte[] data, RequestType request) {
 		String mode = "";
 		int i = FILE_NAME_START;
 		//Append filename if request was read or write
