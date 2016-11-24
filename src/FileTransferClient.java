@@ -334,6 +334,7 @@ public class FileTransferClient extends Host{
 							numTimeOuts++;
 							if(numTimeOuts == 4){
 								System.out.println("Timed out 3 times, aborting transfer");
+								fis.close();
 								return;
 							}
 						}
