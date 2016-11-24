@@ -584,7 +584,7 @@ public class IntermediateHost extends Host {
 					sendToServerThread(serverThreadPort);
 					new Delay(0, packet.getData(), serverThreadPort, fakeTID).start();
 				}
-				finishTransfer(requestType, clientPort, serverThreadPort);
+				conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
 			}
 		}
 	
