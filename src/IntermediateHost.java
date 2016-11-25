@@ -434,6 +434,11 @@ public class IntermediateHost extends Host {
 		    	sendToServerThread(serverThreadPort);
 				new Delay(delayTime, packet.getData(), serverThreadPort, serverSocket, duplicate).start();;
 			}
+    		if(requestType == RequestType.WRITE) {
+    			receiveFromServer(ACK_PACKET_SIZE);
+    			sendToClient(clientPort);
+    		}
+			
 			conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
            
 		}
@@ -766,15 +771,12 @@ public class IntermediateHost extends Host {
 			while(!done) {				
 				receiveFromServer(PACKET_SIZE);
 				done = getSize() < PACKET_SIZE;
-				System.out.println(getSize() + "******");
 				
 				sendToClient(clientPort); 
 				receiveFromClient(ACK_PACKET_SIZE);
 				sendToServerThread(serverThreadPort);
 			}
 			
-			//receiveFromClient(ACK_PACKET_SIZE);
-			//sendToServerThread(serverThreadPort);
 		}
 		else {
 			while(!done) {
@@ -877,11 +879,9 @@ public class IntermediateHost extends Host {
 		
 		if(packType == packetType) {
 			if(block[0] == checkBlkNum[0] && block[1] == checkBlkNum[1]) {
-				System.out.println("**Block number: " + block[0] + block[1]);
 				return true; 
 			}
 		}
-		System.out.println("**Block number: " + block[0] + block[1]);
 		return false; 
 	}
 	
