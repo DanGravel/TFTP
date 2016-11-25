@@ -51,7 +51,7 @@ public class FileTransferServer extends Host implements Runnable {
 			if(serverShutdown) System.exit(0);
 			System.out.println("Waiting..."); // so we know we're waiting
 			if(serverShutdown) System.exit(0);
-			receiveaPacket("Server", receiveSocket);   
+			receiveaPacket("Server", receiveSocket); 
 			Thread thread = new Thread(new FileTransferServer(receivePacket, 0)); //create a connection manager to deal with file transfer
 			thread.start();
 			Thread.sleep(1000);
@@ -106,7 +106,7 @@ public class FileTransferServer extends Host implements Runnable {
 			System.out.println("Could not open file to read\n");
 		}
 		
-		int endOfFile = fileData.length;	//KG CHANGED THIS TO FIX PROB, USED TO BE: int endOfFile = fileData.length - 1;
+		int endOfFile = fileData.length;	
 
 		byte[] toSend;
 		RequestType request;
@@ -129,20 +129,20 @@ public class FileTransferServer extends Host implements Runnable {
 			upto += DATA_END;
 			int tempPort = receivePacket.getPort();
 			DatagramPacket received = null;
-			int tempBlkNum = 0;
 			boolean response = false;
 			while(!response){
 				try{	
 					received = receiveaPacket("Server", sendAndReceiveSocket);
-					if(getBlockNum(received.getData()) < blockNum) continue;
+					if(getInt(received) < blockNum) continue;
 					if(validater.validate(received.getData()) == RequestType.ACK) response = true;
+					blockNum++;
 				} catch (Exception e){
 					sendaPacket(packetdata, tempPort, sendAndReceiveSocket, "Server");
 				}
 			}
 	      	byte data[] = receivePacket.getData(); 
 	      	request = validater.validate(data); //get the request type
-	      	blockNum++; //Next block
+	      	//blockNum++; //Next block
 		} while(request == RequestType.ACK && !doneFile); //Only do this a second time (or more) if more data is left AND an ACK was received		
 		
 		try { //disables timeout
