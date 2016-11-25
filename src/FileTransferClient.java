@@ -325,8 +325,8 @@ public class FileTransferClient extends Host{
 //								sendError(errorMsg, receivePacket.getPort(),socket,sender,5);
 //							}
 							if(getInt(receivePacket) < blockNum){
-								//TODO Dan this needs to send back the ack of the data that was received, currently not happening
-								sendaPacket(ack, receivePacket.getPort(), socket, sender);
+								byte[] newPacket = createAck(getInt(receivePacket));
+								sendaPacket(newPacket, receivePacket.getPort(), socket, sender);
 							}
 							if(isError()) handleError();
 							if(validPacketNum(receivePacket,blockNum)) response = true;

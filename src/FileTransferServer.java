@@ -205,7 +205,8 @@ public class FileTransferServer extends Host implements Runnable {
 						receiveaPacket("Server", sendAndReceiveSocket);
 						tempBlockNum = getBlockNum(receivePacket.getData());
 						if(tempBlockNum < blockNum){
-							sendaPacket(ack, lastPort, sendAndReceiveSocket, "Server");
+							byte[] newPacket = createAck(tempBlockNum);
+							sendaPacket(newPacket, lastPort, sendAndReceiveSocket, "Server");
 						}
 					} catch (SocketTimeoutException e){
 						//System.out.println("Did not receive data, re-sending ACK");
