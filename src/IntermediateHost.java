@@ -78,12 +78,13 @@ public class IntermediateHost extends Host {
 			System.out.println("Intermediate host will be duplicating a packet");
 			System.out.println("Select type of packet to duplicate (DATA - 3, ACK - 4)");
 			packetType = s.nextInt();
-			System.out.println("Enter delay in milliseconds between duplicates: ");
-			delayTime = s.nextInt(); 
 			if(packetType == 3 || packetType == 4){
 				System.out.println("Enter the packet number you want to duplicate:");
 				packetNum = s.nextInt();
 			}
+			
+			System.out.println("Enter delay in milliseconds between duplicates: ");
+			delayTime = s.nextInt(); 
 			duplicatePacket(); 
 		}
 		
