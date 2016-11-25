@@ -7,7 +7,7 @@ public class IntermediateHost extends Host {
 	private DatagramSocket sendReceiveSocket;
 	private DatagramSocket serverSocket; 
 	
-	private static int userInput = 88; 
+	private static int userInput = 0; 
 	private static int packetType = 0; // type of packet to manipulate
 	private static int packetNum = 0; 
 	private static int delayTime = 0;
@@ -28,6 +28,20 @@ public class IntermediateHost extends Host {
 		}
 	}
 
+	private int numberChosen(Scanner s) {
+		while(!s.hasNextInt()) {
+			s.next();
+		}
+		return s.nextInt();
+	}
+	
+	private int checkBounds(Scanner s, int biggerNum, int smallerNum, int cantBe) {
+		int temp = cantBe;
+		while(temp > biggerNum || temp < smallerNum || temp == cantBe) {
+			temp = numberChosen(s);
+		}
+		return temp;
+	}
 	/*
 	 * 0 - Normal
 	 * 1 - Lose packet
@@ -37,7 +51,8 @@ public class IntermediateHost extends Host {
 		System.out.println("Press 0 for normal mode, \nPress 1 to lose a packet, \nPress 2 to delay a packet, \nPress 3 to duplicate a packet, \nPress 4 to change the TID, \nPress 5 to corrupt request packet, \nPress 6 to change opcode, \nPress 7 to make packet too large");
 		@SuppressWarnings("resource")
 		Scanner s = new Scanner(System.in);
-		userInput = s.nextInt(); 
+		userInput = checkBounds(s, 8, 0, -1);
+		
 		if (userInput == 0) {
 			System.out.println("Intermediate Host running in normal mode");
 			normal(); 
@@ -46,11 +61,11 @@ public class IntermediateHost extends Host {
 		else if(userInput == 1) {
 			System.out.println("Intermediate host will be losing a packet");
 			System.out.println("Select type of packet to lose (Request - 1, DATA - 3, ACK - 4)");
-			packetType = s.nextInt(); 
+			packetType = checkBounds(s, 5, 0, 2);
 			
 			if(packetType == 3 || packetType == 4){
 				System.out.println("Enter the packet number you want to lose:");
-				packetNum = s.nextInt();
+				packetNum = numberChosen(s);
 			} else {
 				packetNum = 1; // losing first packet since RRQ or WRQ
 				
@@ -60,31 +75,30 @@ public class IntermediateHost extends Host {
 		//delay a packet
 		else if (userInput == 2) {
 			System.out.println("Intermediate host will be delaying a packet\n Enter the type of packet you'd like to delay (Request - 1, DATA - 3, ACK - 4)");
-			packetType = s.nextInt();
+			packetType = checkBounds(s, 5, 0, 2);
 			
 			if(packetType == 3 || packetType == 4){
 				System.out.println("Enter the packet number you want to delay:");
-				packetNum = s.nextInt();
+				packetNum = numberChosen(s);
 			} else {
 				packetNum = 1; // delaying first packet since RRQ or WRQ
 			}
 			
 			System.out.println("Enter delay in milliseconds: ");
-			delayTime = s.nextInt(); 
+			delayTime = numberChosen(s);
 			delayPacket();
 		}
 		//duplicate a packet
 		else if (userInput == 3) {
 			System.out.println("Intermediate host will be duplicating a packet");
 			System.out.println("Select type of packet to duplicate (DATA - 3, ACK - 4)");
-			packetType = s.nextInt();
+			packetType = checkBounds(s, 5, 2, 0);
+			System.out.println("Enter delay in milliseconds between duplicates: ");
+			delayTime = numberChosen(s); 
 			if(packetType == 3 || packetType == 4){
 				System.out.println("Enter the packet number you want to duplicate:");
 				packetNum = s.nextInt();
 			}
-			
-			System.out.println("Enter delay in milliseconds between duplicates: ");
-			delayTime = s.nextInt(); 
 			duplicatePacket(); 
 		}
 		
@@ -92,11 +106,11 @@ public class IntermediateHost extends Host {
 		else if (userInput == 4) {
 			System.out.println("Intermediate host will change the TID of a packet");
 			System.out.println("Select type of packet to send invalid TID (DATA - 3, ACK - 4)");
-			packetType = s.nextInt();
+			packetType = checkBounds(s, 5, 2, 0);
 			
 			if(packetType == 3 || packetType == 4){
 				System.out.println("Enter the packet number you want to lose:");
-				packetNum = s.nextInt();
+				packetNum = numberChosen(s);
 			}
 			invalidTID();
 		}
@@ -107,18 +121,17 @@ public class IntermediateHost extends Host {
 			System.out.println("\tPress 2 to remove mode");
 			System.out.println("\tPress 3 remove delimeter 1");
 			System.out.println("\tPress 4 remove delimeter 2");
-			corruptRequest = s.nextInt();
-			
+			corruptRequest = checkBounds(s, 5, 0, 0);			
 			corruptRequest();
 		}
 		
 		else if(userInput == 6) {
 			System.out.println("Intermediate host will change the opcode of a packet");
 			System.out.println("Select packet for which opcode will be corrupted (Request - 1, DATA - 3, ACK - 4)");
-			packetType = s.nextInt();
+			packetType = checkBounds(s, 5, 2, 0);
 			if(packetType == 3 || packetType == 4){
 				System.out.println("Enter the packet number you want to lose:");
-				packetNum = s.nextInt();
+				packetNum = numberChosen(s);
 			} else {
 				packetNum = 1; // losing first packet since RRQ or WRQ
 				
@@ -136,10 +149,10 @@ public class IntermediateHost extends Host {
 		else if(userInput == 7) {
 			System.out.println("Intermediate host will make the packet too large");
 			System.out.println("Select type of packet to make too large (Request - 1, DATA - 3, ACK - 4)");
-			packetType = s.nextInt();
+			packetType = checkBounds(s, 5, 0, 2);
 			if(packetType == 3 || packetType == 4){
 				System.out.println("Enter the packet number you want to enlarge:");
-				packetNum = s.nextInt();
+				packetNum = numberChosen(s);
 			} else {
 				packetNum = 1; // losing first packet since RRQ or WRQ	
 			}
