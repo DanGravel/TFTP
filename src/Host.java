@@ -258,4 +258,9 @@ public abstract class Host {
 		return true;
 	}
 	
+	protected boolean isValidDataLen(DatagramPacket packet){
+		if(packet.getData().length > 512) return false;
+		return true;
+	}
+	
 }

@@ -170,6 +170,7 @@ public class FileTransferClient extends Host{
 	  public void sendFile(String filename, DatagramSocket socket, int port, String sender) throws IOException{
 		    String path = createPath(filename);
 	 	  	File file = new File(path);
+	 	  	int TID = 0;
 			sendReceiveSocket.setSoTimeout(TIMEOUT);
 	 	  	//check if the file exists
 	 	  	if (!file.exists()){
@@ -195,6 +196,7 @@ public class FileTransferClient extends Host{
 		 	while(!response){
 			 	try{
 			 		receiveaPacket(sender, socket);
+			 		TID = receivePacket.getPort();
 			 		response = true;
 			 	}catch(SocketTimeoutException e){
 			 		System.out.println("Didnt recieve a response from the server");
@@ -250,20 +252,29 @@ public class FileTransferClient extends Host{
 							response = false;
 							if(isError()) handleError();
 							
-//							if(receivePacket.getPort() != INTERMEDIATE_PORT && receivePacket.getPort() != SERVER_PORT){ //checks the TID of an incoming packet
-//								String errorMsg = "Invalid TID";
-//								sendError(errorMsg, receivePacket.getPort(),socket,sender,5);
-//							}
-//							
-//							if(!validAckLength(receivePacket)) {
-//								String errorMsg = "Packet to large";
-//								sendError(errorMsg, receivePacket.getPort(),socket,sender,4);
-//							}
-//							if(!isValidOpCode(receivePacket)){
-//								String errorMsg = "Invalid op code";
-//								sendError(errorMsg, receivePacket.getPort(),socket,sender,4);
-//							}
-//														
+							if(receivePacket.getPort() != TID){ //checks the TID of an incoming packet
+								String errorMsg = "Invalid TID";
+								sendError(errorMsg, receivePacket.getPort(),socket,sender,5);
+							}
+							
+							//Checks the length of ACK packets
+							if(!validAckLength(receivePacket)) {
+								String errorMsg = "Packet to large";
+								sendError(errorMsg, receivePacket.getPort(),socket,sender,4);
+							}
+							
+							//Checks if if packet has a valid op code
+							if(!isValidOpCode(receivePacket)){
+								String errorMsg = "Invalid op code";
+								sendError(errorMsg, receivePacket.getPort(),socket,sender,4);
+							}
+							//Checks length of data if > 512 error
+							if(!isValidDataLen(receivePacket)){
+								String errorMsg = "Invalid data length > 512";
+								sendError(errorMsg, receivePacket.getPort(),socket,sender,4);
+							}
+							
+							//Checks the ACK number
 							if(validAckNum(receivePacket,blockNum)) response = true;	
 							
 						}catch(SocketTimeoutException e){			 			
@@ -272,6 +283,7 @@ public class FileTransferClient extends Host{
 						}
 						if(numTimeOuts == 3){
 							System.out.println("Resent data 3 times and didnt get a response");
+							fis.close();
 							return;
 						}
 					}
@@ -306,7 +318,9 @@ public class FileTransferClient extends Host{
 
 			
 			byte[] RRQ = arrayCombiner(read, filename);
-	 		sendaPacket(RRQ,port, socket, sender);  //send request 			
+	 		sendaPacket(RRQ,port, socket, sender);  //send request 	
+	 		int TID = 0;
+	 		boolean isFirstRead = true;
 	 		int blockNum = 1;	
 	 		int datalength;
 	 		byte[] ack = RRQ;
@@ -320,13 +334,21 @@ public class FileTransferClient extends Host{
 					while(!response){
 						try{
 							receiveaPacket(sender, socket);
-//							if(receivePacket.getPort() != INTERMEDIATE_PORT && receivePacket.getPort() != SERVER_PORT){	//checks TID of incoming packets							
-//								String errorMsg = "Invalid TID";
-//								sendError(errorMsg, receivePacket.getPort(),socket,sender,5);
-//							}
+							
+							if(isFirstRead) {
+								TID = receivePacket.getPort();
+								isFirstRead = false;
+							}
+							
+							if(receivePacket.getPort() != TID){	//checks TID of incoming packets							
+								String errorMsg = "Invalid TID";
+								sendError(errorMsg, receivePacket.getPort(),socket,sender,5);
+							}
+							
 							if(getInt(receivePacket) < blockNum){
 								sendaPacket(ack, receivePacket.getPort(), socket, sender);
 							}
+							
 							if(isError()) handleError();
 							if(validPacketNum(receivePacket,blockNum)) response = true;
 						}catch(SocketTimeoutException e){
@@ -335,6 +357,7 @@ public class FileTransferClient extends Host{
 							if(numTimeOuts == 4){
 								System.out.println("Timed out 3 times, aborting transfer");
 								fis.close();
+								Files.deleteIfExists(file.toPath());
 								return;
 							}
 						}
