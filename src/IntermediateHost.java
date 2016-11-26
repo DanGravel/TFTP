@@ -516,9 +516,10 @@ public class IntermediateHost extends Host {
 						sendToServerThread(serverThreadPort);
 						
 						
-						if(requestType == RequestType.READ) lost = foundPacket(receiveFromServer(PACKET_SIZE));
-						else lost = foundPacket(receiveFromServer(ACK_PACKET_SIZE));
+						if(requestType == RequestType.READ) packet = receiveFromServer(PACKET_SIZE);
+						else packet = receiveFromServer(ACK_PACKET_SIZE);
 						
+                        lost = foundPacket(packet);	
 					}
 					sendToClient(clientPort);
 					new ErrorSim(0, packet.getData(), clientPort, fakeTID, diffTID).start();
@@ -549,13 +550,18 @@ public class IntermediateHost extends Host {
 						
 						sendToClient(clientPort);
 						
-						if (requestType == RequestType.READ) lost = foundPacket(receiveFromClient(ACK_PACKET_SIZE));
-						else lost = foundPacket(receiveFromClient(PACKET_SIZE));
+						if (requestType == RequestType.READ) packet = receiveFromClient(ACK_PACKET_SIZE);
+						else packet = receiveFromClient(PACKET_SIZE);
+						
+						  lost = foundPacket(packet);	
 					}
 					sendToServerThread(serverThreadPort);
 					new ErrorSim(0, packet.getData(), serverThreadPort, fakeTID, diffTID).start();
 				}
-				
+                if(requestType == RequestType.READ) receiveFromServer(PACKET_SIZE);
+                else receiveFromServer(ACK_PACKET_SIZE);
+                
+                sendToClient(clientPort);
 				conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
 			}
 		}
