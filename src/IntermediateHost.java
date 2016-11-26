@@ -1,5 +1,4 @@
 import java.io.IOException;
-import java.io.Reader;
 import java.net.*;
 import java.util.Scanner;
 
@@ -932,7 +931,6 @@ public class IntermediateHost extends Host {
 	
 	private void finishTransfer(RequestType requestType, int clientPort, int serverThreadPort) {
 		boolean done = false;
-		
 		if(requestType == RequestType.READ) {
 			while(!done) {
 				receiveFromClient(ACK_PACKET_SIZE);
@@ -959,7 +957,6 @@ public class IntermediateHost extends Host {
 				sendToClient(clientPort);
 			}
 		}
-		
 	}
 	
 	private void sendToServer(DatagramPacket newPacket) {
@@ -1027,7 +1024,6 @@ public class IntermediateHost extends Host {
 	
 	private byte[] blockNumber(DatagramPacket p) {
 		byte[] blockNum = { p.getData()[2], p.getData()[3] };
-		System.out.println("Block number: " + blockNum[0] + blockNum[1]);
 		return blockNum;
 	}
 	
@@ -1037,9 +1033,7 @@ public class IntermediateHost extends Host {
 		else if(packType == RequestType.WRITE) return 2; 
 		else if(packType == RequestType.DATA) return 3; 
 		else if(packType == RequestType.ACK) return 4; 
-		else {
-			return 5; 
-		}
+		else return 5; 
 	}
 	
 	public void clearFileName() {
@@ -1056,6 +1050,7 @@ public class IntermediateHost extends Host {
 	}
 	
 	private void promptIntermediateOperator() { 
+		@SuppressWarnings("resource")
 		Scanner reader = new Scanner(System.in);
 		String key = "";
 		System.out.println("Press v to enable verbose or press q to enable quiet\n");
