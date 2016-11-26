@@ -55,19 +55,19 @@ public class IntermediateHost extends Host {
 	 * 8 - Change Block Number
 	 */
 	public void sendAndReceive(InputStream in) { //TODO account for errors in user input
-		System.out.println("Press 0 for normal mode, \nPress 1 to lose a packet, \nPress 2 to delay a packet, \nPress 3 to duplicate a packet, \nPress 4 to change the TID, \nPress 5 to corrupt request packet, \nPress 6 to change opcode, \nPress 7 to have invalid packet size, \nPress 8 to change the block number");
+	//	System.out.println("Press 0 for normal mode, \nPress 1 to lose a packet, \nPress 2 to delay a packet, \nPress 3 to duplicate a packet, \nPress 4 to change the TID, \nPress 5 to corrupt request packet, \nPress 6 to change opcode, \nPress 7 to have invalid packet size, \nPress 8 to change the block number");
 		s = new Scanner(in);
 		userInput = checkBounds(9, 0, -1);
 		
 		if (userInput == 0) {
 			System.out.println("Intermediate Host running in normal mode");
-			normal(); 
+			return;
 		}
 		// lose a packet
 		else if(userInput == 1) {
 			chooseTypeOfPacket("lose", "losing", true);
 			choosePacketNumber("lose");
-			losePacket(); 
+			return;
 		}
 		//delay a packet
 		else if (userInput == 2) {
@@ -75,7 +75,7 @@ public class IntermediateHost extends Host {
 			choosePacketNumber("delay");
 			System.out.println("Enter delay in milliseconds: ");
 			delayTime = packetNum = checkBounds(100000, -1, -1);
-			delayPacket();
+			return;
 		}
 		//duplicate a packet
 		else if (userInput == 3) {
@@ -83,14 +83,14 @@ public class IntermediateHost extends Host {
 			choosePacketNumber("duplicate");
 			System.out.println("Enter delay in milliseconds between duplicates: ");
 			delayTime = checkBounds(100000, -1, -1);
-			duplicatePacket(); 
+			return;
 		}
 		
 		// invalid TID
 		else if (userInput == 4) {
 			chooseTypeOfPacket("send from an invalid TID", "changing the TID of", false);
 			choosePacketNumber("send from an invalid TID");
-			invalidTID();
+			return;
 		}
 		
 		// corrupt request
@@ -101,7 +101,7 @@ public class IntermediateHost extends Host {
 			System.out.println("\tPress 3 remove delimeter 1");
 			System.out.println("\tPress 4 remove delimeter 2");
 			corruptRequest = checkBounds(5, 0, 0);			
-			corruptRequest();
+			return;
 		}
 		
 		// change opcode 
@@ -113,7 +113,7 @@ public class IntermediateHost extends Host {
 			wrongOpCode[0] = s.nextByte();
 			System.out.println("Enter the second byte of the opcode you'd like to change it to: ");
 			wrongOpCode[1] = s.nextByte();
-			changeOpCode();
+			return;
 			
 		}
 		
@@ -121,7 +121,7 @@ public class IntermediateHost extends Host {
 		else if(userInput == 7) {
 			chooseTypeOfPacket("change the size", "changing the packet size of", false);
 			choosePacketNumber("change the size");
-			resizePacket();
+			return;
 		}
 		
 		// change block number
@@ -137,7 +137,7 @@ public class IntermediateHost extends Host {
 			System.out.println("Enter the second byte of the block # you'd like to change it to: ");
 			wrongBlockNum[1] = s.nextByte();
 			
-			changeBlockNum();
+			return;
 			
 		}
 		
@@ -156,7 +156,7 @@ public class IntermediateHost extends Host {
 	
 	private int checkBounds(int biggerNum, int smallerNum, int cantBe) {
 		int temp = cantBe;
-		while(temp > biggerNum || temp < smallerNum || temp == cantBe) {
+		while(temp >= biggerNum || temp < smallerNum || temp == cantBe) {
 			temp = numberChosen(s);
 		}
 		return temp;
