@@ -384,7 +384,11 @@ public class FileTransferClient extends Host{
 								sendaPacket(ack, receivePacket.getPort(), socket, sender);
 							}
 							
-							if(isError()) handleError();
+							if(isError()) {
+								handleError();
+								fis.close();
+								return;
+							}
 							
 							//Checks if Data is what we expect if it is continue transfer
 							if(validPacketNum(receivePacket,blockNum)) response = true;
