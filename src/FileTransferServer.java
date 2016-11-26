@@ -25,8 +25,14 @@ public class FileTransferServer extends Host implements Runnable {
 	private boolean serverShutdown = false; // boolean to see if server is supposed to be shut down
 	private boolean inATransfer = false;
 	private Validater validater;
+	private int TID;
+
 	
 	public FileTransferServer(DatagramPacket packet, int port) {
+		if(packet!=null){
+			this.TID = packet.getPort();
+		}
+
 		try { 
 			if(port == SERVER_PORT) {
 				receiveSocket = new DatagramSocket(SERVER_PORT);
@@ -51,7 +57,7 @@ public class FileTransferServer extends Host implements Runnable {
 			if(serverShutdown) System.exit(0);
 			System.out.println("Waiting..."); // so we know we're waiting
 			if(serverShutdown) System.exit(0);
-			receiveaPacket("Server", receiveSocket);   
+			receiveaPacket("Server", receiveSocket); 
 			Thread thread = new Thread(new FileTransferServer(receivePacket, 0)); //create a connection manager to deal with file transfer
 			thread.start();
 			Thread.sleep(1000);
@@ -105,17 +111,18 @@ public class FileTransferServer extends Host implements Runnable {
 			System.out.println("Could not open file to read\n");
 		}
 		
-		int endOfFile = fileData.length;	//KG CHANGED THIS TO FIX PROB, USED TO BE: int endOfFile = fileData.length - 1;
+		int endOfFile = fileData.length;	
 
 		byte[] toSend;
 		RequestType request;
 		try {
 			sendAndReceiveSocket.setSoTimeout(TIMEOUT);
 		} catch (SocketException e1) {
-			// TODO Auto-generated catch block
+			
 			e1.printStackTrace();
 		}
 		do {
+			System.out.println(TID + "<----- THE TID OF THE ORIGINAL PORT");
 			if (upto > fileData.length) { //If trying to access an index out of file array length
 				toSend = Arrays.copyOfRange(fileData, start, endOfFile); //only go to end of file
 				doneFile = true; //done sending the whole file!
@@ -133,8 +140,14 @@ public class FileTransferServer extends Host implements Runnable {
 			while(!response){
 				try{	
 					received = receiveaPacket("Server", sendAndReceiveSocket);
-					if(getBlockNum(received.getData()) < blockNum) continue;
+					System.out.println(received.getPort() + "<---- TID OF RECEIVED PORT");
+					invalidTID(receivePacket);
+					//TODO
+					packetSize(receivePacket);
+					validater.validateFileNameOrModeOrDelimiters(validater.validate(receivePacket.getData()), receivePacket.getData(),"Illegal TFTP");
+					if(getInt(received) < blockNum) continue;
 					if(validater.validate(received.getData()) == RequestType.ACK) response = true;
+					blockNum++;
 				} catch (Exception e){
 					sendaPacket(packetdata, tempPort, sendAndReceiveSocket, "Server");
 					numOfTimeOuts++;
@@ -146,13 +159,13 @@ public class FileTransferServer extends Host implements Runnable {
 			}
 	      	byte data[] = receivePacket.getData(); 
 	      	request = validater.validate(data); //get the request type
-	      	blockNum++; //Next block
+	      	//blockNum++; //Next block
 		} while(request == RequestType.ACK && !doneFile); //Only do this a second time (or more) if more data is left AND an ACK was received		
 		
 		try { //disables timeout
 			sendAndReceiveSocket.setSoTimeout(0);
 		} catch (SocketException e1) {
-			// TODO Auto-generated catch block
+			
 			e1.printStackTrace();
 		}
 	}
@@ -171,21 +184,26 @@ public class FileTransferServer extends Host implements Runnable {
 		/*try {
 			sendAndReceiveSocket.setSoTimeout(TIMEOUT);
 		} catch (SocketException e1) {
-			// TODO Auto-generated catch block
+			
 			e1.printStackTrace();
 		}*/
 		String path = "src\\serverFiles\\" + validater.getFilename(); 
 		File file = new File(path);
 		FileOutputStream fos = null;
-		//TODO can't find a proper way to infuse it with the while loop
+		
 		try {
 			receiveaPacket("Server", sendAndReceiveSocket);
+			invalidTID(receivePacket);
+			//
+			packetSize(receivePacket);
+			//TODO
+			validater.validateFileNameOrModeOrDelimiters(validater.validate(receivePacket.getData()), receivePacket.getData(),"Illegal TFTP");
 		} catch (Exception e1) {
 			e1.printStackTrace();
 		}
 		int blockNum = 1;
-		
-		DatagramPacket prevPacket = null;
+		boolean isWrongTID = false;
+		//DatagramPacket prevPacket;
 		request = validater.validate(receivePacket.getData()); //Get the request
 		byte[] ack = createRightPacket(request, receivePacket.getData()); //create ACK
 		try {
@@ -207,10 +225,20 @@ public class FileTransferServer extends Host implements Runnable {
 					//tempBlockNum = getBlockNum(receivePacket.getData());
 					try {
 						receiveaPacket("Server", sendAndReceiveSocket);
-						tempBlockNum = getBlockNum(receivePacket.getData());
-						if(tempBlockNum < blockNum){
-							sendaPacket(ack, lastPort, sendAndReceiveSocket, "Server");
+						//
+						
+						if (invalidTID(receivePacket)){
+							isWrongTID = true;
 						}
+						//TODO
+						packetSize(receivePacket);
+						validater.validateFileNameOrModeOrDelimiters(validater.validate(receivePacket.getData()), receivePacket.getData(),"Illegal TFTP");
+						tempBlockNum = getBlockNum(receivePacket.getData());
+						if(tempBlockNum < blockNum && !isWrongTID){
+							byte[] newPacket = createAck(tempBlockNum);
+							sendaPacket(newPacket, lastPort, sendAndReceiveSocket, "Server");
+						}
+						isWrongTID = false;
 					} catch (SocketTimeoutException e){
 						numTimeOuts++;
 						if (numTimeOuts == 4){
@@ -219,7 +247,7 @@ public class FileTransferServer extends Host implements Runnable {
 						}
 					}
 				}
-				prevPacket = receivePacket;
+				//prevPacket = receivePacket;
 				request = validater.validate(receivePacket.getData());
 				ack = createRightPacket(request, receivePacket.getData()); 
 			} 
@@ -288,6 +316,38 @@ public class FileTransferServer extends Host implements Runnable {
 		return response;
 	}
 	
+	
+	/**
+	 * If the packet received has a invalid TID then and error code is sent
+	 * @param receivePacket
+	 */
+	private boolean invalidTID(DatagramPacket receivePacket)
+	{
+		int recPacPort = receivePacket.getPort();
+	
+		System.out.println("*****************got to INVALID TID METHOD");
+		if(recPacPort != TID)	
+		{	
+				String errorMsg = "Invalid TID";
+				sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",5);
+				return true;
+		}
+		
+		return false;
+	}
+	
+	private boolean packetSize(DatagramPacket receivePacket)
+	{
+		System.out.println("Packet size got to");
+		if(receivePacket.getData().length > PACKET_SIZE)	
+		{	
+				String errorMsg = "Invalid TID";
+				sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
+				return true;
+		}
+		
+		return false;
+	}
 	
 	private String findTypeOfInvalid(byte data[], RequestType request) {
 		String error = "There was an error";

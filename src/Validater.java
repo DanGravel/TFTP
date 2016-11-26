@@ -45,16 +45,16 @@ public class Validater {
 		if(request == RequestType.READ) {
 			if(!(new File(path).exists())) {
 				request = RequestType.FILENOTFOUND; //check if client is trying to read from a file that DNE
-				clearFileName();
+				fileName = "";
 			}
 			else if(!(Files.isReadable(path2))) {
 				request = RequestType.ACCESSDENIED; //check if file is trying to read from a write only file
-				clearFileName();
+				fileName = "";
 			}
 		} else if(request == RequestType.WRITE) {
 			if(new File(path).exists()) {
 				request = RequestType.FILEEXISTS; // Check if file is trying to write to existing file
-				clearFileName();
+				fileName = "";
 			}
 		}		
 		return request;
@@ -80,7 +80,7 @@ public class Validater {
 			mode += (char)data[i];
 			i++;
 		}
-		if(fileName.length() == 0 || mode.length() == 0 || fileName.length() > 15 || mode.length() > 15) request = RequestType.INVALID;
+		if(fileName.length() == 0 || mode.length() == 0 || fileName.length() > 15 || mode.length() > 15 || data[0] !=0 || data[1] >5) request = RequestType.INVALID;
 		return request;
 	}
 	

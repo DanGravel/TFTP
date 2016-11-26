@@ -626,9 +626,9 @@ public class IntermediateHost extends Host {
 	}
 	
 	private void changeOpCode() {
-		RequestType r = validate.validate(receiveFromClient(PACKET_SIZE).getData());
+		RequestType requestType = validate.validate(receiveFromClient(PACKET_SIZE).getData());
 		int clientPort = receivePacket.getPort();
-		int serverThreadPort = 0;
+		int serverThreadPort;
 		DatagramPacket wrongOp = null;
 		
 		if(packetType == 1) { // change request
@@ -639,16 +639,60 @@ public class IntermediateHost extends Host {
 			wrongOp = new DatagramPacket(data, data.length);
 			sendToServer(wrongOp);
 			
-			if(r == RequestType.WRITE) receiveFromServer(ACK_PACKET_SIZE);
+			if(requestType == RequestType.WRITE) receiveFromServer(ACK_PACKET_SIZE);
 			else receiveFromServer(PACKET_SIZE);
 			
 			serverThreadPort = receivePacket.getPort();
 			
 			sendToClient(clientPort);
 			
-			finishTransfer(r, clientPort, serverThreadPort);
+			finishTransfer(requestType, clientPort, serverThreadPort);
+ 		} else {
+ 			sendToServer();
+			DatagramPacket packet;
+			if(requestType == RequestType.READ) packet =  receiveFromServer(PACKET_SIZE);
+			else packet = receiveFromServer(ACK_PACKET_SIZE);
+			serverThreadPort = receivePacket.getPort();
+ 			if((requestType == RequestType.READ && packetType == 3) ||(requestType == RequestType.WRITE && packetType == 4)) {
+ 			
+ 				while(!foundPacket(packet)) {
+					sendToClient(clientPort);
+					if (requestType == RequestType.READ) receiveFromClient(ACK_PACKET_SIZE);
+					else receiveFromClient(PACKET_SIZE);
+					sendToServerThread(serverThreadPort);
+					if(requestType == RequestType.READ) packet =  receiveFromServer(PACKET_SIZE);
+					else packet = receiveFromServer(ACK_PACKET_SIZE);
+				}
+ 				System.out.println("Changing op code of packet number: " + packetNum);	
+				byte[] data = receivePacket.getData();
+				data[0] = wrongOpCode[0];
+				data[1] = wrongOpCode[1];
+				wrongOp = new DatagramPacket(data, data.length);
+				sendToClient(clientPort, wrongOp);
+				finishTransfer(requestType, clientPort, serverThreadPort);
+ 			} else if((requestType == RequestType.READ && packetType == 4) || (requestType == RequestType.WRITE && packetType == 3)) {
+ 				sendToClient(clientPort);
+ 				if(requestType == RequestType.READ) packet =  receiveFromClient(ACK_PACKET_SIZE);
+ 				else packet = receiveFromClient(PACKET_SIZE);
+ 				while(!foundPacket(packet)) {
+					sendToServerThread(serverThreadPort);
+					if(requestType == RequestType.READ) receiveFromServer(PACKET_SIZE);
+					else receiveFromServer(ACK_PACKET_SIZE);
+					sendToClient(clientPort);
+					if (requestType == RequestType.READ) packet = receiveFromClient(ACK_PACKET_SIZE);
+					else packet = receiveFromClient(PACKET_SIZE);
+				}
+ 				byte[] data = receivePacket.getData();
+				data[0] = wrongOpCode[0];
+				data[1] = wrongOpCode[1];
+				wrongOp = new DatagramPacket(data, data.length);
+				sendToServerThread(serverThreadPort, wrongOp);
+				sendToClient(clientPort);
+ 				finishTransfer(requestType, clientPort, serverThreadPort);
+ 			}
  		}
-	}
+ 			
+ 	}
 	
 	/*
 	private void changeOpCode() {
