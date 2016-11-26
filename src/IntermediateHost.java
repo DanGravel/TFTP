@@ -31,17 +31,6 @@ public class IntermediateHost extends Host {
 		}
 	}
 	
-	public IntermediateHost(int x) {
-		validate = new Validater(); 
-		//Printer.setIsVerbose(true); //TODO remove hardcoding for this
-		try {
-			sendReceiveSocket = new DatagramSocket();
-			serverSocket = new DatagramSocket();
-		} catch (SocketException se) {
-			se.printStackTrace();
-			System.exit(1);
-		}
-	}
 
 	/*
 	 * 0 - Normal
