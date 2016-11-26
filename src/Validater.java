@@ -45,16 +45,16 @@ public class Validater {
 		if(request == RequestType.READ) {
 			if(!(new File(path).exists())) {
 				request = RequestType.FILENOTFOUND; //check if client is trying to read from a file that DNE
-				fileName = "";
+				clearFileName();
 			}
 			else if(!(Files.isReadable(path2))) {
 				request = RequestType.ACCESSDENIED; //check if file is trying to read from a write only file
-				fileName = "";
+				clearFileName();
 			}
 		} else if(request == RequestType.WRITE) {
 			if(new File(path).exists()) {
 				request = RequestType.FILEEXISTS; // Check if file is trying to write to existing file
-				fileName = "";
+				clearFileName();
 			}
 		}		
 		return request;

@@ -86,7 +86,6 @@ public class FileTransferServer extends Host implements Runnable {
 			sendaPacket(response, receivePacket.getPort(), sendAndReceiveSocket, "Server"); //Handles all errors
 		}
 		sendAndReceiveSocket.close();
-		
 	}
 	
 	/**
@@ -129,8 +128,8 @@ public class FileTransferServer extends Host implements Runnable {
 			upto += DATA_END;
 			int tempPort = receivePacket.getPort();
 			DatagramPacket received = null;
-			int tempBlkNum = 0;
 			boolean response = false;
+			int numOfTimeOuts = 0;
 			while(!response){
 				try{	
 					received = receiveaPacket("Server", sendAndReceiveSocket);
@@ -138,6 +137,11 @@ public class FileTransferServer extends Host implements Runnable {
 					if(validater.validate(received.getData()) == RequestType.ACK) response = true;
 				} catch (Exception e){
 					sendaPacket(packetdata, tempPort, sendAndReceiveSocket, "Server");
+					numOfTimeOuts++;
+					if(numOfTimeOuts == 4){
+						System.out.println("Timed out 4 times, stopping transfer");
+						break;
+					}
 				}
 			}
 	      	byte data[] = receivePacket.getData(); 
@@ -196,7 +200,7 @@ public class FileTransferServer extends Host implements Runnable {
 				blockNum++;
 				int tempBlockNum = 0;
 				int lastPort = receivePacket.getPort();
-				
+				int numTimeOuts = 0;
 				
 				while (tempBlockNum < blockNum){
 					//receiveaPacket("Server", sendAndReceiveSocket);
@@ -208,25 +212,10 @@ public class FileTransferServer extends Host implements Runnable {
 							sendaPacket(ack, lastPort, sendAndReceiveSocket, "Server");
 						}
 					} catch (SocketTimeoutException e){
-						//System.out.println("Did not receive data, re-sending ACK");
-						//sendaPacket(ack, lastPort, sendAndReceiveSocket, "Server");
-						//tempPacket = receiveaPacket("Server", sendAndReceiveSocket);
-						boolean received = false;
-						int numTimeOuts = 0;
-						while(!received){
-							sendaPacket(ack, lastPort, sendAndReceiveSocket, "Server");
-							try{
-								receiveaPacket("Server", sendAndReceiveSocket);
-								tempBlockNum = getBlockNum(receivePacket.getData());
-								received = true;
-							} catch(SocketTimeoutException e1){
-								numTimeOuts++;
-								continue;
-							}
-							if (numTimeOuts == 3){
-								System.out.println("The server timed out too many times. Cancelling write.");
-								break;
-							}
+						numTimeOuts++;
+						if (numTimeOuts == 4){
+							System.out.println("Timed out 4 times, stopping transfer");
+							break;
 						}
 					}
 				}
