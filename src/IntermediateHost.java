@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.io.Reader;
 import java.net.*;
 import java.util.Scanner;
 
@@ -19,7 +20,7 @@ public class IntermediateHost extends Host {
 	
 	public IntermediateHost() {
 		validate = new Validater(); 
-		Printer.setIsVerbose(true); //TODO remove hardcoding for this
+		//Printer.setIsVerbose(true); //TODO remove hardcoding for this
 		try {
 			sendReceiveSocket = new DatagramSocket(INTERMEDIATE_PORT);
 			serverSocket = new DatagramSocket();
@@ -288,7 +289,7 @@ public class IntermediateHost extends Host {
 			requestType = validate.validate(receiveFromClient(PACKET_SIZE).getData());
 			int clientPort = receivePacket.getPort();
 			
-			new Delay(delayTime, receivePacket.getData(), SERVER_PORT, serverSocket, delay).start();
+			new ErrorSim(delayTime, receivePacket.getData(), SERVER_PORT, serverSocket, delay).start();
 			
 			if(requestType == RequestType.READ) receiveFromServer(PACKET_SIZE);
 			else receiveFromServer(ACK_PACKET_SIZE);
@@ -313,7 +314,7 @@ public class IntermediateHost extends Host {
 				serverThreadPort = packet.getPort();
 				
 				if(foundPacket(packet)) {
-					new Delay(delayTime, receivePacket.getData(), clientPort, sendReceiveSocket, delay).start();
+					new ErrorSim(delayTime, receivePacket.getData(), clientPort, sendReceiveSocket, delay).start();
 				}
 				else {
 					delayed = false; 
@@ -329,7 +330,7 @@ public class IntermediateHost extends Host {
 						else delayed = foundPacket(receiveFromServer(ACK_PACKET_SIZE));
 
 					}
-					new Delay(delayTime, receivePacket.getData(), clientPort, sendReceiveSocket, delay).start();
+					new ErrorSim(delayTime, receivePacket.getData(), clientPort, sendReceiveSocket, delay).start();
 				}
 				
 				finishTransfer(requestType, clientPort, serverThreadPort);
@@ -349,7 +350,7 @@ public class IntermediateHost extends Host {
 				else p = receiveFromClient(PACKET_SIZE);
 				
 				if(foundPacket(p)) {
-					new Delay(delayTime, receivePacket.getData(), serverThreadPort, serverSocket, delay).start();
+					new ErrorSim(delayTime, receivePacket.getData(), serverThreadPort, serverSocket, delay).start();
 				}
 				else {
 					delayed = false;
@@ -365,7 +366,7 @@ public class IntermediateHost extends Host {
 						else delayed = foundPacket(receiveFromClient(PACKET_SIZE));
 						
 					}
-					new Delay(delayTime, receivePacket.getData(), serverThreadPort, serverSocket, delay).start();
+					new ErrorSim(delayTime, receivePacket.getData(), serverThreadPort, serverSocket, delay).start();
 				}
 				if(requestType == RequestType.WRITE) {
 					receiveFromServer(ACK_PACKET_SIZE);
@@ -410,7 +411,7 @@ public class IntermediateHost extends Host {
 			if(foundPacket(duplicatePacket)) 
 		    {
 		    	sendToClient(clientPort);
-				new Delay(delayTime, duplicatePacket.getData(), clientPort, sendReceiveSocket, duplicate).start();
+				new ErrorSim(delayTime, duplicatePacket.getData(), clientPort, sendReceiveSocket, duplicate).start();
 			}
 		    else
 		    {
@@ -430,7 +431,7 @@ public class IntermediateHost extends Host {
 
 				}
 		    	sendToClient(clientPort);
-				new Delay(delayTime, duplicatePacket.getData(), clientPort, sendReceiveSocket, duplicate).start();
+				new ErrorSim(delayTime, duplicatePacket.getData(), clientPort, sendReceiveSocket, duplicate).start();
 		    }
 			finishTransfer(requestType, clientPort, serverThreadPort);
 			
@@ -447,7 +448,7 @@ public class IntermediateHost extends Host {
 			if(foundPacket(packet)) 
 			{
 				sendToServerThread(serverThreadPort);
-				new Delay(delayTime, packet.getData(), serverThreadPort, serverSocket, duplicate).start();
+				new ErrorSim(delayTime, packet.getData(), serverThreadPort, serverSocket, duplicate).start();
 			}
 			else
 			{
@@ -467,7 +468,7 @@ public class IntermediateHost extends Host {
 		    		dupli = foundPacket(packet);						 
 				}
 		    	sendToServerThread(serverThreadPort);
-				new Delay(delayTime, packet.getData(), serverThreadPort, serverSocket, duplicate).start();;
+				new ErrorSim(delayTime, packet.getData(), serverThreadPort, serverSocket, duplicate).start();;
 			}
     		if(requestType == RequestType.WRITE) {
     			receiveFromServer(ACK_PACKET_SIZE);
@@ -503,7 +504,7 @@ public class IntermediateHost extends Host {
 				serverThreadPort = packet.getPort(); 
 				if(foundPacket(packet)) {
 					sendToClient(clientPort);
-					new Delay(0, packet.getData(), clientPort, fakeTID, diffTID).start();	// send to client
+					new ErrorSim(0, packet.getData(), clientPort, fakeTID, diffTID).start();	// send to client
 				}
 				else {
 					lost = false;
@@ -521,7 +522,7 @@ public class IntermediateHost extends Host {
 						
 					}
 					sendToClient(clientPort);
-					new Delay(0, packet.getData(), clientPort, fakeTID, diffTID).start();
+					new ErrorSim(0, packet.getData(), clientPort, fakeTID, diffTID).start();
 				}
 				finishTransfer(requestType, clientPort, serverThreadPort);
 			}
@@ -538,7 +539,7 @@ public class IntermediateHost extends Host {
 
 				if(foundPacket(packet)) {
 					sendToServerThread(serverThreadPort);
-					new Delay(0, packet.getData(), serverThreadPort, fakeTID, diffTID).start();
+					new ErrorSim(0, packet.getData(), serverThreadPort, fakeTID, diffTID).start();
 				}
 				else {
 					lost = false; 
@@ -553,7 +554,7 @@ public class IntermediateHost extends Host {
 						else lost = foundPacket(receiveFromClient(PACKET_SIZE));
 					}
 					sendToServerThread(serverThreadPort);
-					new Delay(0, packet.getData(), serverThreadPort, fakeTID, diffTID).start();
+					new ErrorSim(0, packet.getData(), serverThreadPort, fakeTID, diffTID).start();
 				}
 				
 				conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
@@ -1047,13 +1048,29 @@ public class IntermediateHost extends Host {
 
 	public static void main(String args[]) {
 		IntermediateHost ih = new IntermediateHost();
+		ih.promptIntermediateOperator();
 		while(true) {
 			ih.sendAndReceive();
 			ih.clearFileName();
 		}
 	}
+	
+	private void promptIntermediateOperator() { 
+		Scanner reader = new Scanner(System.in);
+		String key = "";
+		System.out.println("Press v to enable verbose or press q to enable quiet\n");
+		key = reader.nextLine();
+		if (key.equalsIgnoreCase("v")){
+			System.out.println("Enabling Verbose\n");
+			Printer.setIsVerbose(true);
+		}
+		else if(key.equalsIgnoreCase("q")) {
+			System.out.println("Enabling Quiet\n");
+			Printer.setIsVerbose(false);
+		}
+	}
 
-	private class Delay extends Thread {
+	private class ErrorSim extends Thread {
 		private int delayTime;
 		private byte[] data; 
 		private int sendPort; 
@@ -1061,7 +1078,7 @@ public class IntermediateHost extends Host {
 		private String host;
 		DatagramPacket sendPacket; 
 		
-		public Delay(int delayTime, byte[] data, int sendPort, DatagramSocket socket, String host) {
+		public ErrorSim(int delayTime, byte[] data, int sendPort, DatagramSocket socket, String host) {
 			this.delayTime = delayTime;
 			this.data = data;
 			this.sendPort = sendPort; 
