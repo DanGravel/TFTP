@@ -166,7 +166,6 @@ public class IntermediateHost extends Host {
 		if(packetType == 3 || packetType == 4){
 			System.out.println("Enter the packet number you want to " + string + ": ");
 			packetNum = checkBounds(100, 0, 0);
-			System.out.println("User chose: " + packetNum);
 		} else {
 			packetNum = 1; // losing first packet since RRQ or WRQ	
 		}
@@ -177,7 +176,6 @@ public class IntermediateHost extends Host {
 		String options = (hasOne) ? " (Request - 1, DATA - 3, ACK - 4)" : " (DATA - 3, ACK - 4)";
 		System.out.println("Select type of packet to " + string + options);
 		packetType = (hasOne) ? checkBounds(5, 0, 2) : checkBounds(5, 2, 0);
-		System.out.println("User chose: " + packetType);
 	}
 	
 	private void normal() {		
