@@ -138,6 +138,7 @@ public class IntermediateHost extends Host {
 	
 	private int numberChosen(Scanner s) {
 		while(!s.hasNextInt()) {
+			System.out.println("Please input a number within the bounds:");
 			s.next();
 		}
 		return s.nextInt();
@@ -147,6 +148,9 @@ public class IntermediateHost extends Host {
 		int temp = cantBe;
 		while(temp > biggerNum || temp < smallerNum || temp == cantBe) {
 			temp = numberChosen(s);
+			if(temp > biggerNum || temp < smallerNum || temp == cantBe) {
+				System.out.println("Please input a number within the bounds: ");
+			}
 		}
 		return temp;
 	}
