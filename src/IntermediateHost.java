@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.*;
 import java.util.Scanner;
 
@@ -29,21 +30,19 @@ public class IntermediateHost extends Host {
 			System.exit(1);
 		}
 	}
-
-	private int numberChosen(Scanner s) {
-		while(!s.hasNextInt()) {
-			s.next();
-		}
-		return s.nextInt();
-	}
 	
-	private int checkBounds(Scanner s, int biggerNum, int smallerNum, int cantBe) {
-		int temp = cantBe;
-		while(temp > biggerNum || temp < smallerNum || temp == cantBe) {
-			temp = numberChosen(s);
+	public IntermediateHost(int x) {
+		validate = new Validater(); 
+		//Printer.setIsVerbose(true); //TODO remove hardcoding for this
+		try {
+			sendReceiveSocket = new DatagramSocket();
+			serverSocket = new DatagramSocket();
+		} catch (SocketException se) {
+			se.printStackTrace();
+			System.exit(1);
 		}
-		return temp;
 	}
+
 	/*
 	 * 0 - Normal
 	 * 1 - Lose packet
@@ -55,10 +54,10 @@ public class IntermediateHost extends Host {
 	 * 7 - Invalid Packet Size
 	 * 8 - Change Block Number
 	 */
-	public void sendAndReceive() { //TODO account for errors in user input
+	public void sendAndReceive(InputStream in) { //TODO account for errors in user input
 		System.out.println("Press 0 for normal mode, \nPress 1 to lose a packet, \nPress 2 to delay a packet, \nPress 3 to duplicate a packet, \nPress 4 to change the TID, \nPress 5 to corrupt request packet, \nPress 6 to change opcode, \nPress 7 to have invalid packet size, \nPress 8 to change the block number");
-		s = new Scanner(System.in);
-		userInput = checkBounds(s, 9, 0, -1);
+		s = new Scanner(in);
+		userInput = checkBounds(9, 0, -1);
 		
 		if (userInput == 0) {
 			System.out.println("Intermediate Host running in normal mode");
@@ -75,7 +74,7 @@ public class IntermediateHost extends Host {
 			chooseTypeOfPacket("delay", "delaying", true);
 			choosePacketNumber("delay");
 			System.out.println("Enter delay in milliseconds: ");
-			delayTime = packetNum = checkBounds(s, 100000, -1, -1);
+			delayTime = packetNum = checkBounds(100000, -1, -1);
 			delayPacket();
 		}
 		//duplicate a packet
@@ -83,7 +82,7 @@ public class IntermediateHost extends Host {
 			chooseTypeOfPacket("delay", "delaying", false);
 			choosePacketNumber("duplicate");
 			System.out.println("Enter delay in milliseconds between duplicates: ");
-			delayTime = checkBounds(s, 100000, -1, -1);
+			delayTime = checkBounds(100000, -1, -1);
 			duplicatePacket(); 
 		}
 		
@@ -101,22 +100,19 @@ public class IntermediateHost extends Host {
 			System.out.println("\tPress 2 to remove mode");
 			System.out.println("\tPress 3 remove delimeter 1");
 			System.out.println("\tPress 4 remove delimeter 2");
-			corruptRequest = checkBounds(s, 5, 0, 0);			
+			corruptRequest = checkBounds(5, 0, 0);			
 			corruptRequest();
 		}
 		
 		// change opcode 
 		else if(userInput == 6) {
 			chooseTypeOfPacket("change opcode for", "changing the opcode of", true);
-			packetType = checkBounds(s, 5, 0, 2);
+			packetType = checkBounds(5, 0, 2);
 			choosePacketNumber("change the opcode");
-			//TODO handle wrong input for bytes
 			System.out.println("Enter the first byte of the opcode you'd like to change it to: ");
 			wrongOpCode[0] = s.nextByte();
-			
 			System.out.println("Enter the second byte of the opcode you'd like to change it to: ");
 			wrongOpCode[1] = s.nextByte();
-			
 			changeOpCode();
 			
 		}
@@ -151,10 +147,26 @@ public class IntermediateHost extends Host {
 		}
 	}
 	
+	private int numberChosen(Scanner s) {
+		while(!s.hasNextInt()) {
+			s.next();
+		}
+		return s.nextInt();
+	}
+	
+	private int checkBounds(int biggerNum, int smallerNum, int cantBe) {
+		int temp = cantBe;
+		while(temp > biggerNum || temp < smallerNum || temp == cantBe) {
+			temp = numberChosen(s);
+		}
+		return temp;
+	}
+	
 	private void choosePacketNumber(String string) {
 		if(packetType == 3 || packetType == 4){
 			System.out.println("Enter the packet number you want to " + string + ": ");
-			packetNum = checkBounds(s, 100, 0, 0);
+			packetNum = checkBounds(100, 0, 0);
+			System.out.println("User chose: " + packetNum);
 		} else {
 			packetNum = 1; // losing first packet since RRQ or WRQ	
 		}
@@ -164,9 +176,11 @@ public class IntermediateHost extends Host {
 		System.out.println("Intermediate host will be " + stringing + " a packet");
 		String options = (hasOne) ? " (Request - 1, DATA - 3, ACK - 4)" : " (DATA - 3, ACK - 4)";
 		System.out.println("Select type of packet to " + string + options);
-		packetType = (hasOne) ? checkBounds(s, 5, 0, 2) : checkBounds(s, 5, 2, 0);
+		packetType = (hasOne) ? checkBounds(5, 0, 2) : checkBounds(5, 2, 0);
+		System.out.println("User chose: " + packetType);
 	}
-	public void normal() {		
+	
+	private void normal() {		
 		RequestType r = validate.validate(receiveFromClient(PACKET_SIZE).getData());
 		int clientPort = receivePacket.getPort();
 		sendToServer();
@@ -890,6 +904,7 @@ public class IntermediateHost extends Host {
 			conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
 		}
 	}
+	
 	private void conditionalFinishTransfer(RequestType requestType, int clientPort, int serverThreadPort) {
 		boolean done = false; 
 		if(requestType == RequestType.READ) {
@@ -1025,15 +1040,17 @@ public class IntermediateHost extends Host {
 	public void clearFileName() {
 		validate.clearFileName();
 	}
+	
 
 	public static void main(String args[]) {
 		IntermediateHost ih = new IntermediateHost();
 		ih.promptIntermediateOperator();
 		while(true) {
-			ih.sendAndReceive();
+			ih.sendAndReceive(System.in);
 			ih.clearFileName();
 		}
 	}
+	
 	
 	private void promptIntermediateOperator() { 
 		@SuppressWarnings("resource")
