@@ -68,7 +68,7 @@ public class IntermediateHost extends Host {
 		}
 		//duplicate a packet
 		else if (userInput == 3) {
-			chooseTypeOfPacket("delay", "delaying", false);
+			chooseTypeOfPacket("duplicate", "duplicating", true);
 			choosePacketNumber("duplicate");
 			System.out.println("Enter delay in milliseconds between duplicates: ");
 			delayTime = checkBounds(100000, -1, -1);
