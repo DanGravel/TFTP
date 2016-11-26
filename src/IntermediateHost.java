@@ -366,11 +366,13 @@ public class IntermediateHost extends Host {
 		RequestType requestType = null;
 		if(packetType == 1)
 		{
-		   receiveFromClient(PACKET_SIZE); //get RRQ/WRQ
+		   requestType = validate.validate(receiveFromClient(PACKET_SIZE).getData()); //get RRQ/WRQ
 		   DatagramPacket newPacket = receivePacket; //SAVE read 
 		   int clientPort = receivePacket.getPort();
 		   sendToServer(); // Send request
 		   new ErrorSim(delayTime, newPacket.getData(), SERVER_PORT, serverSocket, duplicate).start();
+		   
+		   if(requestType == RequestType.WRITE) receiveFromServer(ACK_PACKET_SIZE);
 		   conditionalFinishTransfer(requestType, clientPort, serverThreadPort);	
 		}
 		else
