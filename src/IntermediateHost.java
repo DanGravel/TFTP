@@ -1040,11 +1040,16 @@ public class IntermediateHost extends Host {
 			return 5; 
 		}
 	}
+	
+	public void clearFileName() {
+		validate.clearFileName();
+	}
 
 	public static void main(String args[]) {
 		IntermediateHost ih = new IntermediateHost();
 		while(true) {
 			ih.sendAndReceive();
+			ih.clearFileName();
 		}
 	}
 

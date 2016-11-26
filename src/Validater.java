@@ -87,5 +87,9 @@ public class Validater {
 	public String getFilename() {
 		return fileName;
 	}
+	
+	public void clearFileName() {
+		fileName = "";
+	}
 
 }
