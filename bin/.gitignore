@@ -1,1 +1,7 @@
-/bin/
+/FileTransferClient$Mode.class
+/FileTransferClient.class
+/FileTransferServer$RequestType.class
+/FileTransferServer.class
+/Host.class
+/IntermediateHost.class
+/Printer.class
