@@ -4,10 +4,8 @@
 /FileTransferServer$1.class
 /FileTransferServer.class
 /Host.class
-/IntermediateHost$Delay.class
+/IntermediateHost$ErrorSim.class
 /IntermediateHost.class
 /Printer.class
 /RequestType.class
 /Validater.class
-/IntermediateHost$ErrorSim.class
-/IntermediateHost$1.class

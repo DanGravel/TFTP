@@ -14,6 +14,7 @@ public class IntermediateHost extends Host {
 	private static int corruptRequest = 0;
 	private static byte[] wrongOpCode = new byte[2];
 	private static byte[] wrongBlockNum = new byte[2];
+	Scanner s;
 	
 	private Validater validate; 
 	
@@ -56,8 +57,8 @@ public class IntermediateHost extends Host {
 	 */
 	public void sendAndReceive() { //TODO account for errors in user input
 		System.out.println("Press 0 for normal mode, \nPress 1 to lose a packet, \nPress 2 to delay a packet, \nPress 3 to duplicate a packet, \nPress 4 to change the TID, \nPress 5 to corrupt request packet, \nPress 6 to change opcode, \nPress 7 to have invalid packet size, \nPress 8 to change the block number");
-		Scanner s = new Scanner(System.in);
-		userInput = checkBounds(s, 8, 0, -1);
+		s = new Scanner(System.in);
+		userInput = checkBounds(s, 9, 0, -1);
 		
 		if (userInput == 0) {
 			System.out.println("Intermediate Host running in normal mode");
@@ -65,56 +66,31 @@ public class IntermediateHost extends Host {
 		}
 		// lose a packet
 		else if(userInput == 1) {
-			System.out.println("Intermediate host will be losing a packet");
-			System.out.println("Select type of packet to lose (Request - 1, DATA - 3, ACK - 4)");
-			packetType = checkBounds(s, 5, 0, 2);
-			
-			if(packetType == 3 || packetType == 4){
-				System.out.println("Enter the packet number you want to lose:");
-				packetNum = numberChosen(s);
-			} else {
-				packetNum = 1; // losing first packet since RRQ or WRQ
-				
-			}
+			chooseTypeOfPacket("lose", "losing", true);
+			choosePacketNumber("lose");
 			losePacket(); 
 		}
 		//delay a packet
 		else if (userInput == 2) {
-			System.out.println("Intermediate host will be delaying a packet\n Enter the type of packet you'd like to delay (Request - 1, DATA - 3, ACK - 4)");
-			packetType = checkBounds(s, 5, 0, 2);
-			
-			if(packetType == 3 || packetType == 4){
-				System.out.println("Enter the packet number you want to delay:");
-				packetNum = numberChosen(s);
-			} else {
-				packetNum = 1; // delaying first packet since RRQ or WRQ
-			}
-			
+			chooseTypeOfPacket("delay", "delaying", true);
+			choosePacketNumber("delay");
 			System.out.println("Enter delay in milliseconds: ");
-			delayTime = numberChosen(s);
+			delayTime = packetNum = checkBounds(s, 100000, -1, -1);
 			delayPacket();
 		}
 		//duplicate a packet
 		else if (userInput == 3) {
-			System.out.println("Intermediate host will be duplicating a packet");
-			System.out.println("Select type of packet to duplicate (DATA - 3, ACK - 4)");
-			packetType = checkBounds(s, 5, 2, 0);
-			if(packetType == 3 || packetType == 4){
-				System.out.println("Enter the packet number you want to duplicate:");
-				packetNum = s.nextInt();
-			}
+			chooseTypeOfPacket("delay", "delaying", false);
+			choosePacketNumber("duplicate");
 			System.out.println("Enter delay in milliseconds between duplicates: ");
-			delayTime = numberChosen(s); 
+			delayTime = checkBounds(s, 100000, -1, -1);
 			duplicatePacket(); 
 		}
 		
 		// invalid TID
 		else if (userInput == 4) {
-			System.out.println("Intermediate host will change the TID of a packet");
-			System.out.println("Select type of packet to send invalid TID (DATA - 3, ACK - 4)");
-			packetType = checkBounds(s, 5, 2, 0);
-			System.out.println("Enter the packet number you want to send from an invalid TID:");
-			packetNum = numberChosen(s);
+			chooseTypeOfPacket("send from an invalid TID", "changing the TID of", false);
+			choosePacketNumber("send from an invalid TID");
 			invalidTID();
 		}
 		
@@ -131,16 +107,10 @@ public class IntermediateHost extends Host {
 		
 		// change opcode 
 		else if(userInput == 6) {
-			System.out.println("Intermediate host will change the opcode of a packet");
-			System.out.println("Select packet for which opcode will be corrupted (Request - 1, DATA - 3, ACK - 4)");
+			chooseTypeOfPacket("change opcode for", "changing the opcode of", true);
 			packetType = checkBounds(s, 5, 0, 2);
-			if(packetType == 3 || packetType == 4){
-				System.out.println("Enter the packet number for which you want to change the opcode:");
-				packetNum = numberChosen(s);
-			} else {
-				packetNum = 1; // losing first packet since RRQ or WRQ
-				
-			}
+			choosePacketNumber("change the opcode");
+			//TODO handle wrong input for bytes
 			System.out.println("Enter the first byte of the opcode you'd like to change it to: ");
 			wrongOpCode[0] = s.nextByte();
 			
@@ -153,22 +123,17 @@ public class IntermediateHost extends Host {
 		
 		// change packet size
 		else if(userInput == 7) {
-			System.out.println("Intermediate host will make the packet size invalid");
-			System.out.println("Select type of packet to change size (DATA - 3, ACK - 4)");
-			packetType = checkBounds(s, 5, 2, 0);
-			System.out.println("Enter the packet number for which you'd like to change the size:");
-			packetNum = numberChosen(s);
+			chooseTypeOfPacket("change the size", "changing the packet size of", false);
+			choosePacketNumber("change the size");
 			resizePacket();
 		}
 		
 		// change block number
 		else if(userInput == 8) {
-			System.out.println("Intermediate host will change the block # of a packet");
-			System.out.println("Select packet for which block # will be changed (DATA - 3, ACK - 4)");
-			packetType = checkBounds(s, 5, 2, 0);
-
-			System.out.println("Enter the packet number for which you want to change the block #: ");
-			packetNum = numberChosen(s);
+			chooseTypeOfPacket("change block # of", "changing the block # of", false);
+			choosePacketNumber("change the block #");
+			
+			//TODO handle invalid inputs
 
 			System.out.println("Enter the first byte of the block # you'd like to change it to: ");
 			wrongBlockNum[0] = s.nextByte();
@@ -186,6 +151,21 @@ public class IntermediateHost extends Host {
 		}
 	}
 	
+	private void choosePacketNumber(String string) {
+		if(packetType == 3 || packetType == 4){
+			System.out.println("Enter the packet number you want to " + string + ": ");
+			packetNum = checkBounds(s, 100, 0, 0);
+		} else {
+			packetNum = 1; // losing first packet since RRQ or WRQ	
+		}
+	}
+	
+	private void chooseTypeOfPacket(String string, String stringing, boolean hasOne) {
+		System.out.println("Intermediate host will be " + stringing + " a packet");
+		String options = (hasOne) ? " (Request - 1, DATA - 3, ACK - 4)" : " (DATA - 3, ACK - 4)";
+		System.out.println("Select type of packet to " + string + options);
+		packetType = (hasOne) ? checkBounds(s, 5, 0, 2) : checkBounds(s, 5, 2, 0);
+	}
 	public void normal() {		
 		RequestType r = validate.validate(receiveFromClient(PACKET_SIZE).getData());
 		int clientPort = receivePacket.getPort();
