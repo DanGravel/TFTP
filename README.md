@@ -70,3 +70,22 @@ When running in test mode: <br />
    * help - shows commands and sample queries
   * An example of a command is normal/test read/write filename.txt verbose/!verbose
   * If at anytime you want to change directories simply type in the new directory
+  
+### Testing Errors: <br />
+ * Disk Full 
+  * To test disk full error in client, obtain a USB disk that is basically full and set the path of the client to that disk
+  * Make a RRQ for a file in Server, and the file should stop reading as soon as the disk is full
+  * For Server Disk full, the path of the server directory has to be changed within the code
+ * File Exists
+  * For a Write, copy the file from the client directory into the server directory 
+  * Attempt the WRQ, the server will send an error packet packet back to client saying the file already exists 
+  * Client will be re-prompted
+  * For a Read, copy the file from server to client
+  * Attempt a RRQ, the client will re-prompt the user saying that the file already exists
+ * File Not Found
+  * For a write request, make sure the file you want to transfer is not in the client directory
+  * Attempt to send this file, the client will be re-prompted because the file doesn't exist
+  * For a read request, make sure the file is not in the server directory
+  * Attempt a read request, the server will send an error to client saying that the file does not exist
+  
+ 
