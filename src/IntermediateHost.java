@@ -364,99 +364,97 @@ public class IntermediateHost extends Host {
 		boolean dupli; 
 		
 		RequestType requestType = null;
-//		if(packetType == 1)
-//		{
-//		   System.out.println("\n*Duplicating a REQUEST packet*\n");
-//		   receiveFromClient(PACKET_SIZE); //get RRQ/WRQ
-//		   DatagramPacket newPacket = receivePacket; //SAVE read 
-//		   int clientPort = receivePacket.getPort();
-//		   sendToServer(); // Send request
-//		   new Delay(delayTime, newPacket.getData(), SERVER_PORT, serverSocket, duplicate).start();
-//		   conditionalFinishTransfer(requestType, clientPort, serverThreadPort);	
-//		}
-//		else
-//		{
-		requestType = validate.validate(receiveFromClient(PACKET_SIZE).getData()); // receive request packet
-		int clientPort = receivePacket.getPort();
-		sendToServer();	// send request
-		if((requestType == RequestType.READ && packetType == 3) || (requestType == RequestType.WRITE && packetType == 4)) 
+		if(packetType == 1)
 		{
-			DatagramPacket duplicatePacket = null;
-			
-			if(requestType == RequestType.READ) duplicatePacket = receiveFromServer(PACKET_SIZE);
-			else duplicatePacket = receiveFromServer(ACK_PACKET_SIZE);
-			
-			serverThreadPort = receivePacket.getPort();
-			
-			if(foundPacket(duplicatePacket)) 
-		    {
-		    	sendToClient(clientPort);
-				new ErrorSim(delayTime, duplicatePacket.getData(), clientPort, sendReceiveSocket, duplicate).start();
-			}
-		    else
-		    {
-		    	dupli = false;
-		    	while(!dupli) 
-		    	{
-					sendToClient(clientPort);
-					
-					if (requestType == RequestType.READ)receiveFromClient(ACK_PACKET_SIZE);
-					else receiveFromClient(PACKET_SIZE);
-					
+		   receiveFromClient(PACKET_SIZE); //get RRQ/WRQ
+		   DatagramPacket newPacket = receivePacket; //SAVE read 
+		   int clientPort = receivePacket.getPort();
+		   sendToServer(); // Send request
+		   new ErrorSim(delayTime, newPacket.getData(), SERVER_PORT, serverSocket, duplicate).start();
+		   conditionalFinishTransfer(requestType, clientPort, serverThreadPort);	
+		}
+		else
+		{
+			requestType = validate.validate(receiveFromClient(PACKET_SIZE).getData()); // receive request packet
+			int clientPort = receivePacket.getPort();
+			sendToServer();	// send request
+			if((requestType == RequestType.READ && packetType == 3) || (requestType == RequestType.WRITE && packetType == 4)) 
+			{
+				DatagramPacket duplicatePacket = null;
+				
+				if(requestType == RequestType.READ) duplicatePacket = receiveFromServer(PACKET_SIZE);
+				else duplicatePacket = receiveFromServer(ACK_PACKET_SIZE);
+				
+				serverThreadPort = receivePacket.getPort();
+				
+				if(foundPacket(duplicatePacket)) 
+			    {
+			    	sendToClient(clientPort);
+					new ErrorSim(delayTime, duplicatePacket.getData(), clientPort, sendReceiveSocket, duplicate).start();
+				}
+			    else
+			    {
+			    	dupli = false;
+			    	while(!dupli) 
+			    	{
+						sendToClient(clientPort);
+						
+						if (requestType == RequestType.READ)receiveFromClient(ACK_PACKET_SIZE);
+						else receiveFromClient(PACKET_SIZE);
+						
+						sendToServerThread(serverThreadPort);
+						
+						if(requestType == RequestType.READ) dupli = foundPacket(receiveFromServer(PACKET_SIZE));
+						else dupli = foundPacket(receiveFromServer(ACK_PACKET_SIZE));
+						duplicatePacket = receivePacket;
+	
+					}
+			    	sendToClient(clientPort);
+					new ErrorSim(delayTime, duplicatePacket.getData(), clientPort, sendReceiveSocket, duplicate).start();
+			    }
+				finishTransfer(requestType, clientPort, serverThreadPort);
+				
+			}else if((requestType == RequestType.READ && packetType == 4) || (requestType == RequestType.WRITE && packetType == 3)) {
+				if(requestType == RequestType.READ) serverThreadPort = receiveFromServer(PACKET_SIZE).getPort();
+				else serverThreadPort = receiveFromServer(ACK_PACKET_SIZE).getPort();
+				
+				sendToClient(clientPort);
+				
+				DatagramPacket packet = null;
+				if (requestType == RequestType.READ) packet = receiveFromClient(ACK_PACKET_SIZE);
+				else packet = receiveFromClient(PACKET_SIZE);
+			    
+				if(foundPacket(packet)) 
+				{
 					sendToServerThread(serverThreadPort);
-					
-					if(requestType == RequestType.READ) dupli = foundPacket(receiveFromServer(PACKET_SIZE));
-					else dupli = foundPacket(receiveFromServer(ACK_PACKET_SIZE));
-					duplicatePacket = receivePacket;
-
+					new ErrorSim(delayTime, packet.getData(), serverThreadPort, serverSocket, duplicate).start();
 				}
-		    	sendToClient(clientPort);
-				new ErrorSim(delayTime, duplicatePacket.getData(), clientPort, sendReceiveSocket, duplicate).start();
-		    }
-			finishTransfer(requestType, clientPort, serverThreadPort);
-			
-		}else if((requestType == RequestType.READ && packetType == 4) || (requestType == RequestType.WRITE && packetType == 3)) {
-			if(requestType == RequestType.READ) serverThreadPort = receiveFromServer(PACKET_SIZE).getPort();
-			else serverThreadPort = receiveFromServer(ACK_PACKET_SIZE).getPort();
-			
-			sendToClient(clientPort);
-			
-			DatagramPacket packet = null;
-			if (requestType == RequestType.READ) packet = receiveFromClient(ACK_PACKET_SIZE);
-			else packet = receiveFromClient(PACKET_SIZE);
-		    
-			if(foundPacket(packet)) 
-			{
-				sendToServerThread(serverThreadPort);
-				new ErrorSim(delayTime, packet.getData(), serverThreadPort, serverSocket, duplicate).start();
-			}
-			else
-			{
-				dupli = false;
-		    	while(!dupli) 
-		    	{
-		    		sendToServerThread(serverThreadPort);
-					
-		    		if(requestType == RequestType.READ) receiveFromServer(PACKET_SIZE);
-					else receiveFromServer(ACK_PACKET_SIZE);
-		    		
-		    		sendToClient(clientPort);
-		    		
-					if (requestType == RequestType.READ) packet = receiveFromClient(ACK_PACKET_SIZE);
-					else packet = receiveFromClient(PACKET_SIZE);
-					
-		    		dupli = foundPacket(packet);						 
+				else
+				{
+					dupli = false;
+			    	while(!dupli) 
+			    	{
+			    		sendToServerThread(serverThreadPort);
+						
+			    		if(requestType == RequestType.READ) receiveFromServer(PACKET_SIZE);
+						else receiveFromServer(ACK_PACKET_SIZE);
+			    		
+			    		sendToClient(clientPort);
+			    		
+						if (requestType == RequestType.READ) packet = receiveFromClient(ACK_PACKET_SIZE);
+						else packet = receiveFromClient(PACKET_SIZE);
+						
+			    		dupli = foundPacket(packet);						 
+					}
+			    	sendToServerThread(serverThreadPort);
+					new ErrorSim(delayTime, packet.getData(), serverThreadPort, serverSocket, duplicate).start();;
 				}
-		    	sendToServerThread(serverThreadPort);
-				new ErrorSim(delayTime, packet.getData(), serverThreadPort, serverSocket, duplicate).start();;
+	    		if(requestType == RequestType.WRITE) {
+	    			receiveFromServer(ACK_PACKET_SIZE);
+	    			sendToClient(clientPort);
+	    		}
 			}
-    		if(requestType == RequestType.WRITE) {
-    			receiveFromServer(ACK_PACKET_SIZE);
-    			sendToClient(clientPort);
-    		}
-			
 			conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
-           
 		}
 	}
 
