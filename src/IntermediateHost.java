@@ -96,7 +96,6 @@ public class IntermediateHost extends Host {
 		// change opcode 
 		else if(userInput == 6) {
 			chooseTypeOfPacket("change opcode for", "changing the opcode of", true);
-			packetType = checkBounds(5, 0, 2);
 			choosePacketNumber("change the opcode");
 			System.out.println("Enter the first byte of the opcode you'd like to change it to: ");
 			wrongOpCode[0] = s.nextByte();
