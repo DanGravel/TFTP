@@ -28,7 +28,7 @@ public class Validater {
 		}
 		return request;
 	}
-
+	
 	public String validateFileNameOrModeOrDelimiters(RequestType request, byte data[], String error) {
 		if(request == RequestType.READ || request == RequestType.WRITE) {
 			request = validateFileNameandMode(data, request);	//Get filename and validate packet
@@ -86,6 +86,10 @@ public class Validater {
 	
 	public String getFilename() {
 		return fileName;
+	}
+	
+	public void clearFileName() {
+		fileName = "";
 	}
 
 }

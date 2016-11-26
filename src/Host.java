@@ -226,9 +226,20 @@ public abstract class Host {
 	}
 	
 	protected boolean validAckNum(DatagramPacket packet, int num){
-		int val = ((packet.getData()[2] & 0xff) << 8) | (packet.getData()[3] & 0xff);
+		Byte val1 = packet.getData()[2];
+		Byte val2=  packet.getData()[3];
+		int val = (val1.intValue())*10 + val2.intValue();
 		if(val != num) return false;
 		return true;
+	}
+	
+	protected boolean isACKnumHigher(DatagramPacket packet, int num){
+		Byte val1 = packet.getData()[2];
+		Byte val2=  packet.getData()[3];
+		int val = (val1.intValue())*10 + val2.intValue();
+		boolean tst = val > num;
+		if(val > num) return true;
+		return false;
 	}
 	
 	protected boolean validPacketNum(DatagramPacket packet, int num){
@@ -259,7 +270,7 @@ public abstract class Host {
 	}
 	
 	protected boolean isValidDataLen(DatagramPacket packet){
-		if(packet.getData().length > 512) return false;
+		if(packet.getData().length > 516) return false;
 		return true;
 	}
 	

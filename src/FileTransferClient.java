@@ -13,7 +13,10 @@ import java.util.Arrays;
 
 /**
  * File Transfer Client
- * As long as you dont touch anything it works
+ *         \/     \\
+ * ___  _@@       @@_  ___
+ *(___)(_)         (_)(___)
+  //|| ||           || ||\\
  */
 public class FileTransferClient extends Host{
 	private DatagramSocket sendReceiveSocket;
@@ -28,12 +31,11 @@ public class FileTransferClient extends Host{
 	private static String FILE_PATH_REGEX = "([a-zA-Z]:)?(\\\\[a-zA-Z0-9_.-]+)+\\\\?";
 	private static final int MAX_TIMEOUTS = 4;
 	private FileOutputStream fis;
-	private Validater validater;
+	private int TID;
 	/**
 	 * FileTransferClient Constructor creates a new DatgramSocket.
 	 */
 	public FileTransferClient() {
-		validater = new Validater();
 		try {
 			sendReceiveSocket = new DatagramSocket();
 		} catch (SocketException se) {
@@ -170,7 +172,7 @@ public class FileTransferClient extends Host{
 	  public void sendFile(String filename, DatagramSocket socket, int port, String sender) throws IOException{
 		    String path = createPath(filename);
 	 	  	File file = new File(path);
-	 	  	int TID = 0;
+	 	  	TID = 0;
 			sendReceiveSocket.setSoTimeout(TIMEOUT);
 	 	  	//check if the file exists
 	 	  	if (!file.exists()){
@@ -252,26 +254,37 @@ public class FileTransferClient extends Host{
 							response = false;
 							if(isError()) handleError();
 							
-							if(receivePacket.getPort() != TID){ //checks the TID of an incoming packet
+							//checks the TID of an incoming packet
+							if(receivePacket.getPort() != TID){ 
 								String errorMsg = "Invalid TID";
 								sendError(errorMsg, receivePacket.getPort(),socket,sender,5);
 							}
 							
 							//Checks the length of ACK packets
-							if(!validAckLength(receivePacket)) {
-								String errorMsg = "Packet to large";
+							else if(!validAckLength(receivePacket)) {							
+								String errorMsg = "Invalid ACK size";
 								sendError(errorMsg, receivePacket.getPort(),socket,sender,4);
+								fis.close();
+								System.out.println("Terminating transfer: " + errorMsg);
+								return;
+							}
+							
+							//Checks if block num is higher
+							else if(isACKnumHigher(receivePacket,blockNum)){
+								String errorMsg = "ACK number is higher then current ack, something went very wrong";
+								sendError(errorMsg, receivePacket.getPort(),socket,sender,4);
+								fis.close();
+								System.out.println("Terminating transfer: " + errorMsg);
+								return;
 							}
 							
 							//Checks if if packet has a valid op code
-							if(!isValidOpCode(receivePacket)){
+							else if(!isValidOpCode(receivePacket)){
 								String errorMsg = "Invalid op code";
 								sendError(errorMsg, receivePacket.getPort(),socket,sender,4);
-							}
-							//Checks length of data if > 512 error
-							if(!isValidDataLen(receivePacket)){
-								String errorMsg = "Invalid data length > 512";
-								sendError(errorMsg, receivePacket.getPort(),socket,sender,4);
+								fis.close();
+								System.out.println("Terminating transfer: " + errorMsg);
+								return;
 							}
 							
 							//Checks the ACK number
@@ -327,6 +340,7 @@ public class FileTransferClient extends Host{
 	 		int tempPort = 0;
 			boolean response = false;
 			int numTimeOuts = 0;
+			
 			try{
 				fis = new FileOutputStream(file);
 				do{
@@ -335,26 +349,50 @@ public class FileTransferClient extends Host{
 						try{
 							receiveaPacket(sender, socket);
 							
+							//Checks if this is the first packet receive and records its TID
 							if(isFirstRead) {
 								TID = receivePacket.getPort();
 								isFirstRead = false;
 							}
 							
-							if(receivePacket.getPort() != TID){	//checks TID of incoming packets							
+							//checks TID of incoming packets	
+							if(receivePacket.getPort() != TID){							
 								String errorMsg = "Invalid TID";
 								sendError(errorMsg, receivePacket.getPort(),socket,sender,5);
 							}
 							
+							//Checks length of data if > 512 error
+							if(!isValidDataLen(receivePacket)){
+								String errorMsg = "Invalid data length > 512";
+								sendError(errorMsg, receivePacket.getPort(),socket,sender,4);
+								fis.close();
+								System.out.println("Terminating transfer: " + errorMsg);
+								return;
+							}
+							
+							//Checks if if packet has a valid op code
+							if(!isValidOpCode(receivePacket)){
+								String errorMsg = "Invalid op code";
+								sendError(errorMsg, receivePacket.getPort(),socket,sender,4);
+								fis.close();
+								System.out.println("Terminating transfer: " + errorMsg);
+								return;
+							}
+							
+							//Checks if Data is duplicate
 							if(getInt(receivePacket) < blockNum){
 								sendaPacket(ack, receivePacket.getPort(), socket, sender);
 							}
 							
 							if(isError()) handleError();
+							
+							//Checks if Data is what we expect if it is continue transfer
 							if(validPacketNum(receivePacket,blockNum)) response = true;
+							
 						}catch(SocketTimeoutException e){
 					 		System.out.println("Didnt recieve a response from the server");
 							numTimeOuts++;
-							if(numTimeOuts == 4){
+							if(numTimeOuts == 3){
 								System.out.println("Timed out 3 times, aborting transfer");
 								fis.close();
 								Files.deleteIfExists(file.toPath());
@@ -423,6 +461,8 @@ public class FileTransferClient extends Host{
 		}
 		return;
 	}
+
+	
 
    /**
     * creates the byte array for the initial read or write request

@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.*;
 import java.util.Scanner;
 
@@ -7,18 +8,20 @@ public class IntermediateHost extends Host {
 	private DatagramSocket sendReceiveSocket;
 	private DatagramSocket serverSocket; 
 	
-	private static int userInput = 88; 
+	private static int userInput = 0; 
 	private static int packetType = 0; // type of packet to manipulate
 	private static int packetNum = 0; 
 	private static int delayTime = 0;
 	private static int corruptRequest = 0;
 	private static byte[] wrongOpCode = new byte[2];
+	private static byte[] wrongBlockNum = new byte[2];
+	Scanner s;
 	
 	private Validater validate; 
 	
 	public IntermediateHost() {
 		validate = new Validater(); 
-		Printer.setIsVerbose(true); //TODO remove hardcoding for this
+		//Printer.setIsVerbose(true); //TODO remove hardcoding for this
 		try {
 			sendReceiveSocket = new DatagramSocket(INTERMEDIATE_PORT);
 			serverSocket = new DatagramSocket();
@@ -27,122 +30,104 @@ public class IntermediateHost extends Host {
 			System.exit(1);
 		}
 	}
+	
 
 	/*
 	 * 0 - Normal
 	 * 1 - Lose packet
 	 * 2 - Delay packet
+	 * 3 - Duplicate 
+	 * 4 - Invalid TID
+	 * 5 - Corrupt Request
+	 * 6 - Change Opcode
+	 * 7 - Invalid Packet Size
+	 * 8 - Change Block Number
 	 */
-	public void sendAndReceive() { //TODO account for errors in user input
-		System.out.println("Press 0 for normal mode, \nPress 1 to lose a packet, \nPress 2 to delay a packet, \nPress 3 to duplicate a packet, \nPress 4 to change the TID, \nPress 5 to corrupt request packet, \nPress 6 to change opcode, \nPress 7 to make packet too large");
-		@SuppressWarnings("resource")
-		Scanner s = new Scanner(System.in);
-		userInput = s.nextInt(); 
+	public void sendAndReceive(InputStream in) { //TODO account for errors in user input
+		System.out.println("Press 0 for normal mode, \nPress 1 to lose a packet, \nPress 2 to delay a packet, \nPress 3 to duplicate a packet, \nPress 4 to change the TID, \nPress 5 to corrupt request packet, \nPress 6 to change opcode, \nPress 7 to have invalid packet size, \nPress 8 to change the block number");
+		s = new Scanner(in);
+		userInput = checkBounds(9, 0, -1);
+		
 		if (userInput == 0) {
 			System.out.println("Intermediate Host running in normal mode");
 			normal(); 
 		}
 		// lose a packet
 		else if(userInput == 1) {
-			System.out.println("Intermediate host will be losing a packet");
-			System.out.println("Select type of packet to lose (Request - 1, DATA - 3, ACK - 4)");
-			packetType = s.nextInt(); 
-			
-			if(packetType == 3 || packetType == 4){
-				System.out.println("Enter the packet number you want to lose:");
-				packetNum = s.nextInt();
-			} else {
-				packetNum = 1; // losing first packet since RRQ or WRQ
-				
-			}
+			chooseTypeOfPacket("lose", "losing", true);
+			choosePacketNumber("lose");
 			losePacket(); 
 		}
 		//delay a packet
 		else if (userInput == 2) {
-			System.out.println("Intermediate host will be delaying a packet\n Enter the type of packet you'd like to delay (Request - 1, DATA - 3, ACK - 4)");
-			packetType = s.nextInt();
-			
-			if(packetType == 3 || packetType == 4){
-				System.out.println("Enter the packet number you want to delay:");
-				packetNum = s.nextInt();
-			} else {
-				packetNum = 1; // delaying first packet since RRQ or WRQ
-			}
-			
+			chooseTypeOfPacket("delay", "delaying", true);
+			choosePacketNumber("delay");
 			System.out.println("Enter delay in milliseconds: ");
-			delayTime = s.nextInt(); 
+			delayTime = packetNum = checkBounds(100000, -1, -1);
 			delayPacket();
 		}
 		//duplicate a packet
 		else if (userInput == 3) {
-			System.out.println("Intermediate host will be duplicating a packet");
-			System.out.println("Select type of packet to duplicate (DATA - 3, ACK - 4)");
-			packetType = s.nextInt();
+			chooseTypeOfPacket("delay", "delaying", false);
+			choosePacketNumber("duplicate");
 			System.out.println("Enter delay in milliseconds between duplicates: ");
-			delayTime = s.nextInt(); 
-			if(packetType == 3 || packetType == 4){
-				System.out.println("Enter the packet number you want to duplicate:");
-				packetNum = s.nextInt();
-			}
+			delayTime = checkBounds(100000, -1, -1);
 			duplicatePacket(); 
 		}
 		
 		// invalid TID
 		else if (userInput == 4) {
-			System.out.println("Intermediate host will change the TID of a packet");
-			System.out.println("Select type of packet to send invalid TID (DATA - 3, ACK - 4)");
-			packetType = s.nextInt();
-			
-			if(packetType == 3 || packetType == 4){
-				System.out.println("Enter the packet number you want to lose:");
-				packetNum = s.nextInt();
-			}
+			chooseTypeOfPacket("send from an invalid TID", "changing the TID of", false);
+			choosePacketNumber("send from an invalid TID");
 			invalidTID();
 		}
 		
+		// corrupt request
 		else if (userInput == 5) {
 			System.out.println("Intermediate host will corrupt request packet");
 			System.out.println("\tPress 1 to remove filename");
 			System.out.println("\tPress 2 to remove mode");
 			System.out.println("\tPress 3 remove delimeter 1");
 			System.out.println("\tPress 4 remove delimeter 2");
-			corruptRequest = s.nextInt();
-			
+			corruptRequest = checkBounds(5, 0, 0);			
 			corruptRequest();
 		}
 		
+		// change opcode 
 		else if(userInput == 6) {
-			System.out.println("Intermediate host will change the opcode of a packet");
-			System.out.println("Select packet for which opcode will be corrupted (Request - 1, DATA - 3, ACK - 4)");
-			packetType = s.nextInt();
-			if(packetType == 3 || packetType == 4){
-				System.out.println("Enter the packet number you want to lose:");
-				packetNum = s.nextInt();
-			} else {
-				packetNum = 1; // losing first packet since RRQ or WRQ
-				
-			}
+			chooseTypeOfPacket("change opcode for", "changing the opcode of", true);
+			packetType = checkBounds(5, 0, 2);
+			choosePacketNumber("change the opcode");
 			System.out.println("Enter the first byte of the opcode you'd like to change it to: ");
 			wrongOpCode[0] = s.nextByte();
-			
 			System.out.println("Enter the second byte of the opcode you'd like to change it to: ");
 			wrongOpCode[1] = s.nextByte();
-			
 			changeOpCode();
 			
 		}
 		
+		// change packet size
 		else if(userInput == 7) {
-			System.out.println("Intermediate host will make the packet too large");
-			System.out.println("Select type of packet to make too large (Request - 1, DATA - 3, ACK - 4)");
-			packetType = s.nextInt();
-			if(packetType == 3 || packetType == 4){
-				System.out.println("Enter the packet number you want to enlarge:");
-				packetNum = s.nextInt();
-			} else {
-				packetNum = 1; // losing first packet since RRQ or WRQ	
-			}
-			enlargePacket();
+			chooseTypeOfPacket("change the size", "changing the packet size of", false);
+			choosePacketNumber("change the size");
+			resizePacket();
+		}
+		
+		// change block number
+		else if(userInput == 8) {
+			chooseTypeOfPacket("change block # of", "changing the block # of", false);
+			choosePacketNumber("change the block #");
+			
+			//TODO handle invalid inputs
+
+			System.out.println("Enter the first byte of the block # you'd like to change it to: ");
+			wrongBlockNum[0] = s.nextByte();
+			
+			System.out.println("Enter the second byte of the block # you'd like to change it to: ");
+			wrongBlockNum[1] = s.nextByte();
+			
+			changeBlockNum();
+			
 		}
 		
 		else {
@@ -151,7 +136,38 @@ public class IntermediateHost extends Host {
 		}
 	}
 	
-	public void normal() {		
+	private int numberChosen(Scanner s) {
+		while(!s.hasNextInt()) {
+			s.next();
+		}
+		return s.nextInt();
+	}
+	
+	private int checkBounds(int biggerNum, int smallerNum, int cantBe) {
+		int temp = cantBe;
+		while(temp > biggerNum || temp < smallerNum || temp == cantBe) {
+			temp = numberChosen(s);
+		}
+		return temp;
+	}
+	
+	private void choosePacketNumber(String string) {
+		if(packetType == 3 || packetType == 4){
+			System.out.println("Enter the packet number you want to " + string + ": ");
+			packetNum = checkBounds(100, 0, 0);
+		} else {
+			packetNum = 1; // losing first packet since RRQ or WRQ	
+		}
+	}
+	
+	private void chooseTypeOfPacket(String string, String stringing, boolean hasOne) {
+		System.out.println("Intermediate host will be " + stringing + " a packet");
+		String options = (hasOne) ? " (Request - 1, DATA - 3, ACK - 4)" : " (DATA - 3, ACK - 4)";
+		System.out.println("Select type of packet to " + string + options);
+		packetType = (hasOne) ? checkBounds(5, 0, 2) : checkBounds(5, 2, 0);
+	}
+	
+	private void normal() {		
 		RequestType r = validate.validate(receiveFromClient(PACKET_SIZE).getData());
 		int clientPort = receivePacket.getPort();
 		sendToServer();
@@ -173,7 +189,7 @@ public class IntermediateHost extends Host {
 		if(packetType == 1){ // RRQ or WRQ
 			System.out.println("Losing a request packet");
 			receiveFromClient(PACKET_SIZE);			
-			normal(); 
+			//normal(); 
 			
 		}
 		else {
@@ -243,6 +259,7 @@ public class IntermediateHost extends Host {
 	}
 	
 	private void delayPacket() {
+		String delay = "DELAYED PACKET";
 		int serverThreadPort = 0; 
 		boolean delayed; 
 		RequestType requestType = null;
@@ -252,8 +269,7 @@ public class IntermediateHost extends Host {
 			requestType = validate.validate(receiveFromClient(PACKET_SIZE).getData());
 			int clientPort = receivePacket.getPort();
 			
-			Thread delay = new Delay(delayTime, receivePacket.getData(), SERVER_PORT, serverSocket);
-			delay.start(); 
+			new ErrorSim(delayTime, receivePacket.getData(), SERVER_PORT, serverSocket, delay).start();
 			
 			if(requestType == RequestType.READ) receiveFromServer(PACKET_SIZE);
 			else receiveFromServer(ACK_PACKET_SIZE);
@@ -278,7 +294,7 @@ public class IntermediateHost extends Host {
 				serverThreadPort = packet.getPort();
 				
 				if(foundPacket(packet)) {
-					new Delay(delayTime, receivePacket.getData(), serverThreadPort, serverSocket).start();
+					new ErrorSim(delayTime, receivePacket.getData(), clientPort, sendReceiveSocket, delay).start();
 				}
 				else {
 					delayed = false; 
@@ -294,10 +310,10 @@ public class IntermediateHost extends Host {
 						else delayed = foundPacket(receiveFromServer(ACK_PACKET_SIZE));
 
 					}
-					new Delay(delayTime, receivePacket.getData(), serverThreadPort, serverSocket).start();
+					new ErrorSim(delayTime, receivePacket.getData(), clientPort, sendReceiveSocket, delay).start();
 				}
 				
-				conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
+				finishTransfer(requestType, clientPort, serverThreadPort);
 			}
 			else if((requestType == RequestType.READ && packetType == 4) || (requestType == RequestType.WRITE && packetType == 3)) { 	
 				DatagramPacket packet = null;
@@ -314,9 +330,7 @@ public class IntermediateHost extends Host {
 				else p = receiveFromClient(PACKET_SIZE);
 				
 				if(foundPacket(p)) {
-					//delay(serverThreadPort);
-					Thread delay = new Delay(delayTime, receivePacket.getData(), serverThreadPort, serverSocket);
-					delay.start();
+					new ErrorSim(delayTime, receivePacket.getData(), serverThreadPort, serverSocket, delay).start();
 				}
 				else {
 					delayed = false;
@@ -332,10 +346,12 @@ public class IntermediateHost extends Host {
 						else delayed = foundPacket(receiveFromClient(PACKET_SIZE));
 						
 					}
-					Thread delay = new Delay(delayTime, receivePacket.getData(), serverThreadPort, serverSocket);
-					delay.start();
+					new ErrorSim(delayTime, receivePacket.getData(), serverThreadPort, serverSocket, delay).start();
 				}
-				
+				if(requestType == RequestType.WRITE) {
+					receiveFromServer(ACK_PACKET_SIZE);
+					sendToClient(clientPort); 
+				}
 				conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
 			}
 		}
@@ -343,173 +359,109 @@ public class IntermediateHost extends Host {
 	
 	private void duplicatePacket() 
 	{
+		String duplicate = "DUPLICATED PACKET";
 		int serverThreadPort = 0; 
 		boolean dupli; 
 		
 		RequestType requestType = null;
-		if(packetType == 1)
+//		if(packetType == 1)
+//		{
+//		   System.out.println("\n*Duplicating a REQUEST packet*\n");
+//		   receiveFromClient(PACKET_SIZE); //get RRQ/WRQ
+//		   DatagramPacket newPacket = receivePacket; //SAVE read 
+//		   int clientPort = receivePacket.getPort();
+//		   sendToServer(); // Send request
+//		   new Delay(delayTime, newPacket.getData(), SERVER_PORT, serverSocket, duplicate).start();
+//		   conditionalFinishTransfer(requestType, clientPort, serverThreadPort);	
+//		}
+//		else
+//		{
+		requestType = validate.validate(receiveFromClient(PACKET_SIZE).getData()); // receive request packet
+		int clientPort = receivePacket.getPort();
+		sendToServer();	// send request
+		if((requestType == RequestType.READ && packetType == 3) || (requestType == RequestType.WRITE && packetType == 4)) 
 		{
-		   System.out.println("\n*Duplicating a REQUEST packet*\n");
-		   receiveFromClient(PACKET_SIZE); //get RRQ/WRQ
-		   DatagramPacket newPacket = receivePacket; //SAVE read 
-		   int clientPort = receivePacket.getPort();
-		   sendToServer(); // Send request
-		   new Delay(delayTime, newPacket.getData(), SERVER_PORT, serverSocket).start();
-		   conditionalFinishTransfer(requestType, clientPort, serverThreadPort);	
-		}
-		else
-		{
-			requestType = validate.validate(receiveFromClient(PACKET_SIZE).getData()); // receive request packet
-			int clientPort = receivePacket.getPort();
-			sendToServer();	// send request
-			if(requestType == RequestType.READ) 
-			{
-				if(packetType == 3) // DATA
-				{ 
-					System.out.println("\n*Duplicating a DATA packet*\n");
-					DatagramPacket duplicatePacket = receiveFromServer(PACKET_SIZE);
-					serverThreadPort = receivePacket.getPort();
-				    if(foundPacket(duplicatePacket)) 
-				    {
-				    	sendToClient(clientPort);
-						System.out.println("Duplicated DATA packet # " + packetNum);
-						new Delay(delayTime, duplicatePacket.getData(), clientPort, sendReceiveSocket).start();
-					}
-				    else
-				    {
-				    	dupli = false;
-				    	while(!dupli) 
-				    	{
-				    		sendToClient(clientPort); // send data 1
-						    receiveFromClient(ACK_PACKET_SIZE); //get ack
-						    sendToServerThread(serverThreadPort);  //send ack
-						    dupli = foundPacket(receiveFromServer(PACKET_SIZE)); //get data 2
-
-						}
-				    	System.out.println(clientPort + "   CLIENT PORT");
-				    	sendToClient(clientPort);
-						System.out.println("Duplicated DATA packet # " + packetNum);	
-						duplicatePacket = receivePacket;
-						new Delay(delayTime, duplicatePacket.getData(), clientPort, sendReceiveSocket).start();
-				    }
-				    
-				    for(;;) {
-                        receiveFromClient(ACK_PACKET_SIZE);
-                        sendToServerThread(serverThreadPort);
-                        receiveFromServer(PACKET_SIZE);
-                        sendToClient(clientPort);
-				    }	
-				}
-				else if (packetType == 4) //ACK ~
-				{
-					System.out.println("\n*Duplicating a ACK packet*\n");
-					serverThreadPort = receiveFromServer(PACKET_SIZE).getPort();
+			DatagramPacket duplicatePacket = null;
+			
+			if(requestType == RequestType.READ) duplicatePacket = receiveFromServer(PACKET_SIZE);
+			else duplicatePacket = receiveFromServer(ACK_PACKET_SIZE);
+			
+			serverThreadPort = receivePacket.getPort();
+			
+			if(foundPacket(duplicatePacket)) 
+		    {
+		    	sendToClient(clientPort);
+				new ErrorSim(delayTime, duplicatePacket.getData(), clientPort, sendReceiveSocket, duplicate).start();
+			}
+		    else
+		    {
+		    	dupli = false;
+		    	while(!dupli) 
+		    	{
 					sendToClient(clientPort);
-
-					DatagramPacket ack = receiveFromClient(ACK_PACKET_SIZE); 
-				    clientPort = receivePacket.getPort();
-				    
-					if(foundPacket(ack)) 
-					{
-						System.out.println("Duplicated ACK packet # " + packetNum);
-						sendToServerThread(serverThreadPort);
-						new Delay(delayTime, ack.getData(), serverThreadPort, serverSocket).start();
-					}
-					else
-					{
-						dupli = false;
-				    	while(!dupli) 
-				    	{
-				    		sendToServerThread(serverThreadPort);
-				    		receiveFromServer(PACKET_SIZE);
-				    		sendToClient(clientPort);
-				    		
-				    		ack = receiveFromClient(ACK_PACKET_SIZE);
-				    		dupli = foundPacket(ack);						 
-						}
-						System.out.println("Duplicated ACK packet # " + packetNum);
-				    	sendToServerThread(serverThreadPort);
-						new Delay(delayTime, ack.getData(), serverThreadPort, serverSocket).start();;
-					}
 					
-                    for(;;)
-                    {
-                        receiveFromServer(PACKET_SIZE);
-                        sendToClient(clientPort);
-                        receiveFromClient(ACK_PACKET_SIZE);
-                        sendToServerThread(serverThreadPort);
-                   }
+					if (requestType == RequestType.READ)receiveFromClient(ACK_PACKET_SIZE);
+					else receiveFromClient(PACKET_SIZE);
+					
+					sendToServerThread(serverThreadPort);
+					
+					if(requestType == RequestType.READ) dupli = foundPacket(receiveFromServer(PACKET_SIZE));
+					else dupli = foundPacket(receiveFromServer(ACK_PACKET_SIZE));
+					duplicatePacket = receivePacket;
+
 				}
-			}
-			else if (requestType == RequestType.WRITE) 
+		    	sendToClient(clientPort);
+				new ErrorSim(delayTime, duplicatePacket.getData(), clientPort, sendReceiveSocket, duplicate).start();
+		    }
+			finishTransfer(requestType, clientPort, serverThreadPort);
+			
+		}else if((requestType == RequestType.READ && packetType == 4) || (requestType == RequestType.WRITE && packetType == 3)) {
+			if(requestType == RequestType.READ) serverThreadPort = receiveFromServer(PACKET_SIZE).getPort();
+			else serverThreadPort = receiveFromServer(ACK_PACKET_SIZE).getPort();
+			
+			sendToClient(clientPort);
+			
+			DatagramPacket packet = null;
+			if (requestType == RequestType.READ) packet = receiveFromClient(ACK_PACKET_SIZE);
+			else packet = receiveFromClient(PACKET_SIZE);
+		    
+			if(foundPacket(packet)) 
 			{
-				if(packetType == 3) // DATA ~
-				{ 
-					System.out.println("\n*Duplicating a ACK packet*\n");
-					serverThreadPort = receiveFromServer(ACK_PACKET_SIZE).getPort();
-					sendToClient(clientPort);
-
-					DatagramPacket ack = receiveFromClient(PACKET_SIZE); 
-				    clientPort = receivePacket.getPort();
-				    
-					if(foundPacket(ack)) 
-					{
-						System.out.println("Duplicated ACK packet # " + packetNum);
-						sendToServerThread(serverThreadPort);
-						new Delay(delayTime, ack.getData(), serverThreadPort, serverSocket).start();
-					}
-					else
-					{
-						dupli = false;
-				    	while(!dupli) 
-				    	{
-				    		sendToServerThread(serverThreadPort);
-				    		receiveFromServer(ACK_PACKET_SIZE);
-				    		sendToClient(clientPort);
-				    		
-				    		ack = receiveFromClient(PACKET_SIZE);
-				    		dupli = foundPacket(ack);						 
-
-						}
-						System.out.println("Duplicated ACK packet # " + packetNum);
-						new Delay(delayTime, ack.getData(), serverThreadPort, serverSocket).start();
-					}
-					conditionalFinishTransfer(requestType, clientPort, serverThreadPort);			
-				}
-				else if(packetType == 4)// ACK
-				{ 
-					System.out.println("\n*Duplicating a ACK packet*\n");
-					DatagramPacket duplicatePacket = receiveFromServer(ACK_PACKET_SIZE);
-					serverThreadPort = receivePacket.getPort();
-				    if(foundPacket(duplicatePacket)) 
-				    {
-				    	sendToClient(clientPort);
-						System.out.println("Duplicated DATA packet # " + packetNum);
-						new Delay(delayTime, duplicatePacket.getData(), clientPort, sendReceiveSocket).start();
-					}
-				    else
-				    {
-				    	dupli = false;
-				    	while(!dupli) 
-				    	{
-				    		sendToClient(clientPort); 
-						    receiveFromClient(PACKET_SIZE); 
-						    sendToServerThread(serverThreadPort); 
-						    dupli = foundPacket(receiveFromServer(ACK_PACKET_SIZE)); 
-
-						}
-				    	sendToClient(clientPort);
-						System.out.println("Duplicated DATA packet # " + packetNum);	
-						duplicatePacket = receivePacket;
-						new Delay(delayTime, duplicatePacket.getData(), clientPort, sendReceiveSocket).start();
-				    }
-				    conditionalFinishTransfer(requestType, clientPort, serverThreadPort);	  
-				}
+				sendToServerThread(serverThreadPort);
+				new ErrorSim(delayTime, packet.getData(), serverThreadPort, serverSocket, duplicate).start();
 			}
+			else
+			{
+				dupli = false;
+		    	while(!dupli) 
+		    	{
+		    		sendToServerThread(serverThreadPort);
+					
+		    		if(requestType == RequestType.READ) receiveFromServer(PACKET_SIZE);
+					else receiveFromServer(ACK_PACKET_SIZE);
+		    		
+		    		sendToClient(clientPort);
+		    		
+					if (requestType == RequestType.READ) packet = receiveFromClient(ACK_PACKET_SIZE);
+					else packet = receiveFromClient(PACKET_SIZE);
+					
+		    		dupli = foundPacket(packet);						 
+				}
+		    	sendToServerThread(serverThreadPort);
+				new ErrorSim(delayTime, packet.getData(), serverThreadPort, serverSocket, duplicate).start();;
+			}
+    		if(requestType == RequestType.WRITE) {
+    			receiveFromServer(ACK_PACKET_SIZE);
+    			sendToClient(clientPort);
+    		}
+			
+			conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
+           
 		}
 	}
 
 	private void invalidTID() {
+		String diffTID = "DIFFERENT TID";
 		int serverThreadPort = 0; 
 		boolean lost; 
 		
@@ -532,7 +484,7 @@ public class IntermediateHost extends Host {
 				serverThreadPort = packet.getPort(); 
 				if(foundPacket(packet)) {
 					sendToClient(clientPort);
-					new Delay(0, packet.getData(), clientPort, fakeTID).start();	// send to client
+					new ErrorSim(0, packet.getData(), clientPort, fakeTID, diffTID).start();	// send to client
 				}
 				else {
 					lost = false;
@@ -545,12 +497,13 @@ public class IntermediateHost extends Host {
 						sendToServerThread(serverThreadPort);
 						
 						
-						if(requestType == RequestType.READ) lost = foundPacket(receiveFromServer(PACKET_SIZE));
-						else lost = foundPacket(receiveFromServer(ACK_PACKET_SIZE));
+						if(requestType == RequestType.READ) packet = receiveFromServer(PACKET_SIZE);
+						else packet = receiveFromServer(ACK_PACKET_SIZE);
 						
+                        lost = foundPacket(packet);	
 					}
 					sendToClient(clientPort);
-					new Delay(0, packet.getData(), clientPort, fakeTID).start();
+					new ErrorSim(0, packet.getData(), clientPort, fakeTID, diffTID).start();
 				}
 				finishTransfer(requestType, clientPort, serverThreadPort);
 			}
@@ -567,7 +520,7 @@ public class IntermediateHost extends Host {
 
 				if(foundPacket(packet)) {
 					sendToServerThread(serverThreadPort);
-					new Delay(0, packet.getData(), serverThreadPort, fakeTID).start();
+					new ErrorSim(0, packet.getData(), serverThreadPort, fakeTID, diffTID).start();
 				}
 				else {
 					lost = false; 
@@ -578,12 +531,18 @@ public class IntermediateHost extends Host {
 						
 						sendToClient(clientPort);
 						
-						if (requestType == RequestType.READ) lost = foundPacket(receiveFromClient(ACK_PACKET_SIZE));
-						else lost = foundPacket(receiveFromClient(PACKET_SIZE));
+						if (requestType == RequestType.READ) packet = receiveFromClient(ACK_PACKET_SIZE);
+						else packet = receiveFromClient(PACKET_SIZE);
+						
+						  lost = foundPacket(packet);	
 					}
 					sendToServerThread(serverThreadPort);
-					new Delay(0, packet.getData(), serverThreadPort, fakeTID).start();
+					new ErrorSim(0, packet.getData(), serverThreadPort, fakeTID, diffTID).start();
 				}
+                if(requestType == RequestType.READ) receiveFromServer(PACKET_SIZE);
+                else receiveFromServer(ACK_PACKET_SIZE);
+                
+                sendToClient(clientPort);
 				conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
 			}
 		}
@@ -657,11 +616,8 @@ public class IntermediateHost extends Host {
 		else receiveFromServer(PACKET_SIZE);
 		
 		serverThreadPort = receivePacket.getPort();
-		
 		sendToClient(clientPort);
-		
 		finishTransfer(r, clientPort, serverThreadPort);
-
 	}
 	
 	private void changeOpCode() {
@@ -729,7 +685,6 @@ public class IntermediateHost extends Host {
 				sendToClient(clientPort, wrongOp);
 				receiveFromClient(PACKET_SIZE);
 				sendToServerThread(serverThreadPort);
-
 			} else if((requestType == RequestType.READ && packetType == 4) || (requestType == RequestType.WRITE && packetType == 3)) {
 				sendToClient(clientPort);
 				if (requestType == RequestType.READ) packet = receiveFromClient(ACK_PACKET_SIZE);
@@ -754,113 +709,240 @@ public class IntermediateHost extends Host {
 		}
 	}*/
 	
-	private void enlargePacket() {
+	private void resizePacket() {
 		RequestType requestType = validate.validate(receiveFromClient(PACKET_SIZE).getData());
 		int clientPort = receivePacket.getPort();
 		int serverThreadPort = 0;
-		DatagramPacket largerPacket = null;
+		DatagramPacket resizedPacket = null;
+		DatagramPacket packet = null;
+		sendToServer();	// send request
+		if(requestType == RequestType.READ) packet = receiveFromServer(PACKET_SIZE);
+		else packet = receiveFromServer(ACK_PACKET_SIZE);
+		serverThreadPort = packet.getPort(); 		
 		
-		if(packetType == 1) { // change request
-			byte[] data = receivePacket.getData();
-			byte[] newData = new byte[PACKET_SIZE + 20];
-			
-			System.arraycopy(data, 0, newData, 20, data.length);
-			
-			largerPacket = new DatagramPacket(newData, newData.length);
-			sendToServer(largerPacket);
+		if((requestType == RequestType.READ && packetType == 3) ||(requestType == RequestType.WRITE && packetType == 4)) {
+			while(!foundPacket(packet)) {
+				sendToClient(clientPort);
+				if (requestType == RequestType.READ) receiveFromClient(ACK_PACKET_SIZE);
+				else receiveFromClient(PACKET_SIZE);
+				sendToServerThread(serverThreadPort);
+				if(requestType == RequestType.READ) packet =  receiveFromServer(PACKET_SIZE);
+				else packet = receiveFromServer(ACK_PACKET_SIZE);
+			}
 
-			receiveFromServer(PACKET_SIZE);		// receive error
-			sendToClient(clientPort);			// send error
- 		}
-		else {
-			DatagramPacket packet = null;
-			sendToServer();	// send request
-			if(requestType == RequestType.READ) packet = receiveFromServer(PACKET_SIZE);
-			else packet = receiveFromServer(ACK_PACKET_SIZE);
-			serverThreadPort = packet.getPort(); 		
+			byte[] data = receivePacket.getData();
+			byte[] newData = null;
+			if(requestType == RequestType.READ) {
+				newData = new byte[PACKET_SIZE + 20];
+				System.arraycopy(data, 0, newData, 0, data.length);
+				resizedPacket = new DatagramPacket(newData, newData.length);
+			}
+			else {
+				newData = new byte[2];
+				System.arraycopy(data, 0, newData, 0, newData.length);
+				resizedPacket = new DatagramPacket(newData, newData.length);
+			}
+			sendToClient(clientPort, resizedPacket);
+			receiveFromClient(PACKET_SIZE);		// should be receiving an error
+			sendToServerThread(serverThreadPort);
 			
-			if((requestType == RequestType.READ && packetType == 3) ||(requestType == RequestType.WRITE && packetType == 4)) {
-				while(!foundPacket(packet)) {
-					sendToClient(clientPort);
-					if (requestType == RequestType.READ) receiveFromClient(ACK_PACKET_SIZE);
-					else receiveFromClient(PACKET_SIZE);
-					sendToServerThread(serverThreadPort);
-					if(requestType == RequestType.READ) packet =  receiveFromServer(PACKET_SIZE);
-					else packet = receiveFromServer(ACK_PACKET_SIZE);
-				}
-	
-				byte[] data = receivePacket.getData();
-				byte[] newData = new byte[PACKET_SIZE + 20];
-				
-				System.arraycopy(data, 0, newData, 20, data.length);
-				largerPacket = new DatagramPacket(newData, newData.length);
-				
-				sendToClient(clientPort, largerPacket);
-				receiveFromClient(PACKET_SIZE);
+		} else if((requestType == RequestType.READ && packetType == 4) || (requestType == RequestType.WRITE && packetType == 3)) {
+			sendToClient(clientPort);
+			
+			if (requestType == RequestType.READ) packet = receiveFromClient(ACK_PACKET_SIZE);
+			else packet = receiveFromClient(PACKET_SIZE);
+			
+			while(!foundPacket(packet)) {
 				sendToServerThread(serverThreadPort);
 				
-			} else if((requestType == RequestType.READ && packetType == 4) || (requestType == RequestType.WRITE && packetType == 3)) {
+				if(requestType == RequestType.READ) receiveFromServer(PACKET_SIZE);
+				else receiveFromServer(ACK_PACKET_SIZE);
+				
 				sendToClient(clientPort);
 				
 				if (requestType == RequestType.READ) packet = receiveFromClient(ACK_PACKET_SIZE);
 				else packet = receiveFromClient(PACKET_SIZE);
+			}
+			
+			byte[] data = receivePacket.getData();
+			byte[] newData = null;
+			if(requestType == RequestType.READ) {
+				newData = new byte[2];
+				System.arraycopy(data, 0, newData, 0, newData.length);
+				resizedPacket = new DatagramPacket(newData, newData.length);
+			}
+			else {
+				newData = new byte[PACKET_SIZE + 20];
+				System.arraycopy(data, 0, newData, 0, data.length);
+				resizedPacket = new DatagramPacket(newData, newData.length);
+			}
+			
+			sendToServerThread(serverThreadPort, resizedPacket);
+			receiveFromServer(PACKET_SIZE);	// receive error packet
+			sendToClient(clientPort);
+		}
+	}
+	
+	private void changeBlockNum() {
+		int serverThreadPort = 0; 
+		boolean currPacket; 
+		DatagramPacket changedBlockNum = null; 
+		byte[] data = null;
+		
+		RequestType requestType = null;
+
+		DatagramPacket packet = null;
+		requestType = validate.validate(receiveFromClient(PACKET_SIZE).getData()); // receive request packet
+		int clientPort = receivePacket.getPort();
+		sendToServer();	// send request
+		if((requestType == RequestType.READ && packetType == 3) || (requestType == RequestType.WRITE && packetType == 4)) 
+		{				
+			if(requestType == RequestType.READ) packet = receiveFromServer(PACKET_SIZE);
+			else packet = receiveFromServer(ACK_PACKET_SIZE);
+			
+			data = packet.getData();
+			
+			serverThreadPort = receivePacket.getPort();
+			
+			if(foundPacket(packet)) 
+		    {
+				data[2] = wrongBlockNum[0];
+				data[3] = wrongBlockNum[1];
 				
-				while(!foundPacket(packet)) {
-					sendToServerThread(serverThreadPort);
-					
-					if(requestType == RequestType.READ) receiveFromServer(PACKET_SIZE);
-					else receiveFromServer(ACK_PACKET_SIZE);
-					
+				changedBlockNum = new DatagramPacket(data, data.length);
+		    	sendToClient(clientPort, changedBlockNum);
+			}
+		    else
+		    {
+		    	currPacket = false;
+		    	while(!currPacket) 
+		    	{
 					sendToClient(clientPort);
 					
+					if (requestType == RequestType.READ)receiveFromClient(ACK_PACKET_SIZE);
+					else receiveFromClient(PACKET_SIZE);
+					
+					sendToServerThread(serverThreadPort);
+					
+					if(requestType == RequestType.READ) currPacket = foundPacket(receiveFromServer(PACKET_SIZE));
+					else currPacket = foundPacket(receiveFromServer(ACK_PACKET_SIZE));
+					packet = receivePacket;
+
+				}
+		    	data = packet.getData();
+				data[2] = wrongBlockNum[0];
+				data[3] = wrongBlockNum[1];
+				
+				changedBlockNum = new DatagramPacket(data, data.length);
+		    	sendToClient(clientPort, changedBlockNum);
+		    }
+			finishTransfer(requestType, clientPort, serverThreadPort);
+			
+		}else if((requestType == RequestType.READ && packetType == 4) || (requestType == RequestType.WRITE && packetType == 3)) {
+			if(requestType == RequestType.READ) serverThreadPort = receiveFromServer(PACKET_SIZE).getPort();
+			else serverThreadPort = receiveFromServer(ACK_PACKET_SIZE).getPort();
+			
+			sendToClient(clientPort);
+			
+			if (requestType == RequestType.READ) packet = receiveFromClient(ACK_PACKET_SIZE);
+			else packet = receiveFromClient(PACKET_SIZE);
+		    
+			data = packet.getData();
+			
+			if(foundPacket(packet)) 
+			{
+		    	data = packet.getData();
+				data[2] = wrongBlockNum[0];
+				data[3] = wrongBlockNum[1];
+				
+				changedBlockNum = new DatagramPacket(data, data.length);
+				sendToServerThread(serverThreadPort, changedBlockNum);
+			}
+			else
+			{
+				currPacket = false;
+		    	while(!currPacket) 
+		    	{
+		    		sendToServerThread(serverThreadPort);
+					
+		    		if(requestType == RequestType.READ) receiveFromServer(PACKET_SIZE);
+					else receiveFromServer(ACK_PACKET_SIZE);
+		    		
+		    		sendToClient(clientPort);
+		    		
 					if (requestType == RequestType.READ) packet = receiveFromClient(ACK_PACKET_SIZE);
 					else packet = receiveFromClient(PACKET_SIZE);
+					
+		    		currPacket = foundPacket(packet);						 
 				}
-				System.out.println("Lost packet # " + packetNum);	
-				byte[] data = receivePacket.getData();
-				byte[] newData = new byte[PACKET_SIZE + 20];
+		    	data = packet.getData();
+				data[2] = wrongBlockNum[0];
+				data[3] = wrongBlockNum[1];
 				
-				System.arraycopy(data, 0, newData, 20, data.length);
-				largerPacket = new DatagramPacket(newData, newData.length);
-				
-				largerPacket = new DatagramPacket(newData, newData.length);
-				sendToServerThread(serverThreadPort, largerPacket);
-				receiveFromServer(PACKET_SIZE);
-				sendToClient(clientPort);
+				changedBlockNum = new DatagramPacket(data, data.length);
+				sendToServerThread(serverThreadPort, changedBlockNum);
 			}
+    		if(requestType == RequestType.WRITE) {
+    			receiveFromServer(ACK_PACKET_SIZE);
+    			sendToClient(clientPort);
+    		}
+			
+			conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
 		}
 	}
 	
 	private void conditionalFinishTransfer(RequestType requestType, int clientPort, int serverThreadPort) {
-		if(requestType == RequestType.WRITE) {
-			for(;;) {				
+		boolean done = false; 
+		if(requestType == RequestType.READ) {
+			while(!done) {				
+				receiveFromServer(PACKET_SIZE);
+				done = getSize() < PACKET_SIZE;
+				
+				sendToClient(clientPort); 
+				receiveFromClient(ACK_PACKET_SIZE);
+				sendToServerThread(serverThreadPort);
+			}
+			
+		}
+		else {
+			while(!done) {
 				receiveFromClient(PACKET_SIZE);
+				done = getSize() < PACKET_SIZE;
+				
 				sendToServerThread(serverThreadPort);
 				receiveFromServer(ACK_PACKET_SIZE);
 				sendToClient(clientPort); 
 			}
 		}
-		else {
-			for(;;) {
-				receiveFromServer(PACKET_SIZE);
-				sendToClient(clientPort); 
-				receiveFromClient(ACK_PACKET_SIZE);
-				sendToServerThread(serverThreadPort);
-			}
-		}
 	}
 	
 	private void finishTransfer(RequestType requestType, int clientPort, int serverThreadPort) {
-		for(;;) {
-			if (requestType == RequestType.READ)receiveFromClient(ACK_PACKET_SIZE);
-			else receiveFromClient(PACKET_SIZE);
+		boolean done = false;
+		if(requestType == RequestType.READ) {
+			while(!done) {
+				receiveFromClient(ACK_PACKET_SIZE);
+				sendToServerThread(serverThreadPort);
+				
+				receiveFromServer(PACKET_SIZE);
+				done = getSize() < PACKET_SIZE;
+				
+				sendToClient(clientPort);
+			}
 			
+			receiveFromClient(ACK_PACKET_SIZE);
 			sendToServerThread(serverThreadPort);
 			
-			if(requestType == RequestType.READ) receiveFromServer(PACKET_SIZE);
-			else receiveFromServer(ACK_PACKET_SIZE);
-			
-			sendToClient(clientPort);
+		}
+		
+		else {
+			while(!done) {
+				receiveFromClient(PACKET_SIZE);
+				done = getSize() < PACKET_SIZE;
+				
+				sendToServerThread(serverThreadPort);
+				receiveFromServer(ACK_PACKET_SIZE);
+				sendToClient(clientPort);
+			}
 		}
 	}
 	
@@ -891,7 +973,6 @@ public class IntermediateHost extends Host {
 		try {
 			 returnPacket = receiveaPacket("Intermediate", sendReceiveSocket, size);
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return returnPacket;
@@ -902,7 +983,6 @@ public class IntermediateHost extends Host {
 		try {
 			 returnPacket = receiveaPacket("Intermediate", serverSocket, size);
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return returnPacket;
@@ -923,17 +1003,14 @@ public class IntermediateHost extends Host {
 		
 		if(packType == packetType) {
 			if(block[0] == checkBlkNum[0] && block[1] == checkBlkNum[1]) {
-				System.out.println("**Block number: " + block[0] + block[1]);
 				return true; 
 			}
 		}
-		System.out.println("**Block number: " + block[0] + block[1]);
 		return false; 
 	}
 	
 	private byte[] blockNumber(DatagramPacket p) {
 		byte[] blockNum = { p.getData()[2], p.getData()[3] };
-		System.out.println("Block number: " + blockNum[0] + blockNum[1]);
 		return blockNum;
 	}
 	
@@ -943,29 +1020,54 @@ public class IntermediateHost extends Host {
 		else if(packType == RequestType.WRITE) return 2; 
 		else if(packType == RequestType.DATA) return 3; 
 		else if(packType == RequestType.ACK) return 4; 
-		else {
-			return 5; 
-		}
+		else return 5; 
 	}
+	
+	public void clearFileName() {
+		validate.clearFileName();
+	}
+	
 
 	public static void main(String args[]) {
 		IntermediateHost ih = new IntermediateHost();
-		ih.sendAndReceive();
+		ih.promptIntermediateOperator();
+		while(true) {
+			ih.sendAndReceive(System.in);
+			ih.clearFileName();
+		}
+	}
+	
+	
+	private void promptIntermediateOperator() { 
+		@SuppressWarnings("resource")
+		Scanner reader = new Scanner(System.in);
+		String key = "";
+		System.out.println("Press v to enable verbose or press q to enable quiet\n");
+		key = reader.nextLine();
+		if (key.equalsIgnoreCase("v")){
+			System.out.println("Enabling Verbose\n");
+			Printer.setIsVerbose(true);
+		}
+		else if(key.equalsIgnoreCase("q")) {
+			System.out.println("Enabling Quiet\n");
+			Printer.setIsVerbose(false);
+		}
 	}
 
-	private class Delay extends Thread {
+	private class ErrorSim extends Thread {
 		private int delayTime;
 		private byte[] data; 
 		private int sendPort; 
 		private DatagramSocket socket; 
-		private String host = "Intermediate";
+		private String host;
 		DatagramPacket sendPacket; 
 		
-		public Delay(int delayTime, byte[] data, int sendPort, DatagramSocket socket) {
+		public ErrorSim(int delayTime, byte[] data, int sendPort, DatagramSocket socket, String host) {
 			this.delayTime = delayTime;
 			this.data = data;
 			this.sendPort = sendPort; 
 			this.socket = socket;
+			this.host = host;
 		}
 		
 		public void run() {
@@ -980,7 +1082,7 @@ public class IntermediateHost extends Host {
 			} catch (UnknownHostException e) {
 				e.printStackTrace();
 			}
-			p.printSenderOrReceiverInfo(false, sendPacket, "DELAYED PACKET");
+			p.printSenderOrReceiverInfo(false, sendPacket, host);
 			
 			try {
 				socket.send(sendPacket);
@@ -990,5 +1092,3 @@ public class IntermediateHost extends Host {
 		}
 	}
 }
-
-
