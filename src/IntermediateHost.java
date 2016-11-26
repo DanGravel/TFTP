@@ -600,7 +600,9 @@ public class IntermediateHost extends Host {
 			int x = fileNameLength + Validater.FILE_NAME_START;
 			System.arraycopy(data, 0, newData, 0, x);
 			System.arraycopy(data, x+1, newData, x, newLength-x);
-			x++;
+			
+			corruptPacket = new DatagramPacket(newData, newData.length);
+			sendToServer(corruptPacket);
 		}
 		
 		else if(corruptRequest == 4) {
@@ -608,6 +610,9 @@ public class IntermediateHost extends Host {
 			newData = new byte[newLength];
 			
 			System.arraycopy(data, 0, newData, 0, newLength);
+			
+			corruptPacket = new DatagramPacket(newData, newData.length);
+			sendToServer(corruptPacket);
 		}
 		
 		if(r == RequestType.WRITE) receiveFromServer(ACK_PACKET_SIZE);
