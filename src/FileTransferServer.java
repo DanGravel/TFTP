@@ -122,7 +122,6 @@ public class FileTransferServer extends Host implements Runnable {
 			e1.printStackTrace();
 		}
 		do {
-			System.out.println(TID + "<----- THE TID OF THE ORIGINAL PORT");
 			if (upto > fileData.length) { //If trying to access an index out of file array length
 				toSend = Arrays.copyOfRange(fileData, start, endOfFile); //only go to end of file
 				doneFile = true; //done sending the whole file!
@@ -324,8 +323,6 @@ public class FileTransferServer extends Host implements Runnable {
 	private boolean invalidTID(DatagramPacket receivePacket)
 	{
 		int recPacPort = receivePacket.getPort();
-	
-		System.out.println("*****************got to INVALID TID METHOD");
 		if(recPacPort != TID)	
 		{	
 				String errorMsg = "Invalid TID";
@@ -338,7 +335,6 @@ public class FileTransferServer extends Host implements Runnable {
 	
 	private boolean packetSize(DatagramPacket receivePacket)
 	{
-		System.out.println("Packet size got to");
 		if(receivePacket.getData().length > PACKET_SIZE)	
 		{	
 				String errorMsg = "Invalid TID";
