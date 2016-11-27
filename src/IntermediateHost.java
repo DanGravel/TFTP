@@ -98,9 +98,9 @@ public class IntermediateHost extends Host {
 			chooseTypeOfPacket("change opcode for", "changing the opcode of", true);
 			choosePacketNumber("change the opcode");
 			System.out.println("Enter the first byte of the opcode you'd like to change it to: ");
-			wrongOpCode[0] = s.nextByte();
+			wrongOpCode[0] = byteChosen();
 			System.out.println("Enter the second byte of the opcode you'd like to change it to: ");
-			wrongOpCode[1] = s.nextByte();
+			wrongOpCode[1] = byteChosen();
 			changeOpCode();
 			
 		}
@@ -135,17 +135,24 @@ public class IntermediateHost extends Host {
 		}
 	}
 	
-	private int numberChosen(Scanner s) {
+	private int numberChosen() {
 		while(!s.hasNextInt()) {
 			s.next();
 		}
 		return s.nextInt();
 	}
 	
+	private byte byteChosen() {
+		while(!s.hasNextByte()) {
+			s.next();
+		}
+		return s.nextByte();
+	}
+	
 	private int checkBounds(int biggerNum, int smallerNum, int cantBe) {
 		int temp = cantBe;
 		while(temp > biggerNum || temp < smallerNum || temp == cantBe) {
-			temp = numberChosen(s);
+			temp = numberChosen();
 		}
 		return temp;
 	}
@@ -633,19 +640,12 @@ public class IntermediateHost extends Host {
 		if(packetType == 1) { // change request
 			byte[] data = receivePacket.getData();
 			data[0] = wrongOpCode[0];
-			data[1] = wrongOpCode[1];
-			
+			data[1] = wrongOpCode[1];	
 			wrongOp = new DatagramPacket(data, data.length);
 			sendToServer(wrongOp);
-			
-			if(requestType == RequestType.WRITE) receiveFromServer(ACK_PACKET_SIZE);
-			else receiveFromServer(PACKET_SIZE);
-			
+			receiveFromServer(PACKET_SIZE);			
 			serverThreadPort = receivePacket.getPort();
-			
 			sendToClient(clientPort);
-			
-			finishTransfer(requestType, clientPort, serverThreadPort);
  		} else {
  			sendToServer();
 			DatagramPacket packet;
@@ -661,13 +661,7 @@ public class IntermediateHost extends Host {
 					sendToServerThread(serverThreadPort);
 					if(requestType == RequestType.READ) packet =  receiveFromServer(PACKET_SIZE);
 					else packet = receiveFromServer(ACK_PACKET_SIZE);
-				}
- 				System.out.println("Changing op code of packet number: " + packetNum);
- 				System.out.println("Changing op code of packet number: " + packetNum);	
- 				System.out.println("Changing op code of packet number: " + packetNum);	
- 				System.out.println("Changing op code of packet number: " + packetNum);	
- 				System.out.println("Changing op code of packet number: " + packetNum);	
- 				
+				}		
 				byte[] data = receivePacket.getData();
 				data[0] = wrongOpCode[0];
 				data[1] = wrongOpCode[1];
@@ -675,9 +669,6 @@ public class IntermediateHost extends Host {
 				sendToClient(clientPort, wrongOp);
 				receiveFromClient(PACKET_SIZE);
 				sendToServerThread(serverThreadPort);
-				receiveFromServer(PACKET_SIZE);
-				sendToClient(clientPort);
-			//	finishTransfer(requestType, clientPort, serverThreadPort);
  			} else if((requestType == RequestType.READ && packetType == 4) || (requestType == RequestType.WRITE && packetType == 3)) {
  				sendToClient(clientPort);
  				if(requestType == RequestType.READ) packet =  receiveFromClient(ACK_PACKET_SIZE);
@@ -697,8 +688,6 @@ public class IntermediateHost extends Host {
 				sendToServerThread(serverThreadPort, wrongOp);
 				receiveFromServer(PACKET_SIZE);
 				sendToClient(clientPort);
-				receiveFromClient(PACKET_SIZE);
-				sendToServerThread(serverThreadPort);
 
  			}
  		}
