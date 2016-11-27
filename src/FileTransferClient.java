@@ -216,6 +216,7 @@ public class FileTransferClient extends Host{
 		 	
 		 	if(isError()){
 				handleError();
+				fis.close();
 				return;
 			}	 
 		 
@@ -252,7 +253,11 @@ public class FileTransferClient extends Host{
 						try{
 							receiveaPacket(sender, socket);
 							response = false;
-							if(isError()) handleError();
+							if(isError()){
+								handleError();
+								fis.close();
+								return;
+							}
 							
 							//checks the TID of an incoming packet
 							if(receivePacket.getPort() != TID){ 
@@ -387,7 +392,6 @@ public class FileTransferClient extends Host{
 							if(isError()) {
 								handleError();
 								fis.close();
-								return;
 							}
 							
 							//Checks if Data is what we expect if it is continue transfer
