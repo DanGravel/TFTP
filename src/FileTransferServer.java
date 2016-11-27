@@ -332,7 +332,7 @@ public class FileTransferServer extends Host implements Runnable {
 	{
 		if(receivePacket.getData().length > PACKET_SIZE)	
 		{	
-				String errorMsg = "Invalid TID";
+				String errorMsg = "Packet To Large";
 				sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
 				return true;
 		}
