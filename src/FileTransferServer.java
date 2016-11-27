@@ -141,7 +141,6 @@ public class FileTransferServer extends Host implements Runnable {
 			while(!response){
 				try{	
 					received = receiveaPacket("Server", sendAndReceiveSocket);
-					System.out.println(received.getPort() + "<---- TID OF RECEIVED PORT");
 					invalidTID(receivePacket);
 					packetSize(receivePacket);
 					validater.validateFileNameOrModeOrDelimiters(validater.validate(receivePacket.getData()), receivePacket.getData(),"Illegal TFTP");
@@ -334,6 +333,11 @@ public class FileTransferServer extends Host implements Runnable {
 		return false;
 	}
 	
+	/**
+	 * Checks if the packet size is correct
+	 * @param receivePacket
+	 * @return
+	 */
 	private boolean packetSize(DatagramPacket receivePacket)
 	{
 		if(receivePacket.getData().length > PACKET_SIZE)	
@@ -346,6 +350,12 @@ public class FileTransferServer extends Host implements Runnable {
 		return false;
 	}
 	
+	/**
+	 * Finds which type of invalid is the specific packet
+	 * @param data
+	 * @param request
+	 * @return
+	 */
 	private String findTypeOfInvalid(byte data[], RequestType request) {
 		String error = "There was an error";
 		if(data[0] != 0 || (data[1] != 1 && data[1] != 2 && data[1] != 3 && data[1] != 4)) {
@@ -408,7 +418,10 @@ public class FileTransferServer extends Host implements Runnable {
 	}
 	
 
-	
+	/**
+	 * Main.
+	 * @param args
+	 */
 	public static void main(String args[]) {
 		FileTransferServer s = new FileTransferServer(null, SERVER_PORT);
 		s.promptServerOperator();
