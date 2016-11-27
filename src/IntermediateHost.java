@@ -96,7 +96,6 @@ public class IntermediateHost extends Host {
 		// change opcode 
 		else if(userInput == 6) {
 			chooseTypeOfPacket("change opcode for", "changing the opcode of", true);
-			packetType = checkBounds(5, 0, 2);
 			choosePacketNumber("change the opcode");
 			System.out.println("Enter the first byte of the opcode you'd like to change it to: ");
 			wrongOpCode[0] = s.nextByte();
@@ -693,70 +692,6 @@ public class IntermediateHost extends Host {
  		}
  			
  	}
-	
-	/*
-	private void changeOpCode() {
-		RequestType requestType = validate.validate(receiveFromClient(PACKET_SIZE).getData());
-		int clientPort = receivePacket.getPort();
-		int serverThreadPort = 0;
-		DatagramPacket wrongOp;
-		
-		if(packetType == 1 || packetType == 2) { // change request
-			byte[] data = receivePacket.getData();
-			data[0] = wrongOpCode[0];
-			data[1] = wrongOpCode[1];
-			
-			wrongOp = new DatagramPacket(data, data.length);
-			sendToServer(wrongOp);
-			receiveFromServer(PACKET_SIZE);
-			sendToClient(clientPort);
-			
- 		} else {
-			DatagramPacket packet;
-			sendToServer();	// send request
-			if(requestType == RequestType.READ) packet = receiveFromServer(PACKET_SIZE);
-			else packet = receiveFromServer(ACK_PACKET_SIZE);
-			serverThreadPort = packet.getPort(); 			
-			if((requestType == RequestType.READ && packetType == 3) ||(requestType == RequestType.WRITE && packetType == 4)) {
-				while(!foundPacket(packet)) {
-						sendToClient(clientPort);
-						if (requestType == RequestType.READ) receiveFromClient(ACK_PACKET_SIZE);
-						else receiveFromClient(PACKET_SIZE);
-						sendToServerThread(serverThreadPort);
-						if(requestType == RequestType.READ) packet =  receiveFromServer(PACKET_SIZE);
-						else packet = receiveFromServer(ACK_PACKET_SIZE);
-					}
-				System.out.println("Lost packet # " + packetNum);	
-				byte[] data = receivePacket.getData();
-				data[0] = wrongOpCode[0];
-				data[1] = wrongOpCode[1];
-				wrongOp = new DatagramPacket(data, data.length);
-				sendToClient(clientPort, wrongOp);
-				receiveFromClient(PACKET_SIZE);
-				sendToServerThread(serverThreadPort);
-			} else if((requestType == RequestType.READ && packetType == 4) || (requestType == RequestType.WRITE && packetType == 3)) {
-				sendToClient(clientPort);
-				if (requestType == RequestType.READ) packet = receiveFromClient(ACK_PACKET_SIZE);
-				else packet = receiveFromClient(PACKET_SIZE);
-				while(!foundPacket(packet)) {
-					sendToServerThread(serverThreadPort);
-					if(requestType == RequestType.READ) receiveFromServer(PACKET_SIZE);
-					else receiveFromServer(ACK_PACKET_SIZE);
-					sendToClient(clientPort);
-					if (requestType == RequestType.READ) packet = receiveFromClient(ACK_PACKET_SIZE);
-					else packet = receiveFromClient(PACKET_SIZE);
-				}
-				System.out.println("Lost packet # " + packetNum);	
-				byte[] data = receivePacket.getData();
-				data[0] = wrongOpCode[0];
-				data[1] = wrongOpCode[1];
-				wrongOp = new DatagramPacket(data, data.length);
-				sendToServerThread(serverThreadPort,wrongOp);
-				receiveFromServer(PACKET_SIZE);
-				sendToClient(clientPort);
-			}
-		}
-	}*/
 	
 	private void resizePacket() {
 		RequestType requestType = validate.validate(receiveFromClient(PACKET_SIZE).getData());
