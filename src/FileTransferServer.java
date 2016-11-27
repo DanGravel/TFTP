@@ -257,7 +257,7 @@ public class FileTransferServer extends Host implements Runnable {
 							sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
 							return;
 						}
-						if(!validPacketNum(receivePacket,blockNum)) 
+						if(getInt(receivePacket) > blockNum) 
 						{
 							String errorMsg = "Invalid Block Number";
 							sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
