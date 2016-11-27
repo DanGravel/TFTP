@@ -141,7 +141,7 @@ public class FileTransferServer extends Host implements Runnable {
 					received = receiveaPacket("Server", sendAndReceiveSocket);
 					invalidTID(receivePacket);
 					packetSize(receivePacket);
-					if(!invalidOpcode(receivePacket))
+					if(!isValidOpCode(receivePacket))
 					{
 						String errorMsg = "Invalid Opcode";
 						sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
@@ -204,9 +204,9 @@ public class FileTransferServer extends Host implements Runnable {
 			receiveaPacket("Server", sendAndReceiveSocket);
 			invalidTID(receivePacket);
 			packetSize(receivePacket);
-			if(!invalidOpcode(receivePacket))
+			if(!isValidOpCode(receivePacket))
 			{
-				String errorMsg = "Invalid Opcode";
+				String errorMsg = "Invalid Opcode *";
 				sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
 				return;
 			}
@@ -251,7 +251,7 @@ public class FileTransferServer extends Host implements Runnable {
 						}
 						packetSize(receivePacket);
 						
-						if(!invalidOpcode(receivePacket))
+						if(!isValidOpCode(receivePacket))
 						{
 							String errorMsg = "Invalid Opcode";
 							sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
@@ -270,7 +270,7 @@ public class FileTransferServer extends Host implements Runnable {
 							System.exit(1);
 							return;
 						}
-						tempBlockNum = getBlockNum(receivePacket.getData());
+						tempBlockNum = getInt(receivePacket);
 						if(tempBlockNum < blockNum && !isWrongTID){
 							byte[] newPacket = createAck(tempBlockNum);
 							sendaPacket(newPacket, lastPort, sendAndReceiveSocket, "Server");
@@ -293,16 +293,6 @@ public class FileTransferServer extends Host implements Runnable {
 		}
 		inATransfer = false;
 		if(request != RequestType.DATA) sendaPacket(ack, receivePacket.getPort(), sendAndReceiveSocket, "Server");	//Error Handling
-	}
-	
-	/**
-	 * gets the block number of a packet
-	 * 
-	 * @param data packets data
-	 * @return
-	 */
-	private int getBlockNum(byte [] data){
-		return (data[2] & 0xff) << 8 | (data[3] & 0xff);
 	}
 	
 	/**
@@ -385,26 +375,6 @@ public class FileTransferServer extends Host implements Runnable {
 		}
 		
 		return false;
-	}
-	
-	
-	/**
-	 * checks for invalid opcode
-	 * @param receivePacket
-	 * @return
-	 */
-	private boolean invalidOpcode(DatagramPacket receivePacket)
-	{
-		byte[] data = receivePacket.getData();
-		if(data[0] !=0 || data[1] >5)	
-		{	
-				//String errorMsg = "Invalid Opcode";
-				//sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
-				return true;
-		}
-		
-		return false;
-		
 	}
 	
 	/**
