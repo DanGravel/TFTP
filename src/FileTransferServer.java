@@ -26,6 +26,7 @@ public class FileTransferServer extends Host implements Runnable {
 	private boolean inATransfer = false;
 	private Validater validater;
 	private int TID;
+	private int blockNum;
 
 	
 	public FileTransferServer(DatagramPacket packet, int port) {
@@ -44,6 +45,7 @@ public class FileTransferServer extends Host implements Runnable {
 		}
 		validater = new Validater();
 		doneFile = false;
+		blockNum = 0;//TODO
 		
 	}	
 
@@ -101,7 +103,7 @@ public class FileTransferServer extends Host implements Runnable {
 		int start, upto; // Since the whole file cannot be sent at once, this is used to submit segments at a time
 		start = DATA_START;
 		upto = DATA_END;
-		int blockNum = 1;
+		blockNum = 1;
 		byte[] fileData = null; 
 		byte[] packetdata = new byte[PACKET_SIZE];
 		Path path = Paths.get("src\\serverFiles\\" + validater.getFilename()); 
@@ -143,6 +145,7 @@ public class FileTransferServer extends Host implements Runnable {
 					invalidTID(receivePacket);
 					packetSize(receivePacket);
 					validater.validateFileNameOrModeOrDelimiters(validater.validate(receivePacket.getData()), receivePacket.getData(),"Illegal TFTP");
+					validPacketNum(receivePacket,blockNum);
 					if(getInt(received) < blockNum) continue;
 					if(validater.validate(received.getData()) == RequestType.ACK) response = true;
 					blockNum++;
@@ -194,6 +197,7 @@ public class FileTransferServer extends Host implements Runnable {
 			invalidTID(receivePacket);
 			packetSize(receivePacket);
 			validater.validateFileNameOrModeOrDelimiters(validater.validate(receivePacket.getData()), receivePacket.getData(),"Illegal TFTP");
+			validPacketNum(receivePacket,blockNum);
 		} catch (Exception e1) {
 			e1.printStackTrace();
 		}
@@ -228,6 +232,7 @@ public class FileTransferServer extends Host implements Runnable {
 						}
 						packetSize(receivePacket);
 						validater.validateFileNameOrModeOrDelimiters(validater.validate(receivePacket.getData()), receivePacket.getData(),"Illegal TFTP");
+						validPacketNum(receivePacket,blockNum);
 						tempBlockNum = getBlockNum(receivePacket.getData());
 						if(tempBlockNum < blockNum && !isWrongTID){
 							byte[] newPacket = createAck(tempBlockNum);
