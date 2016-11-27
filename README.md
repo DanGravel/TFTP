@@ -76,16 +76,35 @@ When running in test mode: <br />
   * To test disk full error in client, obtain a USB disk that is basically full and set the path of the client to that disk
   * Make a RRQ for a file in Server, and the file should stop reading as soon as the disk is full
   * For Server Disk full, the path of the server directory has to be changed within the code
- * File Exists
+  <br/>
+ * File Already Exists
   * For a Write, copy the file from the client directory into the server directory 
   * Attempt the WRQ, the server will send an error packet packet back to client saying the file already exists 
   * Client will be re-prompted
   * For a Read, copy the file from server to client
   * Attempt a RRQ, the client will re-prompt the user saying that the file already exists
+  <br/>
  * File Not Found
   * For a write request, make sure the file you want to transfer is not in the client directory
   * Attempt to send this file, the client will be re-prompted because the file doesn't exist
   * For a read request, make sure the file is not in the server directory
   * Attempt a read request, the server will send an error to client saying that the file does not exist
-  
+  <br/>
+ * File Access Denied
+  * Take the file that needs to be read or written and change its access to read-only
+  * this will cause the error to occur on both client and server side
+  <br/>
+ * Illegal TFTP 
+  * An illegal TFTP operation can be performed using the intermediate host
+  * The options in the Intermediate host that provide this error are: 
+   * Corrupt Request Packet
+   * Change OpCode
+   * Invalid Packet Size
+   * Change the Block Number
+  * Follow all prompts accordingly to create an Illegal TFTP
+  <br/>
+ * Unknown Transfer ID
+  * An unknown transfer ID can also be performed through the intermediate
+  * Use Change TID prompt and follow the instructions accordingly to create the error
+  <br/>
  
