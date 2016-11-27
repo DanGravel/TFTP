@@ -141,7 +141,6 @@ public class FileTransferServer extends Host implements Runnable {
 					received = receiveaPacket("Server", sendAndReceiveSocket);
 					System.out.println(received.getPort() + "<---- TID OF RECEIVED PORT");
 					invalidTID(receivePacket);
-					//TODO
 					packetSize(receivePacket);
 					validater.validateFileNameOrModeOrDelimiters(validater.validate(receivePacket.getData()), receivePacket.getData(),"Illegal TFTP");
 					if(getInt(received) < blockNum) continue;
@@ -193,9 +192,7 @@ public class FileTransferServer extends Host implements Runnable {
 		try {
 			receiveaPacket("Server", sendAndReceiveSocket);
 			invalidTID(receivePacket);
-			//
 			packetSize(receivePacket);
-			//TODO
 			validater.validateFileNameOrModeOrDelimiters(validater.validate(receivePacket.getData()), receivePacket.getData(),"Illegal TFTP");
 		} catch (Exception e1) {
 			e1.printStackTrace();
@@ -229,7 +226,6 @@ public class FileTransferServer extends Host implements Runnable {
 						if (invalidTID(receivePacket)){
 							isWrongTID = true;
 						}
-						//TODO
 						packetSize(receivePacket);
 						validater.validateFileNameOrModeOrDelimiters(validater.validate(receivePacket.getData()), receivePacket.getData(),"Illegal TFTP");
 						tempBlockNum = getBlockNum(receivePacket.getData());
