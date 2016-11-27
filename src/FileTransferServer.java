@@ -419,7 +419,7 @@ public class FileTransferServer extends Host implements Runnable {
 	
 
 	/**
-	 * Main.
+	 * Main 
 	 * @param args
 	 */
 	public static void main(String args[]) {
