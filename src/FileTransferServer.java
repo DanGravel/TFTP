@@ -196,7 +196,7 @@ public class FileTransferServer extends Host implements Runnable {
 		String path = "src\\serverFiles\\" + validater.getFilename(); 
 		File file = new File(path);
 		FileOutputStream fos = null;
-		
+		int blockNum = 1;
 		try {
 			receiveaPacket("Server", sendAndReceiveSocket);
 			invalidTID(receivePacket);
@@ -217,7 +217,6 @@ public class FileTransferServer extends Host implements Runnable {
 		} catch (Exception e1) {
 			e1.printStackTrace();
 		}
-		int blockNum = 1;
 		boolean isWrongTID = false;
 		request = validater.validate(receivePacket.getData()); //Get the request
 		byte[] ack = createRightPacket(request, receivePacket.getData()); //create ACK
