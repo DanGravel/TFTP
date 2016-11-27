@@ -63,7 +63,7 @@ public class IntermediateHost extends Host {
 			chooseTypeOfPacket("delay", "delaying", true);
 			choosePacketNumber("delay");
 			System.out.println("Enter delay in milliseconds: ");
-			delayTime = packetNum = checkBounds(100000, -1, -1);
+			delayTime = checkBounds(100000, -1, -1);
 			delayPacket();
 		}
 		//duplicate a packet
@@ -294,7 +294,7 @@ public class IntermediateHost extends Host {
 				serverThreadPort = packet.getPort();
 				
 				if(foundPacket(packet)) {
-					new ErrorSim(delayTime, receivePacket.getData(), clientPort, sendReceiveSocket, delay).start();
+					new ErrorSim(delayTime, packet.getData(), clientPort, sendReceiveSocket, delay).start();
 				}
 				else {
 					delayed = false; 
