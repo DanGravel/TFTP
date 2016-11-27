@@ -198,7 +198,7 @@ public class FileTransferServer extends Host implements Runnable {
 			packetSize(receivePacket);
 			validater.validateFileNameOrModeOrDelimiters(validater.validate(receivePacket.getData()), receivePacket.getData(),"Illegal TFTP");
 			validPacketNum(receivePacket,blockNum);
-			if(!validAckLength(receivePacket)) {							
+			if(!validAckLength(receivePacket)) {			//TODO change to valid data lenght					
 				String errorMsg = "Invalid ACK size";
 				sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
 				System.exit(1);
