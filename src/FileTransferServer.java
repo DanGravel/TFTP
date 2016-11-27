@@ -144,7 +144,7 @@ public class FileTransferServer extends Host implements Runnable {
 					invalidTID(receivePacket);
 					packetSize(receivePacket);
 					validater.validateFileNameOrModeOrDelimiters(validater.validate(receivePacket.getData()), receivePacket.getData(),"Illegal TFTP");
-					validPacketNum(receivePacket,blockNum);
+					if(validPacketNum(receivePacket,blockNum)) response = true;
 					if(getInt(received) < blockNum) continue;
 					if(validater.validate(received.getData()) == RequestType.ACK) response = true;
 					blockNum++;
