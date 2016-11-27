@@ -210,7 +210,7 @@ public class FileTransferServer extends Host implements Runnable {
 				sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
 				return;
 			}
-			if(!validPacketNum(receivePacket,blockNum)) 
+			if(getInt(receivePacket) > blockNum) 
 			{
 				String errorMsg = "Invalid Block Number";
 				sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
@@ -275,7 +275,6 @@ public class FileTransferServer extends Host implements Runnable {
 							byte[] newPacket = createAck(tempBlockNum);
 							sendaPacket(newPacket, lastPort, sendAndReceiveSocket, "Server");
 						}
-						isWrongTID = false;
 					} catch (SocketTimeoutException e){
 						numTimeOuts++;
 						if (numTimeOuts == 4){
