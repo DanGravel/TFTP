@@ -148,6 +148,7 @@ public class FileTransferServer extends Host implements Runnable {
 					if(!validAckLength(receivePacket)) {							
 						String errorMsg = "Invalid ACK size";
 						sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
+						System.exit(1);
 						return;
 					}
 					if(getInt(received) < blockNum) continue;
@@ -200,6 +201,7 @@ public class FileTransferServer extends Host implements Runnable {
 			if(!validAckLength(receivePacket)) {							
 				String errorMsg = "Invalid ACK size";
 				sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
+				System.exit(1);
 				return;
 			}
 		} catch (Exception e1) {
@@ -236,6 +238,7 @@ public class FileTransferServer extends Host implements Runnable {
 						if(!validAckLength(receivePacket)) {							
 							String errorMsg = "Invalid ACK size";
 							sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
+							System.exit(1);
 							return;
 						}
 						tempBlockNum = getBlockNum(receivePacket.getData());
