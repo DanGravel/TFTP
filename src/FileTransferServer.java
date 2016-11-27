@@ -145,6 +145,11 @@ public class FileTransferServer extends Host implements Runnable {
 					packetSize(receivePacket);
 					validater.validateFileNameOrModeOrDelimiters(validater.validate(receivePacket.getData()), receivePacket.getData(),"Illegal TFTP");
 					if(validPacketNum(receivePacket,blockNum)) response = true;
+					if(!validAckLength(receivePacket)) {							
+						String errorMsg = "Invalid ACK size";
+						sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
+						return;
+					}
 					if(getInt(received) < blockNum) continue;
 					if(validater.validate(received.getData()) == RequestType.ACK) response = true;
 					blockNum++;
@@ -192,6 +197,11 @@ public class FileTransferServer extends Host implements Runnable {
 			packetSize(receivePacket);
 			validater.validateFileNameOrModeOrDelimiters(validater.validate(receivePacket.getData()), receivePacket.getData(),"Illegal TFTP");
 			validPacketNum(receivePacket,blockNum);
+			if(!validAckLength(receivePacket)) {							
+				String errorMsg = "Invalid ACK size";
+				sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
+				return;
+			}
 		} catch (Exception e1) {
 			e1.printStackTrace();
 		}
@@ -223,6 +233,11 @@ public class FileTransferServer extends Host implements Runnable {
 						packetSize(receivePacket);
 						validater.validateFileNameOrModeOrDelimiters(validater.validate(receivePacket.getData()), receivePacket.getData(),"Illegal TFTP");
 						validPacketNum(receivePacket,blockNum);
+						if(!validAckLength(receivePacket)) {							
+							String errorMsg = "Invalid ACK size";
+							sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
+							return;
+						}
 						tempBlockNum = getBlockNum(receivePacket.getData());
 						if(tempBlockNum < blockNum && !isWrongTID){
 							byte[] newPacket = createAck(tempBlockNum);
