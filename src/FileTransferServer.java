@@ -144,7 +144,12 @@ public class FileTransferServer extends Host implements Runnable {
 					invalidTID(receivePacket);
 					packetSize(receivePacket);
 					validater.validateFileNameOrModeOrDelimiters(validater.validate(receivePacket.getData()), receivePacket.getData(),"Illegal TFTP");
-					if(validPacketNum(receivePacket,blockNum)) response = true;
+					if(!validPacketNum(receivePacket,blockNum)) 
+					{
+						String errorMsg = "Invalid Block Number";
+						sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
+						return;
+					}
 					if(!validAckLength(receivePacket)) {							
 						String errorMsg = "Invalid ACK size";
 						sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
@@ -197,7 +202,12 @@ public class FileTransferServer extends Host implements Runnable {
 			invalidTID(receivePacket);
 			packetSize(receivePacket);
 			validater.validateFileNameOrModeOrDelimiters(validater.validate(receivePacket.getData()), receivePacket.getData(),"Illegal TFTP");
-			validPacketNum(receivePacket,blockNum);
+			if(!validPacketNum(receivePacket,blockNum)) 
+			{
+				String errorMsg = "Invalid Block Number";
+				sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
+				return;
+			}
 			if(!isValidDataLen(receivePacket)){
 				String errorMsg = "Invalid data length > 512";
 				sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
@@ -234,7 +244,14 @@ public class FileTransferServer extends Host implements Runnable {
 						}
 						packetSize(receivePacket);
 						validater.validateFileNameOrModeOrDelimiters(validater.validate(receivePacket.getData()), receivePacket.getData(),"Illegal TFTP");
-						validPacketNum(receivePacket,blockNum);
+						
+						if(!validPacketNum(receivePacket,blockNum)) 
+						{
+							String errorMsg = "Invalid Block Number";
+							sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
+							return;
+						}
+						
 						if(!isValidDataLen(receivePacket)){
 							String errorMsg = "Invalid data length > 512";
 							sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
