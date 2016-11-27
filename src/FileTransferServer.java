@@ -45,7 +45,7 @@ public class FileTransferServer extends Host implements Runnable {
 		}
 		validater = new Validater();
 		doneFile = false;
-		blockNum = 0;//TODO
+		blockNum = 0;
 		
 	}	
 
@@ -56,14 +56,14 @@ public class FileTransferServer extends Host implements Runnable {
 	public void sendAndReceive() throws Exception {
 		System.out.println("Server: Waiting for Packet.\n");
 		for (;;) {	
-			if(serverShutdown) System.exit(0);
+			if(serverShutdown) System.exit(1);
 			System.out.println("Waiting..."); // so we know we're waiting
-			if(serverShutdown) System.exit(0);
+			if(serverShutdown) System.exit(1);
 			receiveaPacket("Server", receiveSocket); 
 			Thread thread = new Thread(new FileTransferServer(receivePacket, 0)); //create a connection manager to deal with file transfer
 			thread.start();
 			Thread.sleep(1000);
-			if(serverShutdown)System.exit(0);
+			if(serverShutdown)System.exit(1);
 		}
 	}
 	
@@ -235,8 +235,8 @@ public class FileTransferServer extends Host implements Runnable {
 						packetSize(receivePacket);
 						validater.validateFileNameOrModeOrDelimiters(validater.validate(receivePacket.getData()), receivePacket.getData(),"Illegal TFTP");
 						validPacketNum(receivePacket,blockNum);
-						if(!validAckLength(receivePacket)) {							
-							String errorMsg = "Invalid ACK size";
+						if(!isValidDataLen(receivePacket)){
+							String errorMsg = "Invalid data length > 512";
 							sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
 							System.exit(1);
 							return;
