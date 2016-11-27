@@ -181,12 +181,7 @@ public class FileTransferServer extends Host implements Runnable {
 			sendaPacket(b, receivePacket.getPort(), sendAndReceiveSocket, "Server");
 			return; 
 		}
-		/*try {
-			sendAndReceiveSocket.setSoTimeout(TIMEOUT);
-		} catch (SocketException e1) {
-			
-			e1.printStackTrace();
-		}*/
+
 		String path = "src\\serverFiles\\" + validater.getFilename(); 
 		File file = new File(path);
 		FileOutputStream fos = null;
@@ -202,7 +197,6 @@ public class FileTransferServer extends Host implements Runnable {
 		}
 		int blockNum = 1;
 		boolean isWrongTID = false;
-		//DatagramPacket prevPacket;
 		request = validater.validate(receivePacket.getData()); //Get the request
 		byte[] ack = createRightPacket(request, receivePacket.getData()); //create ACK
 		try {
@@ -220,12 +214,9 @@ public class FileTransferServer extends Host implements Runnable {
 				int numTimeOuts = 0;
 				
 				while (tempBlockNum < blockNum){
-					//receiveaPacket("Server", sendAndReceiveSocket);
-					//tempBlockNum = getBlockNum(receivePacket.getData());
+
 					try {
-						receiveaPacket("Server", sendAndReceiveSocket);
-						//
-						
+						receiveaPacket("Server", sendAndReceiveSocket);	
 						if (invalidTID(receivePacket)){
 							isWrongTID = true;
 						}
@@ -246,7 +237,6 @@ public class FileTransferServer extends Host implements Runnable {
 						}
 					}
 				}
-				//prevPacket = receivePacket;
 				request = validater.validate(receivePacket.getData());
 				ack = createRightPacket(request, receivePacket.getData()); 
 			} 
