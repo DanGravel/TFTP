@@ -26,7 +26,6 @@ public class FileTransferServer extends Host implements Runnable {
 	private boolean inATransfer = false;
 	private Validater validater;
 	private int TID;
-	private int blockNum;
 
 	
 	public FileTransferServer(DatagramPacket packet, int port) {
@@ -45,7 +44,6 @@ public class FileTransferServer extends Host implements Runnable {
 		}
 		validater = new Validater();
 		doneFile = false;
-		blockNum = 0;
 		
 	}	
 
@@ -103,7 +101,7 @@ public class FileTransferServer extends Host implements Runnable {
 		int start, upto; // Since the whole file cannot be sent at once, this is used to submit segments at a time
 		start = DATA_START;
 		upto = DATA_END;
-		blockNum = 1;
+		int blockNum = 1;
 		byte[] fileData = null; 
 		byte[] packetdata = new byte[PACKET_SIZE];
 		Path path = Paths.get("src\\serverFiles\\" + validater.getFilename()); 
@@ -143,7 +141,12 @@ public class FileTransferServer extends Host implements Runnable {
 					received = receiveaPacket("Server", sendAndReceiveSocket);
 					invalidTID(receivePacket);
 					packetSize(receivePacket);
-					validater.validateFileNameOrModeOrDelimiters(validater.validate(receivePacket.getData()), receivePacket.getData(),"Illegal TFTP");
+					if(!invalidOpcode(receivePacket))
+					{
+						String errorMsg = "Invalid Opcode";
+						sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
+						return;
+					}
 					if(!validPacketNum(receivePacket,blockNum)) 
 					{
 						String errorMsg = "Invalid Block Number";
@@ -196,12 +199,17 @@ public class FileTransferServer extends Host implements Runnable {
 		String path = "src\\serverFiles\\" + validater.getFilename(); 
 		File file = new File(path);
 		FileOutputStream fos = null;
-		
+		int blockNum = 1;
 		try {
 			receiveaPacket("Server", sendAndReceiveSocket);
 			invalidTID(receivePacket);
 			packetSize(receivePacket);
-			validater.validateFileNameOrModeOrDelimiters(validater.validate(receivePacket.getData()), receivePacket.getData(),"Illegal TFTP");
+			if(!invalidOpcode(receivePacket))
+			{
+				String errorMsg = "Invalid Opcode";
+				sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
+				return;
+			}
 			if(!validPacketNum(receivePacket,blockNum)) 
 			{
 				String errorMsg = "Invalid Block Number";
@@ -217,7 +225,7 @@ public class FileTransferServer extends Host implements Runnable {
 		} catch (Exception e1) {
 			e1.printStackTrace();
 		}
-		int blockNum = 1;
+		
 		boolean isWrongTID = false;
 		request = validater.validate(receivePacket.getData()); //Get the request
 		byte[] ack = createRightPacket(request, receivePacket.getData()); //create ACK
@@ -243,8 +251,13 @@ public class FileTransferServer extends Host implements Runnable {
 							isWrongTID = true;
 						}
 						packetSize(receivePacket);
-						validater.validateFileNameOrModeOrDelimiters(validater.validate(receivePacket.getData()), receivePacket.getData(),"Illegal TFTP");
 						
+						if(!invalidOpcode(receivePacket))
+						{
+							String errorMsg = "Invalid Opcode";
+							sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
+							return;
+						}
 						if(!validPacketNum(receivePacket,blockNum)) 
 						{
 							String errorMsg = "Invalid Block Number";
@@ -373,6 +386,26 @@ public class FileTransferServer extends Host implements Runnable {
 		}
 		
 		return false;
+	}
+	
+	
+	/**
+	 * checks for invalid opcode
+	 * @param receivePacket
+	 * @return
+	 */
+	private boolean invalidOpcode(DatagramPacket receivePacket)
+	{
+		byte[] data = receivePacket.getData();
+		if(data[0] !=0 || data[1] >5)	
+		{	
+				//String errorMsg = "Invalid Opcode";
+				//sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
+				return true;
+		}
+		
+		return false;
+		
 	}
 	
 	/**

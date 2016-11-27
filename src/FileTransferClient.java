@@ -216,7 +216,6 @@ public class FileTransferClient extends Host{
 		 	
 		 	if(isError()){
 				handleError();
-				fis.close();
 				return;
 			}	 
 		 
