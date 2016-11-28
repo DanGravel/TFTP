@@ -3,9 +3,6 @@ import java.io.InputStream;
 import java.net.*;
 import java.util.Scanner;
 
-import org.omg.CosNaming._BindingIteratorImplBase;
-
-
 public class IntermediateHost extends Host {
 	private DatagramSocket sendReceiveSocket;
 	private DatagramSocket serverSocket; 
