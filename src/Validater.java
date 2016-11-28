@@ -80,7 +80,9 @@ public class Validater {
 			mode += (char)data[i];
 			i++;
 		}
-		if(fileName.length() == 0 || mode.length() == 0 || fileName.length() > 15 || mode.length() > 15 || data[0] !=0 || data[1] > 5) request = RequestType.ILLEGALTFTPOPERATION;
+		if(fileName.length() == 0 || mode.length() == 0 || 
+				fileName.length() > 15 || mode.length() > 15 )
+			return RequestType.ILLEGALTFTPOPERATION;
 		return request;
 	}
 	
