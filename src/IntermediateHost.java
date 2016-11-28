@@ -915,7 +915,6 @@ public class IntermediateHost extends Host {
 				
 				receiveFromServer(PACKET_SIZE);
 				done = getSize() < PACKET_SIZE;
-				System.out.println(getSize() + "********* " + done);
 				
 				sendToClient(clientPort);
 			}
