@@ -3,6 +3,8 @@ import java.io.InputStream;
 import java.net.*;
 import java.util.Scanner;
 
+import org.omg.CosNaming._BindingIteratorImplBase;
+
 
 public class IntermediateHost extends Host {
 	private DatagramSocket sendReceiveSocket;
@@ -420,6 +422,10 @@ public class IntermediateHost extends Host {
 			    	sendToClient(clientPort);
 					new ErrorSim(delayTime, duplicatePacket.getData(), clientPort, sendReceiveSocket, duplicate).start();
 			    }
+				if (requestType == RequestType.READ)receiveFromClient(ACK_PACKET_SIZE);
+				else receiveFromClient(PACKET_SIZE);
+				sendToServerThread(serverThreadPort);
+				
 				finishTransfer(requestType, clientPort, serverThreadPort);
 				
 			}else if((requestType == RequestType.READ && packetType == 4) || (requestType == RequestType.WRITE && packetType == 3)) {
@@ -456,8 +462,10 @@ public class IntermediateHost extends Host {
 					}
 			    	sendToServerThread(serverThreadPort);
 					new ErrorSim(delayTime, packet.getData(), serverThreadPort, serverSocket, duplicate).start();;
-				}
+				}				
 	    		if(requestType == RequestType.WRITE) {
+	    			receiveFromServer(ACK_PACKET_SIZE);
+		    		sendToClient(clientPort);
 	    			receiveFromServer(ACK_PACKET_SIZE);
 	    			sendToClient(clientPort);
 	    		}
@@ -910,6 +918,7 @@ public class IntermediateHost extends Host {
 				
 				receiveFromServer(PACKET_SIZE);
 				done = getSize() < PACKET_SIZE;
+				System.out.println(getSize() + "********* " + done);
 				
 				sendToClient(clientPort);
 			}
