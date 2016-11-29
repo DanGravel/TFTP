@@ -3,9 +3,6 @@ import java.io.InputStream;
 import java.net.*;
 import java.util.Scanner;
 
-import org.omg.CosNaming._BindingIteratorImplBase;
-
-
 public class IntermediateHost extends Host {
 	private DatagramSocket sendReceiveSocket;
 	private DatagramSocket serverSocket; 
@@ -918,7 +915,6 @@ public class IntermediateHost extends Host {
 				
 				receiveFromServer(PACKET_SIZE);
 				done = getSize() < PACKET_SIZE;
-				System.out.println(getSize() + "********* " + done);
 				
 				sendToClient(clientPort);
 			}
