@@ -68,14 +68,11 @@ public class Validater {
 	 */
 	public RequestType validateFileNameandMode(byte[] data, RequestType request) {
 		String mode = "";
-		//delimeter - when it reaches true have a boolean for it
 		int i = FILE_NAME_START;
-		boolean deli = true;
 		//Append filename if request was read or write
 		while(data[i] != 0 && i < data.length){
 			fileName += (char)data[i];
 			i++;
-			deli = false;//if reaches 0 will be true
 		}
 		i++; 
 		//Append mode if request was read or write
@@ -86,7 +83,6 @@ public class Validater {
 		if(fileName.length() == 0 || mode.length() == 0 || 
 				fileName.length() > 15 || mode.length() > 15 )
 			return RequestType.ILLEGALTFTPOPERATION;
-		//will have to return 3 things? 
 		return request;
 	}
 	
