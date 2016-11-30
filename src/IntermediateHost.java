@@ -3,7 +3,6 @@ import java.io.InputStream;
 import java.net.*;
 import java.util.Scanner;
 
-
 public class IntermediateHost extends Host {
 	private DatagramSocket sendReceiveSocket;
 	private DatagramSocket serverSocket; 
@@ -420,6 +419,10 @@ public class IntermediateHost extends Host {
 			    	sendToClient(clientPort);
 					new ErrorSim(delayTime, duplicatePacket.getData(), clientPort, sendReceiveSocket, duplicate).start();
 			    }
+				if (requestType == RequestType.READ)receiveFromClient(ACK_PACKET_SIZE);
+				else receiveFromClient(PACKET_SIZE);
+				sendToServerThread(serverThreadPort);
+				
 				finishTransfer(requestType, clientPort, serverThreadPort);
 				
 			}else if((requestType == RequestType.READ && packetType == 4) || (requestType == RequestType.WRITE && packetType == 3)) {
@@ -456,8 +459,10 @@ public class IntermediateHost extends Host {
 					}
 			    	sendToServerThread(serverThreadPort);
 					new ErrorSim(delayTime, packet.getData(), serverThreadPort, serverSocket, duplicate).start();;
-				}
+				}				
 	    		if(requestType == RequestType.WRITE) {
+	    			receiveFromServer(ACK_PACKET_SIZE);
+		    		sendToClient(clientPort);
 	    			receiveFromServer(ACK_PACKET_SIZE);
 	    			sendToClient(clientPort);
 	    		}
@@ -545,10 +550,6 @@ public class IntermediateHost extends Host {
 					sendToServerThread(serverThreadPort);
 					new ErrorSim(0, packet.getData(), serverThreadPort, fakeTID, diffTID).start();
 				}
-                if(requestType == RequestType.READ) receiveFromServer(PACKET_SIZE);
-                else receiveFromServer(ACK_PACKET_SIZE);
-                
-                sendToClient(clientPort);
 				conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
 			}
 		}
@@ -614,7 +615,11 @@ public class IntermediateHost extends Host {
 		}
 		
 		else if(corruptRequest == 4) {
-			newLength = data.length - 1;
+			i++;
+			while(data[i] != 0) {
+				i++; 
+			}
+			newLength = i;
 			newData = new byte[newLength];
 			
 			System.arraycopy(data, 0, newData, 0, newLength);
@@ -628,7 +633,6 @@ public class IntermediateHost extends Host {
 		
 		serverThreadPort = receivePacket.getPort();
 		sendToClient(clientPort);
-		finishTransfer(r, clientPort, serverThreadPort);
 	}
 	
 	private void changeOpCode() {

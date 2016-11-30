@@ -88,10 +88,10 @@ public class FileTransferServer extends Host implements Runnable {
 			inATransfer = true;
 			receiveNextPartofFile();	//Star receive file
 			break;
-		case ILLEGALTFTPOPERATION:
-			String errorMsg = "Illegal TFTP";
-			sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
-			break;
+//		case ILLEGALTFTPOPERATION:
+//			String errorMsg = "Illegal TFTP";
+//			sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
+//			break;
 		default: 
 			sendaPacket(response, receivePacket.getPort(), sendAndReceiveSocket, "Server"); //Handles all errors
 		}
@@ -298,6 +298,66 @@ public class FileTransferServer extends Host implements Runnable {
 		if(request != RequestType.DATA) sendaPacket(ack, receivePacket.getPort(), sendAndReceiveSocket, "Server");	//Error Handling
 	}
 	
+	
+	public String findTypeOfIllegalTFTP(byte data[], RequestType request)
+	{
+		boolean delimeter1 = false;
+		boolean delimeter2 = false; 
+		
+		String mode = "";
+		int i = Validater.FILE_NAME_START;
+		int x = i; 
+		//Append filename if request was read or write
+		while(data[i] != 0 && i < data.length){
+			fileName += (char)data[i];
+			if(fileName.charAt(i-2) == '.') x = i; 
+			i++;
+		}
+		x +=4;
+		
+		if(data[x] != 0) {
+			delimeter1 = true; 
+		}
+		
+		i++; 
+		//Append mode if request was read or write
+		while(data[i] != 0 && i < data.length){
+			mode += (char)data[i];
+			i++;
+		}
+
+		
+		if(data[i-1]!=0)//assuming delimiter one is there and second missing
+		{
+			delimeter2 = true; 
+		}
+		
+		if(fileName.length() == 0 ||fileName.length() > 15)  
+		{
+			String errorMsg = "Missing filename";
+			sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
+			System.exit(0);
+		}
+		else if(!delimeter1 && mode.length() == 0|| mode.length() > 15)
+		{
+			String errorMsg = "Missing Mode";
+			sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
+			System.exit(0);
+		}
+		else if(delimeter2) {
+			String errorMsg = "Missing Delimeter 2";
+			sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
+			System.exit(0);
+		}
+		else if(delimeter1) {
+			String errorMsg = "Missing Delimeter 1";
+			sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
+			System.exit(0);
+		}
+		return null;
+		
+	}
+	
 	/**
 	 * 
 	 * @param request	Request type of data from received packet
@@ -307,6 +367,7 @@ public class FileTransferServer extends Host implements Runnable {
 	private byte[] createRightPacket(RequestType request, byte data[]) {
 		byte[] response = null;  
 		String errorMessage = null;
+		
 		switch(request) {
 			case WRITE: 
 				response = createAck(0);
@@ -318,6 +379,11 @@ public class FileTransferServer extends Host implements Runnable {
 			case INVALID:
 				response = new byte[]{0, 5, 0, 4}; 
 				errorMessage = findTypeOfInvalid(data, request);
+				break;
+			case ILLEGALTFTPOPERATION:
+				response = new byte[]{0, 5, 0, 5}; 
+				errorMessage = "Illegal TFTP Operation";
+				errorMessage = findTypeOfIllegalTFTP(data, request);
 				break;
 			case ACCESSDENIED:
 				response = new byte[]{0, 5, 0, 2};
@@ -362,6 +428,7 @@ public class FileTransferServer extends Host implements Runnable {
 		
 		return false;
 	}
+	
 	
 	/**
 	 * Checks if the packet size is correct
