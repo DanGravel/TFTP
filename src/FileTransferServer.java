@@ -163,7 +163,6 @@ public class FileTransferServer extends Host implements Runnable {
 						System.exit(1);
 						return;
 					}
-					invalidFileNameModeOrDeliemeter(receivePacket);
 					if(getInt(received) < blockNum) continue;
 					if(validater.validate(received.getData()) == RequestType.ACK) response = true;
 					blockNum++;
@@ -365,50 +364,6 @@ public class FileTransferServer extends Host implements Runnable {
 		return false;
 	}
 	
-	/**
-	 * If the packet received has a invalid filename, mode or delimeter 
-	 * |Opcode|Filename|0|Mode|0|
-	 * @param receivePacket
-	 */
-	private boolean invalidFileNameModeOrDeliemeter(DatagramPacket receivePacket)
-	{
-		System.out.println("GOT IN THE METHOD***********");
-		byte[] data = receivePacket.getData();
-		String mode = "";
-		int i = Validater.FILE_NAME_START;
-		//Append filename if request was read or write
-		while(data[i] != 0 && i < data.length){
-			fileName += (char)data[i];
-			i++;
-		}
-		i++; 
-		//Append mode if request was read or write
-		while(data[i] != 0 && i < data.length){
-			mode += (char)data[i];
-			i++;
-		}
-		if(fileName.length() == 0 || fileName.length() > 15)
-		{
-			String errorMsg = "Missing file name";
-			sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
-			return true;
-		}
-		else if (mode.length() == 0 || mode.length() > 15) 
-		{
-			String errorMsg = "Missing mode";
-			sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
-			return true;
-			
-		}
-		else
-		{
-//			String errorMsg = "Missing delimeter";
-//			sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
-//			return true;
-		}
-		return false;
-		
-	}
 	
 	/**
 	 * Checks if the packet size is correct
