@@ -623,7 +623,7 @@ public class IntermediateHost extends Host {
 			while(data[i] != 0) {
 				i++; 
 			}
-			newLength = i-1;
+			newLength = i;
 			newData = new byte[newLength];
 			
 			System.arraycopy(data, 0, newData, 0, newLength);
