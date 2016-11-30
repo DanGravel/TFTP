@@ -33,6 +33,7 @@ public class Validater {
 		if(request == RequestType.READ || request == RequestType.WRITE) {
 			request = validateFileNameandMode(data, request);	//Get filename and validate packet
 			if(request == RequestType.INVALID) {
+				
 				return "Invalid File Name, Mode, or no Delimiters";
 			}
 		}
@@ -82,7 +83,9 @@ public class Validater {
 		}
 		if(fileName.length() == 0 || mode.length() == 0 || 
 				fileName.length() > 15 || mode.length() > 15 )
+		{
 			return RequestType.ILLEGALTFTPOPERATION;
+		}
 		return request;
 	}
 	

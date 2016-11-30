@@ -298,6 +298,40 @@ public class FileTransferServer extends Host implements Runnable {
 		if(request != RequestType.DATA) sendaPacket(ack, receivePacket.getPort(), sendAndReceiveSocket, "Server");	//Error Handling
 	}
 	
+	
+	public String findTypeOfIllegalTFTP(byte data[], RequestType request)
+	{
+		
+		String mode = "";
+		int i = Validater.FILE_NAME_START;
+		//Append filename if request was read or write
+		while(data[i] != 0 && i < data.length){
+			fileName += (char)data[i];
+			i++;
+		}
+		i++; 
+		//Append mode if request was read or write
+		while(data[i] != 0 && i < data.length){
+			mode += (char)data[i];
+			i++;
+		}
+		
+		if(fileName.length() == 0 ||fileName.length() > 15)  
+		{
+			String errorMsg = "Missing filename";
+			sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
+			System.exit(0);
+		}
+		else if(mode.length() == 0|| mode.length() > 15)
+		{
+			String errorMsg = "Missing Mode";
+			sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
+			System.exit(0);
+		}
+		return null;
+		
+	}
+	
 	/**
 	 * 
 	 * @param request	Request type of data from received packet
@@ -320,6 +354,12 @@ public class FileTransferServer extends Host implements Runnable {
 				response = new byte[]{0, 5, 0, 4}; 
 				errorMessage = findTypeOfInvalid(data, request);
 				break;
+			case ILLEGALTFTPOPERATION:
+				response = new byte[]{0, 5, 0, 5}; 
+				errorMessage = "Illegal TFTP Operation";
+				errorMessage = findTypeOfIllegalTFTP(data, request);
+				break;
+				
 			case ACCESSDENIED:
 				response = new byte[]{0, 5, 0, 2};
 				errorMessage = "This file is WRITE-ONLY, access denied";
