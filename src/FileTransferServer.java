@@ -305,21 +305,34 @@ public class FileTransferServer extends Host implements Runnable {
 	//delim 2 missing:  |01|test.txt|0|asci| Size:15
 	public String findTypeOfIllegalTFTP(byte data[], RequestType request)
 	{
+		boolean delimeter1 = false;
+		boolean delimeter2 = false; 
+		
 		String mode = "";
 		int i = Validater.FILE_NAME_START;
+		int x = i; 
 		//Append filename if request was read or write
 		while(data[i] != 0 && i < data.length){
 			fileName += (char)data[i];
+			if(fileName.charAt(i-2) == '.') x = i; 
 			i++;
 		}
-		i++; 
+		x +=4;
+		//i++; 
 		
-		if(data[i]==0 && data[i+1]==0)//assuming delimeter 1 is missing and reach the end of the data
-		{
-			String errorMsg = "Missing Delimeter 1";
-			sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
-			System.exit(0);
+		
+//		if(data[i]==0 && data[i+1]==0)//assuming delimeter 1 is missing and reach the end of the data
+//		{
+//			delimeter1 = true; 
+////			String errorMsg = "Missing Delimeter 1";
+////			sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
+////			System.exit(0);
+//		}
+		
+		if(data[x] != 0) {
+			delimeter1 = true; 
 		}
+		
 		i++; 
 		//Append mode if request was read or write
 		while(data[i] != 0 && i < data.length){
@@ -331,9 +344,10 @@ public class FileTransferServer extends Host implements Runnable {
 		
 		if(data[i-1]!=0)//assuming delimiter one is there and second missing
 		{
-			String errorMsg = "Missing Delimeter 2";
-			sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
-			System.exit(0);
+			delimeter2 = true; 
+//			String errorMsg = "Missing Delimeter 2";
+//			sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
+//			System.exit(0);
 		}
 		
 		if(fileName.length() == 0 ||fileName.length() > 15)  
@@ -342,9 +356,19 @@ public class FileTransferServer extends Host implements Runnable {
 			sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
 			System.exit(0);
 		}
-		else if(mode.length() == 0|| mode.length() > 15)
+		else if(!delimeter1 && mode.length() == 0|| mode.length() > 15)
 		{
 			String errorMsg = "Missing Mode";
+			sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
+			System.exit(0);
+		}
+		else if(delimeter2) {
+			String errorMsg = "Missing Delimeter 2";
+			sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
+			System.exit(0);
+		}
+		else if(delimeter1) {
+			String errorMsg = "Missing Delimeter 1";
 			sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
 			System.exit(0);
 		}
