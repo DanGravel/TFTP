@@ -298,10 +298,13 @@ public class FileTransferServer extends Host implements Runnable {
 		if(request != RequestType.DATA) sendaPacket(ack, receivePacket.getPort(), sendAndReceiveSocket, "Server");	//Error Handling
 	}
 	
-	
+	//possible issue: *trailing zeros
+	//|opcode|filename|0|Mode|0|
+	//|01|test.txt|0|asci|0| Size: 16
+	//delim 1 missing:  |01|test.txt|asci|0| Size:15
+	//delim 2 missing:  |01|test.txt|0|asci| Size:15
 	public String findTypeOfIllegalTFTP(byte data[], RequestType request)
 	{
-		
 		String mode = "";
 		int i = Validater.FILE_NAME_START;
 		//Append filename if request was read or write
@@ -323,6 +326,8 @@ public class FileTransferServer extends Host implements Runnable {
 			mode += (char)data[i];
 			i++;
 		}
+		// 0 1| 4 5 6 7 8 |0 |4 6 6 8|0
+		// 0 1| 4 5 6 7 8 |0 |4 6 6 8 8|
 		
 		if(data[i-1]!=0)//assuming delimiter one is there and second missing
 		{
@@ -374,7 +379,6 @@ public class FileTransferServer extends Host implements Runnable {
 				errorMessage = "Illegal TFTP Operation";
 				errorMessage = findTypeOfIllegalTFTP(data, request);
 				break;
-				
 			case ACCESSDENIED:
 				response = new byte[]{0, 5, 0, 2};
 				errorMessage = "This file is WRITE-ONLY, access denied";
