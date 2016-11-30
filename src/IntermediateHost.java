@@ -550,10 +550,6 @@ public class IntermediateHost extends Host {
 					sendToServerThread(serverThreadPort);
 					new ErrorSim(0, packet.getData(), serverThreadPort, fakeTID, diffTID).start();
 				}
-                if(requestType == RequestType.READ) receiveFromServer(PACKET_SIZE);
-                else receiveFromServer(ACK_PACKET_SIZE);
-                
-                sendToClient(clientPort);
 				conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
 			}
 		}
