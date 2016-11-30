@@ -93,7 +93,7 @@ public class Validater {
 			i++;
 		}
 		 
-		if(data[i]!=0)//assuming delimiter one is there and second missing
+		if(data[i-1]!=0)//assuming delimiter one is there and second missing
 		{
 			return RequestType.ILLEGALTFTPOPERATION;
 		}

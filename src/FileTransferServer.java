@@ -324,7 +324,7 @@ public class FileTransferServer extends Host implements Runnable {
 			i++;
 		}
 		
-		if(data[i]!=0)//assuming delimiter one is there and second missing
+		if(data[i-1]!=0)//assuming delimiter one is there and second missing
 		{
 			String errorMsg = "Missing Delimeter 2";
 			sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
