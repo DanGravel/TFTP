@@ -619,7 +619,11 @@ public class IntermediateHost extends Host {
 		}
 		
 		else if(corruptRequest == 4) {
-			newLength = data.length - 1;
+			i++;
+			while(data[i] != 0) {
+				i++; 
+			}
+			newLength = i;
 			newData = new byte[newLength];
 			
 			System.arraycopy(data, 0, newData, 0, newLength);
