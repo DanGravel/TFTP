@@ -1016,6 +1016,16 @@ public class IntermediateHost extends Host {
 		validate.clearFileName();
 	}
 	
+	public void reset() {
+		userInput = 0; 
+		packetType = 0; // type of packet to manipulate
+		packetNum = 0; 
+		delayTime = 0;
+		corruptRequest = 0;
+		wrongOpCode = new byte[2];
+		wrongBlockNum = new byte[2];
+	}
+	
 
 	public static void main(String args[]) {
 		IntermediateHost ih = new IntermediateHost();
@@ -1023,6 +1033,7 @@ public class IntermediateHost extends Host {
 		while(true) {
 			ih.sendAndReceive(System.in);
 			ih.clearFileName();
+			ih.reset();
 		}
 	}
 	
