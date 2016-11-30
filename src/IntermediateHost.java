@@ -633,7 +633,6 @@ public class IntermediateHost extends Host {
 		
 		serverThreadPort = receivePacket.getPort();
 		sendToClient(clientPort);
-		finishTransfer(r, clientPort, serverThreadPort);
 	}
 	
 	private void changeOpCode() {
