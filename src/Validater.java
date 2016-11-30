@@ -9,6 +9,7 @@ public class Validater {
 	String fileName = "";
 	public static final int FILE_NAME_START = 2; // Index where filename starts for RRQ and WRQ
 	
+
 	/**
 	 * @param data	The data of packet received
 	 * @return		The request type, if packet contained a RRQ,WRQ, ACK, DATA, ERROR
@@ -67,6 +68,10 @@ public class Validater {
 	 * @param request	the initial request
 	 * @return			The possibly changed request
 	 */
+	//|opcode|filename|0|Mode|0|
+	//|01|test.txt|0|asci|0| Size: 16
+	//delim 1 missing:  |01|test.txt|asci|0| Size:15
+	//delim 2 missing:  |01|test.txt|0|asci| Size:15
 	public RequestType validateFileNameandMode(byte[] data, RequestType request) {
 		String mode = "";
 		int i = FILE_NAME_START;
@@ -75,14 +80,25 @@ public class Validater {
 			fileName += (char)data[i];
 			i++;
 		}
+		
+		if(data[i]==0 && data[i+1]==0)//assuming delimeter 1 is missing and reach the end of the data
+		{
+			return RequestType.ILLEGALTFTPOPERATION;
+		}
 		i++; 
+
 		//Append mode if request was read or write
 		while(data[i] != 0 && i < data.length){
 			mode += (char)data[i];
 			i++;
 		}
-		if(fileName.length() == 0 || mode.length() == 0 || 
-				fileName.length() > 15 || mode.length() > 15 )
+		 
+		if(data[i]!=0)//assuming delimiter one is there and second missing
+		{
+			return RequestType.ILLEGALTFTPOPERATION;
+		}
+		
+		if(fileName.length() == 0 || mode.length() == 0 || fileName.length() > 15 || mode.length() > 15 )
 		{
 			return RequestType.ILLEGALTFTPOPERATION;
 		}

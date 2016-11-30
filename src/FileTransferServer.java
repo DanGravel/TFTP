@@ -310,10 +310,25 @@ public class FileTransferServer extends Host implements Runnable {
 			i++;
 		}
 		i++; 
+		
+		if(data[i]==0 && data[i+1]==0)//assuming delimeter 1 is missing and reach the end of the data
+		{
+			String errorMsg = "Missing Delimeter 1";
+			sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
+			System.exit(0);
+		}
+		i++; 
 		//Append mode if request was read or write
 		while(data[i] != 0 && i < data.length){
 			mode += (char)data[i];
 			i++;
+		}
+		
+		if(data[i]!=0)//assuming delimiter one is there and second missing
+		{
+			String errorMsg = "Missing Delimeter 2";
+			sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
+			System.exit(0);
 		}
 		
 		if(fileName.length() == 0 ||fileName.length() > 15)  
