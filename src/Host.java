@@ -45,37 +45,6 @@ public abstract class Host {
 			System.exit(1);
 		}
 	}
-	  
-	 /**
-	   * Method used to receive a packet from a certain host
-	   * 
-	   * @param host: the host the packet is sent from
-	   * @param receiveSocket: the socket that is receiving the packet
-	 * @throws IOException 
-	   */
-	protected DatagramPacket receiveaPacket(String host, DatagramSocket receiveSocket, byte[] packetdata) throws SocketTimeoutException, IOException{
-		byte data[] = new byte[PACKET_SIZE];
-		receivePacket = new DatagramPacket(data, data.length);
-		while(true){
-			//try {
-				receiveSocket.receive(receivePacket);
-				p.printSenderOrReceiverInfo(true, receivePacket, host);
-			//}catch(SocketTimeoutException e){
-				//System.out.println("Havent recieved a response in three seconds resending");
-				//sendaPacket(packetdata, SERVER_PORT, receiveSocket, "Client");
-				//sendaPacket(packetdata, receivePacket.getPort(), receiveSocket, "Client");
-				//sendaPacket(packetdata, INTERMEDIATE_PORT, receiveSocket, "Client");
-				
-				//continue;
-			//}catch (IOException e) {
-				//System.out.print("IO Exception: likely:");
-				//System.out.println("Receive Socket Timed Out.\n" + e);
-				//e.printStackTrace();
-				//System.exit(1);
-			//}
-		}
-
-}
 	
   /**
    * Method used to receive a packet from a certain host
@@ -86,39 +55,17 @@ public abstract class Host {
 	  protected DatagramPacket receiveaPacket(String host, DatagramSocket receiveSocket) throws SocketTimeoutException, IOException {
 		  byte data[] = new byte[PACKET_SIZE];
 	      receivePacket = new DatagramPacket(data, data.length);
-	      //try { 
-	      	 receiveSocket.receive(receivePacket);
-	         p.printSenderOrReceiverInfo(true, receivePacket, host);
-	      //}catch(SocketTimeoutException e){
-			//System.out.println("Havent recieved a response try again");
-			//byte data1[] = new byte[1];
-			//receivePacket = new DatagramPacket(data1,data1.length);
-	      //}  catch(IOException e) {
-	    	 //System.out.print("IO Exception: likely:");
-	    	 //System.out.println("Receive Socket Timed Out.\n" + e);
-	         //e.printStackTrace();
-	         //System.exit(1);
-	      //}
+	      receiveSocket.receive(receivePacket);
+	      p.printSenderOrReceiverInfo(true, receivePacket, host);
 	      return receivePacket;
 	  }
 	  
 	  
 	  protected DatagramPacket receiveaPacket(String host, DatagramSocket receiveSocket, int packetSize) throws SocketTimeoutException, IOException {
 		  byte data[] = new byte[packetSize];
-	      receivePacket = new DatagramPacket(data, data.length);
-	      //try { 
-	      	 receiveSocket.receive(receivePacket);
-	         p.printSenderOrReceiverInfo(true, receivePacket, host);
-	      //}catch(SocketTimeoutException e){
-			//System.out.println("Havent recieved a response try again");
-			//byte data1[] = new byte[1];
-			//receivePacket = new DatagramPacket(data1,data1.length);
-	      //}  catch(IOException e) {
-	    	 //System.out.print("IO Exception: likely:");
-	    	 //System.out.println("Receive Socket Timed Out.\n" + e);
-	         //e.printStackTrace();
-	         //System.exit(1);
-	      //}
+	      receivePacket = new DatagramPacket(data, data.length); 
+	      receiveSocket.receive(receivePacket);
+	      p.printSenderOrReceiverInfo(true, receivePacket, host);
 	      return receivePacket;
 	  }
   
