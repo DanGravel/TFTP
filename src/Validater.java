@@ -75,10 +75,10 @@ public class Validater {
 			i++;
 		}
 		
-		if(data[i]==0 && data[i+1]==0)//assuming delimeter 1 is missing and reach the end of the data
-		{
-			return RequestType.ILLEGALTFTPOPERATION;
-		}
+//		if(data[i]==0 && data[i+1]==0)//assuming delimeter 1 is missing and reach the end of the data
+//		{
+//			return RequestType.ILLEGALTFTPOPERATION;
+//		}
 		i++; 
 
 		//Append mode if request was read or write
@@ -87,10 +87,10 @@ public class Validater {
 			i++;
 		}
 		 
-		if(data[i-1]!=0)//assuming delimiter one is there and second missing
-		{
-			return RequestType.ILLEGALTFTPOPERATION;
-		}
+//		if(data[i-1]!=0)//assuming delimiter one is there and second missing
+//		{
+//			return RequestType.ILLEGALTFTPOPERATION;
+//		}
 		
 		if(fileName.length() == 0 || mode.length() == 0 || fileName.length() > 15 || mode.length() > 15 )
 		{

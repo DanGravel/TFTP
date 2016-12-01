@@ -387,7 +387,13 @@ public class FileTransferClient extends Host{
 							if(getInt(receivePacket) < blockNum){
 								sendaPacket(ack, receivePacket.getPort(), socket, sender);
 							}
-							
+							else if (getInt(receivePacket) > blockNum){
+								String errorMsg = "Invalid block num";
+								sendError(errorMsg, receivePacket.getPort(),socket,sender,4);
+								fis.close();
+								System.out.println("Terminating transfer: " + errorMsg);
+								return;
+							}
 							if(isError()) {
 								handleError();
 								fis.close();

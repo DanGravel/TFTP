@@ -14,6 +14,7 @@ public class IntermediateHost extends Host {
 	private static int corruptRequest = 0;
 	private static byte[] wrongOpCode = new byte[2];
 	private static byte[] wrongBlockNum = new byte[2];
+	private boolean error = false; 
 	Scanner s;
 	
 	private Validater validate; 
@@ -172,17 +173,18 @@ public class IntermediateHost extends Host {
 		packetType = (hasOne) ? checkBounds(5, 0, 2) : checkBounds(5, 2, 0);
 	}
 	
-	private void normal() {		
-		RequestType r = validate.validate(receiveFromClient(PACKET_SIZE).getData());
-		int clientPort = receivePacket.getPort();
-		sendToServer();
-		
-		if(r == RequestType.WRITE) receiveFromServer(ACK_PACKET_SIZE);
-		else receiveFromServer(PACKET_SIZE);
-		int serverThreadPort = receivePacket.getPort();
-		sendToClient(clientPort);
-		
-		finishTransfer(r, clientPort, serverThreadPort);
+	private void normal() {
+		while(!error) {
+			RequestType r = validate.validate(receiveFromClient(PACKET_SIZE).getData());
+			int clientPort = receivePacket.getPort();
+			sendToServer();
+			if(r == RequestType.WRITE) receiveFromServer(ACK_PACKET_SIZE);
+			else receiveFromServer(PACKET_SIZE);
+			int serverThreadPort = receivePacket.getPort();
+			sendToClient(clientPort);
+			
+			finishTransfer(r, clientPort, serverThreadPort);
+		}
 		
 	}
 
@@ -281,8 +283,7 @@ public class IntermediateHost extends Host {
 			
 			serverThreadPort = receivePacket.getPort();
 			sendToClient(clientPort);
-			
-			finishTransfer(requestType, clientPort, serverThreadPort);
+
 		}
 		else {
 			requestType = validate.validate(receiveFromClient(PACKET_SIZE).getData()); // receive request packet
@@ -352,10 +353,6 @@ public class IntermediateHost extends Host {
 						
 					}
 					new ErrorSim(delayTime, receivePacket.getData(), serverThreadPort, serverSocket, delay).start();
-				}
-				if(requestType == RequestType.WRITE) {
-					receiveFromServer(ACK_PACKET_SIZE);
-					sendToClient(clientPort); 
 				}
 				conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
 			}
@@ -463,11 +460,9 @@ public class IntermediateHost extends Host {
 	    		if(requestType == RequestType.WRITE) {
 	    			receiveFromServer(ACK_PACKET_SIZE);
 		    		sendToClient(clientPort);
-	    			receiveFromServer(ACK_PACKET_SIZE);
-	    			sendToClient(clientPort);
 	    		}
-			}
-			conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
+	    		conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
+			}	
 		}
 	}
 
@@ -692,7 +687,6 @@ public class IntermediateHost extends Host {
 				sendToServerThread(serverThreadPort, wrongOp);
 				receiveFromServer(PACKET_SIZE);
 				sendToClient(clientPort);
-
  			}
  		}
  			
@@ -883,7 +877,7 @@ public class IntermediateHost extends Host {
 	private void conditionalFinishTransfer(RequestType requestType, int clientPort, int serverThreadPort) {
 		boolean done = false; 
 		if(requestType == RequestType.READ) {
-			while(!done) {				
+			while(!done && !error) {				
 				receiveFromServer(PACKET_SIZE);
 				done = getSize() < PACKET_SIZE;
 				
@@ -894,7 +888,7 @@ public class IntermediateHost extends Host {
 			
 		}
 		else {
-			while(!done) {
+			while(!done && !error) {
 				receiveFromClient(PACKET_SIZE);
 				done = getSize() < PACKET_SIZE;
 				
@@ -908,7 +902,7 @@ public class IntermediateHost extends Host {
 	private void finishTransfer(RequestType requestType, int clientPort, int serverThreadPort) {
 		boolean done = false;
 		if(requestType == RequestType.READ) {
-			while(!done) {
+			while(!done && !error) {
 				receiveFromClient(ACK_PACKET_SIZE);
 				sendToServerThread(serverThreadPort);
 				
@@ -924,7 +918,7 @@ public class IntermediateHost extends Host {
 		}
 		
 		else {
-			while(!done) {
+			while(!done && !error) {
 				receiveFromClient(PACKET_SIZE);
 				done = getSize() < PACKET_SIZE;
 				
@@ -964,6 +958,7 @@ public class IntermediateHost extends Host {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		checkError();
 		return returnPacket;
 	}
 
@@ -974,6 +969,7 @@ public class IntermediateHost extends Host {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		checkError();
 		return returnPacket;
 	}
 
@@ -1016,6 +1012,10 @@ public class IntermediateHost extends Host {
 		validate.clearFileName();
 	}
 	
+	private void checkError() {
+		error = receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 5;
+	}
+		
 	public void reset() {
 		userInput = 0; 
 		packetType = 0; // type of packet to manipulate
