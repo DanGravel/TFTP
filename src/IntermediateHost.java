@@ -460,8 +460,6 @@ public class IntermediateHost extends Host {
 	    		if(requestType == RequestType.WRITE) {
 	    			receiveFromServer(ACK_PACKET_SIZE);
 		    		sendToClient(clientPort);
-	    			receiveFromServer(ACK_PACKET_SIZE);
-	    			sendToClient(clientPort);
 	    		}
 	    		conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
 			}	
