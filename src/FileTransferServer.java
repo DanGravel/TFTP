@@ -259,20 +259,20 @@ public class FileTransferServer extends Host implements Runnable {
 						{
 							String errorMsg = "Invalid Opcode";
 							sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
-							return;
+							break;
 						}
 						if(getInt(receivePacket) > blockNum) 
 						{
 							String errorMsg = "Invalid Block Number";
 							sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
-							return;
+							break;
 						}
 						
 						if(!isValidDataLen(receivePacket)){
 							String errorMsg = "Invalid data length > 512";
 							sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
 							System.exit(1);
-							return;
+							break;
 						}
 						tempBlockNum = getInt(receivePacket);
 						if(tempBlockNum < blockNum && !isWrongTID){
