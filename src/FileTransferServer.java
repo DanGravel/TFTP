@@ -327,7 +327,7 @@ public class FileTransferServer extends Host implements Runnable {
 		}
 
 		
-		if(data[i-1]!=0)//assuming delimiter one is there and second missing
+		if(data[i]!=0)//assuming delimiter one is there and second missing
 		{
 			delimeter2 = true; 
 		}
