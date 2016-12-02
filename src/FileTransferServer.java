@@ -119,6 +119,7 @@ public class FileTransferServer extends Host implements Runnable {
 
 		byte[] toSend;
 		RequestType request;
+		boolean unexpectedOpCode = false;
 		try {
 			sendAndReceiveSocket.setSoTimeout(TIMEOUT);
 		} catch (SocketException e1) {
@@ -143,10 +144,11 @@ public class FileTransferServer extends Host implements Runnable {
 			while(!response){
 				try{	
 					received = receiveaPacket("Server", sendAndReceiveSocket);
+					if (validater.validate(received.getData()) != RequestType.ACK) unexpectedOpCode = true;
 					invalidTID(receivePacket);
 					packetSize(receivePacket);
 					if(isError()) return;
-					if(!isValidOpCode(receivePacket))
+					if(!isValidOpCode(receivePacket) || unexpectedOpCode)
 					{
 						String errorMsg = "Invalid Opcode";
 						sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
@@ -171,7 +173,7 @@ public class FileTransferServer extends Host implements Runnable {
 					numOfTimeOuts++;
 					if(numOfTimeOuts == 4){
 						System.out.println("Timed out 4 times, stopping transfer");
-						break;
+						return;
 					}
 				}
 			}
