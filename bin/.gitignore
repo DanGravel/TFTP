@@ -1,5 +1,22 @@
+<<<<<<< HEAD
 /FileTransferServer$1.class
 /IntermediateHost$ErrorSim.class
 /RequestType.class
 /Validater.class
 /serverFiles/
+=======
+/FileTransferClient$Mode.class
+/FileTransferClient.class
+/FileTransferServer$1.class
+/FileTransferServer.class
+/Host.class
+/IntermediateHost$ErrorSim.class
+/IntermediateHost.class
+/Printer.class
+/RequestType.class
+/Validater.class
+/serverFiles/
+/FileTransferClient$parse.class
+
+
+>>>>>>> refs/remotes/origin/fix_ErrorSim

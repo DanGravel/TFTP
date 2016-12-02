@@ -9,12 +9,12 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Scanner;
 
-
 /**
  * 
  * A server that receives and sends files
  *
  */
+
 
 public class FileTransferServer extends Host implements Runnable {
 	
@@ -326,6 +326,7 @@ public class FileTransferServer extends Host implements Runnable {
 		{
 			delimeter2 = true; 
 		}
+		
 		
 		if(fileName.length() == 0 ||fileName.length() > 15)  
 		{
