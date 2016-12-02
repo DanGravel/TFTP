@@ -144,10 +144,10 @@ public class FileTransferServer extends Host implements Runnable {
 			while(!response){
 				try{	
 					received = receiveaPacket("Server", sendAndReceiveSocket);
+					if(isError()) return;
 					if (validater.validate(received.getData()) != RequestType.ACK) unexpectedOpCode = true;
 					invalidTID(receivePacket);
 					packetSize(receivePacket);
-					if(isError()) return;
 					if(!isValidOpCode(receivePacket) || unexpectedOpCode)
 					{
 						String errorMsg = "Invalid Opcode";
@@ -214,6 +214,7 @@ public class FileTransferServer extends Host implements Runnable {
 		boolean unexpectedOpCode = false;
 		try {
 			receiveaPacket("Server", sendAndReceiveSocket);
+			if (isError()) return;
 			
 			if (validater.validate(receivePacket.getData()) != RequestType.DATA){
 				System.out.println("Received Unexpected OpCode******");
@@ -222,9 +223,7 @@ public class FileTransferServer extends Host implements Runnable {
 			
 			invalidTID(receivePacket);
 			packetSize(receivePacket);
-			
-			if (isError()) return;
-			
+						
 			if(!isValidOpCode(receivePacket) || unexpectedOpCode)
 			{
 				String errorMsg = "Invalid Opcode *";
@@ -267,7 +266,12 @@ public class FileTransferServer extends Host implements Runnable {
 				while (tempBlockNum < blockNum){
 					
 					try {
-						receiveaPacket("Server", sendAndReceiveSocket);	
+						receiveaPacket("Server", sendAndReceiveSocket);
+						if (isError()) {
+							System.out.println("Error, stopping transfer******");
+							fos.close();
+							return;
+						}
 						if (invalidTID(receivePacket)){
 							isWrongTID = true;
 						}
@@ -276,12 +280,6 @@ public class FileTransferServer extends Host implements Runnable {
 						if (validater.validate(receivePacket.getData()) != RequestType.DATA){
 							System.out.println("Received Unexpected OpCode******");
 							unexpectedOpCode = true;
-						}
-						
-						if (isError()) {
-							System.out.println("Error, stopping transfer******");
-							fos.close();
-							return;
 						}
 						
 						if(!isValidOpCode(receivePacket) || unexpectedOpCode)
