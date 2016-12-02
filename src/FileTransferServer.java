@@ -88,10 +88,6 @@ public class FileTransferServer extends Host implements Runnable {
 			inATransfer = true;
 			receiveNextPartofFile();	//Star receive file
 			break;
-//		case ILLEGALTFTPOPERATION:
-//			String errorMsg = "Illegal TFTP";
-//			sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
-//			break;
 		default: 
 			sendaPacket(response, receivePacket.getPort(), sendAndReceiveSocket, "Server"); //Handles all errors
 		}
