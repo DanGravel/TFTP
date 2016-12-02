@@ -201,7 +201,12 @@ public class FileTransferServer extends Host implements Runnable {
 			sendaPacket(b, receivePacket.getPort(), sendAndReceiveSocket, "Server");
 			return; 
 		}
-
+		try { 
+			sendAndReceiveSocket.setSoTimeout(TIMEOUT);
+		} catch (SocketException e1) {
+			
+			e1.printStackTrace();
+		}
 		String path = "src\\serverFiles\\" + validater.getFilename(); 
 		File file = new File(path);
 		FileOutputStream fos = null;
@@ -309,7 +314,8 @@ public class FileTransferServer extends Host implements Runnable {
 						numTimeOuts++;
 						if (numTimeOuts == 4){
 							System.out.println("Timed out 4 times, stopping transfer");
-							break;
+							fos.close();
+							return;
 						}
 					}
 				}
@@ -322,6 +328,12 @@ public class FileTransferServer extends Host implements Runnable {
 		}
 		inATransfer = false;
 		if(request != RequestType.DATA) sendaPacket(ack, receivePacket.getPort(), sendAndReceiveSocket, "Server");	//Error Handling
+		try { //disables timeout
+			sendAndReceiveSocket.setSoTimeout(0);
+		} catch (SocketException e1) {
+			
+			e1.printStackTrace();
+		}
 	}
 	
 	
