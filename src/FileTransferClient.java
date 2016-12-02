@@ -359,12 +359,18 @@ public class FileTransferClient extends Host{
 					while(!response){
 						try{
 							receiveaPacket(sender, socket);
+							if(isError()) {
+								handleError();
+								fis.close();
+								return;
+							}
 							
 							//Checks if this is the first packet receive and records its TID
 							if(isFirstRead) {
 								TID = receivePacket.getPort();
 								isFirstRead = false;
 							}
+							
 							
 							//checks TID of incoming packets	
 							if(receivePacket.getPort() != TID){	
@@ -405,12 +411,7 @@ public class FileTransferClient extends Host{
 								System.out.println("Terminating transfer: " + errorMsg);
 								return;
 							}
-							if(isError()) {
-								handleError();
-								fis.close();
-								return;
-							}
-							
+					
 							//Checks if Data is what we expect if it is continue transfer
 							if(validPacketNum(receivePacket,blockNum)) response = true;
 							
