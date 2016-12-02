@@ -58,9 +58,7 @@ public class FileTransferClient extends Host{
 	    	  }  
 	      } else {
 	    	  if(mode == Mode.TEST){
-
 	    		 sendFile(fileName, sendReceiveSocket,  INTERMEDIATE_PORT, "client");
-
 	    	  }else{
 	    		  sendFile(fileName, sendReceiveSocket, SERVER_PORT, "client");
 	    	  }
@@ -82,7 +80,6 @@ public class FileTransferClient extends Host{
 		for (String s : tokens) {
 			parser(s);
 		}
-
 	}
 	
 	/**
@@ -181,6 +178,7 @@ public class FileTransferClient extends Host{
 	 	  	}
 	 	  	//check if you can read it
 	 	  	if(accessViolation(path)){
+	 	  		System.out.println("File Access Violation, cant read");
 	 	  		return;
 	 	  	}
 	 	  	
@@ -198,6 +196,12 @@ public class FileTransferClient extends Host{
 		 	while(!response){
 			 	try{
 			 		receiveaPacket(sender, socket);
+			 		if(!isAck(receivePacket)){
+						String errorMsg = "Expected an ACK, but received something else";
+						sendErrorMsg(errorMsg ,socket,sender, 4);
+						fis.close();
+						return;
+			 		}
 			 		TID = receivePacket.getPort();
 			 		response = true;
 			 	}catch(SocketTimeoutException e){
@@ -260,34 +264,37 @@ public class FileTransferClient extends Host{
 							
 							//checks the TID of an incoming packet
 							if(receivePacket.getPort() != TID){ 
-								String errorMsg = "Invalid TID";
-								sendError(errorMsg, receivePacket.getPort(),socket,sender,5);
+								sendErrorMsg("Invalid TID",socket,sender, 5);
 							}
 							
+							//Checks if what is getting received is an ACK
+							else if(!isAck(receivePacket)){
+								String errorMsg = "Expected an ACK, but received something else";
+								sendErrorMsg(errorMsg ,socket,sender, 4);
+								fis.close();
+								return;
+							}
 							//Checks the length of ACK packets
 							else if(!validAckLength(receivePacket)) {							
 								String errorMsg = "Invalid ACK size";
-								sendError(errorMsg, receivePacket.getPort(),socket,sender,4);
+								sendErrorMsg(errorMsg ,socket,sender, 4);
 								fis.close();
-								System.out.println("Terminating transfer: " + errorMsg);
 								return;
 							}
 							
 							//Checks if block num is higher
 							else if(isACKnumHigher(receivePacket,blockNum)){
 								String errorMsg = "ACK number is higher then current ack, something went very wrong";
-								sendError(errorMsg, receivePacket.getPort(),socket,sender,4);
+								sendErrorMsg(errorMsg ,socket,sender, 4);
 								fis.close();
-								System.out.println("Terminating transfer: " + errorMsg);
 								return;
 							}
 							
 							//Checks if if packet has a valid op code
 							else if(!isValidOpCode(receivePacket)){
 								String errorMsg = "Invalid op code";
-								sendError(errorMsg, receivePacket.getPort(),socket,sender,4);
+								sendErrorMsg(errorMsg ,socket,sender, 4);
 								fis.close();
-								System.out.println("Terminating transfer: " + errorMsg);
 								return;
 							}
 							
@@ -312,7 +319,7 @@ public class FileTransferClient extends Host{
 					return;
 				}
 		 }
-	   
+	 
 	  	/**
 	   * Used for write requests in the server
 	   * 
@@ -360,26 +367,30 @@ public class FileTransferClient extends Host{
 							}
 							
 							//checks TID of incoming packets	
-							if(receivePacket.getPort() != TID){							
-								String errorMsg = "Invalid TID";
-								sendError(errorMsg, receivePacket.getPort(),socket,sender,5);
+							if(receivePacket.getPort() != TID){	
+								sendErrorMsg("Invalid TID",socket,sender, 5);
 							}
 							
+							if(!isData(receivePacket)){
+								String errorMsg = "Expected a data packet but got something else";
+								System.out.println("FUCK");
+								sendErrorMsg(errorMsg,socket,sender, 4);
+								fis.close();
+								return;
+							}
 							//Checks length of data if > 512 error
 							if(!isValidDataLen(receivePacket)){
 								String errorMsg = "Invalid data length > 512";
-								sendError(errorMsg, receivePacket.getPort(),socket,sender,4);
+								sendErrorMsg(errorMsg,socket,sender, 4);
 								fis.close();
-								System.out.println("Terminating transfer: " + errorMsg);
 								return;
 							}
 							
 							//Checks if if packet has a valid op code
 							if(!isValidOpCode(receivePacket)){
 								String errorMsg = "Invalid op code";
-								sendError(errorMsg, receivePacket.getPort(),socket,sender,4);
+								sendErrorMsg(errorMsg,socket,sender, 4);
 								fis.close();
-								System.out.println("Terminating transfer: " + errorMsg);
 								return;
 							}
 							
@@ -397,6 +408,7 @@ public class FileTransferClient extends Host{
 							if(isError()) {
 								handleError();
 								fis.close();
+								return;
 							}
 							
 							//Checks if Data is what we expect if it is continue transfer
@@ -431,7 +443,12 @@ public class FileTransferClient extends Host{
 				System.out.println("Failed to receive next part of file");
 			}
 		}	
-
+	
+		
+	private void sendErrorMsg(String errorMsg,DatagramSocket socket,String sender, int opcode){
+		sendError(errorMsg, receivePacket.getPort(),socket,sender,opcode);
+		System.out.println("Terminating transfer: " + errorMsg);
+	}
 	/**
 	 * Handles incoming error packets
 	 */

@@ -212,7 +212,7 @@ public abstract class Host {
 	}
 	
 	protected  boolean isValidOpCode(DatagramPacket packet){
-		if(packet.getData()[0] != 0 || packet.getData()[1] > 5) return false; 
+		if(packet.getData()[0] != 0 && packet.getData()[1] > 5) return false; 
 		return true;
 	}
 	
@@ -221,4 +221,25 @@ public abstract class Host {
 		return true;
 	}
 
+	protected boolean isRead(DatagramPacket packet){
+		if(packet.getData()[0] == 0 && packet.getData()[1] == 1) return true; 
+		return false;
+	}
+	
+	protected boolean isWrite(DatagramPacket packet){
+		if(packet.getData()[0] == 0 && packet.getData()[1] == 2) return true; 
+		return false;
+	}
+	
+	protected boolean isAck(DatagramPacket packet){
+		if(packet.getData()[0] == 0 && packet.getData()[1] == 4) return true; 
+		return false;
+	}
+	
+	protected boolean isData(DatagramPacket packet){
+		if(packet.getData()[0] == 0 && packet.getData()[1] == 3) return true; 
+		return false;
+	}
+	
+	
 }
