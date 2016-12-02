@@ -191,9 +191,7 @@ public class IntermediateHost extends Host {
 		RequestType requestType = null;
 		if(packetType == 1){ // RRQ or WRQ
 			System.out.println("Losing a request packet");
-			receiveFromClient(PACKET_SIZE);			
-			//normal(); 
-			
+			receiveFromClient(PACKET_SIZE);						
 		}
 		else {
 			requestType = validate.validate(receiveFromClient(PACKET_SIZE).getData()); // receive request packet
@@ -364,14 +362,37 @@ public class IntermediateHost extends Host {
 		RequestType requestType = null;
 		if(packetType == 1)
 		{
-		   requestType = validate.validate(receiveFromClient(PACKET_SIZE).getData()); //get RRQ/WRQ
-		   DatagramPacket newPacket = receivePacket; //SAVE read 
-		   int clientPort = receivePacket.getPort();
-		   sendToServer(); // Send request
-		   new ErrorSim(delayTime, newPacket.getData(), SERVER_PORT, serverSocket, duplicate).start();
-		   
-		   if(requestType == RequestType.WRITE) receiveFromServer(ACK_PACKET_SIZE);
-		   conditionalFinishTransfer(requestType, clientPort, serverThreadPort);	
+			requestType = validate.validate(receiveFromClient(PACKET_SIZE).getData()); // get RRQ/WRQ
+			DatagramPacket newPacket = receivePacket; // SAVE read
+			int clientPort = receivePacket.getPort();
+			sendToServer(); // Send request
+			if (requestType == RequestType.READ)serverThreadPort = receiveFromServer(PACKET_SIZE).getPort();
+			else serverThreadPort = receiveFromServer(ACK_PACKET_SIZE).getPort();
+
+			int newServerPort = 0;
+			new ErrorSim(delayTime, newPacket.getData(), SERVER_PORT, serverSocket, duplicate).start();
+			if (requestType == RequestType.READ) newServerPort = receiveFromServer(PACKET_SIZE).getPort();
+			else newServerPort = receiveFromServer(ACK_PACKET_SIZE).getPort();
+			
+			sendToClient(clientPort);
+			
+			if(serverThreadPort != newServerPort) {
+				DatagramSocket invalid = null;
+				try {
+					invalid = new DatagramSocket();
+				} catch (SocketException e) {					
+					e.printStackTrace();
+				}
+				new ErrorSim(0, receivePacket.getData(), clientPort, invalid, "INVALID DUPL TID").start();
+				try {
+					receiveaPacket("Sim Server Thread 2", invalid);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				sendToServerThread(newServerPort);
+				
+			}
+		   finishTransfer(requestType, clientPort, serverThreadPort);	
 		}
 		else
 		{
