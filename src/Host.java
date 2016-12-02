@@ -220,7 +220,7 @@ public abstract class Host {
 		if(packet.getData().length > 516) return false;
 		return true;
 	}
-	
+
 	protected boolean isRead(DatagramPacket packet){
 		if(packet.getData()[0] == 0 && packet.getData()[1] == 1) return true; 
 		return false;
