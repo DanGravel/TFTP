@@ -14,7 +14,7 @@ public class IntermediateHost extends Host {
 	private static int corruptRequest = 0;
 	private static byte[] wrongOpCode = new byte[2];
 	private static byte[] wrongBlockNum = new byte[2];
-	private boolean error = false; 
+	private int error = 0; 
 	Scanner s;
 	
 	private Validater validate; 
@@ -894,7 +894,7 @@ public class IntermediateHost extends Host {
 	private void conditionalFinishTransfer(RequestType requestType, int clientPort, int serverThreadPort) {
 		boolean done = false; 
 		if(requestType == RequestType.READ) {
-			while(!done && !error) {				
+			while(!done && error == 0) {				
 				receiveFromServer(PACKET_SIZE);
 				done = getSize() < PACKET_SIZE;
 				
@@ -902,10 +902,11 @@ public class IntermediateHost extends Host {
 				receiveFromClient(ACK_PACKET_SIZE);
 				sendToServerThread(serverThreadPort);
 			}
+			done = false; 
 			
 		}
 		else {
-			while(!done && !error) {
+			while(!done && error == 0) {
 				receiveFromClient(PACKET_SIZE);
 				done = getSize() < PACKET_SIZE;
 				
@@ -913,29 +914,32 @@ public class IntermediateHost extends Host {
 				receiveFromServer(ACK_PACKET_SIZE);
 				sendToClient(clientPort); 
 			}
+			done = false; 
 		}
 	}
 	
 	private void finishTransfer(RequestType requestType, int clientPort, int serverThreadPort) {
 		boolean done = false;
 		if(requestType == RequestType.READ) {
-			while(!done && !error) {
+			while(!done && error == 0) {
 				receiveFromClient(ACK_PACKET_SIZE);
 				sendToServerThread(serverThreadPort);
-				
+				if(error == 1) break;
 				receiveFromServer(PACKET_SIZE);
 				done = getSize() < PACKET_SIZE;
 				
 				sendToClient(clientPort);
 			}
 			
-			receiveFromClient(ACK_PACKET_SIZE);
-			sendToServerThread(serverThreadPort);
-			
+			if(error == 0) {
+				receiveFromClient(ACK_PACKET_SIZE);
+				sendToServerThread(serverThreadPort);
+			}
+			done = false; 
 		}
 		
 		else {
-			while(!done && !error) {
+			while(!done && error == 0) {
 				receiveFromClient(PACKET_SIZE);
 				done = getSize() < PACKET_SIZE;
 				
@@ -943,6 +947,7 @@ public class IntermediateHost extends Host {
 				receiveFromServer(ACK_PACKET_SIZE);
 				sendToClient(clientPort);
 			}
+			done = false; 
 		}
 	}
 	
@@ -1030,7 +1035,7 @@ public class IntermediateHost extends Host {
 	}
 	
 	private void checkError() {
-		error = receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 5;
+		if(receivePacket.getData()[0] == 0 && receivePacket.getData()[1] == 5) error = 1;
 	}
 		
 	public void reset() {
@@ -1041,6 +1046,7 @@ public class IntermediateHost extends Host {
 		corruptRequest = 0;
 		wrongOpCode = new byte[2];
 		wrongBlockNum = new byte[2];
+		error = 0; 
 	}
 	
 
