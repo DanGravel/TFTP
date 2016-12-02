@@ -9,12 +9,12 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Scanner;
 
+
 /**
  * 
  * A server that receives and sends files
  *
  */
-
 
 public class FileTransferServer extends Host implements Runnable {
 	
@@ -88,6 +88,10 @@ public class FileTransferServer extends Host implements Runnable {
 			inATransfer = true;
 			receiveNextPartofFile();	//Star receive file
 			break;
+//		case ILLEGALTFTPOPERATION:
+//			String errorMsg = "Illegal TFTP";
+//			sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
+//			break;
 		default: 
 			sendaPacket(response, receivePacket.getPort(), sendAndReceiveSocket, "Server"); //Handles all errors
 		}
@@ -115,6 +119,7 @@ public class FileTransferServer extends Host implements Runnable {
 
 		byte[] toSend;
 		RequestType request;
+		boolean unexpectedOpCode = false;
 		try {
 			sendAndReceiveSocket.setSoTimeout(TIMEOUT);
 		} catch (SocketException e1) {
@@ -139,9 +144,11 @@ public class FileTransferServer extends Host implements Runnable {
 			while(!response){
 				try{	
 					received = receiveaPacket("Server", sendAndReceiveSocket);
+					if (validater.validate(received.getData()) != RequestType.ACK) unexpectedOpCode = true;
 					invalidTID(receivePacket);
 					packetSize(receivePacket);
-					if(!isValidOpCode(receivePacket))
+					if(isError()) return;
+					if(!isValidOpCode(receivePacket) || unexpectedOpCode)
 					{
 						String errorMsg = "Invalid Opcode";
 						sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
@@ -166,7 +173,7 @@ public class FileTransferServer extends Host implements Runnable {
 					numOfTimeOuts++;
 					if(numOfTimeOuts == 4){
 						System.out.println("Timed out 4 times, stopping transfer");
-						break;
+						return;
 					}
 				}
 			}
@@ -194,21 +201,37 @@ public class FileTransferServer extends Host implements Runnable {
 			sendaPacket(b, receivePacket.getPort(), sendAndReceiveSocket, "Server");
 			return; 
 		}
-
+		try { 
+			sendAndReceiveSocket.setSoTimeout(TIMEOUT);
+		} catch (SocketException e1) {
+			
+			e1.printStackTrace();
+		}
 		String path = "src\\serverFiles\\" + validater.getFilename(); 
 		File file = new File(path);
 		FileOutputStream fos = null;
 		int blockNum = 1;
+		boolean unexpectedOpCode = false;
 		try {
 			receiveaPacket("Server", sendAndReceiveSocket);
+			
+			if (validater.validate(receivePacket.getData()) != RequestType.DATA){
+				System.out.println("Received Unexpected OpCode******");
+				unexpectedOpCode = true;
+			}
+			
 			invalidTID(receivePacket);
 			packetSize(receivePacket);
-			if(!isValidOpCode(receivePacket))
+			
+			if (isError()) return;
+			
+			if(!isValidOpCode(receivePacket) || unexpectedOpCode)
 			{
 				String errorMsg = "Invalid Opcode *";
 				sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
 				return;
 			}
+			
 			else if(getInt(receivePacket) > blockNum) 
 			{
 				String errorMsg = "Invalid Block Number";
@@ -242,7 +265,7 @@ public class FileTransferServer extends Host implements Runnable {
 				int numTimeOuts = 0;
 				
 				while (tempBlockNum < blockNum){
-
+					
 					try {
 						receiveaPacket("Server", sendAndReceiveSocket);	
 						if (invalidTID(receivePacket)){
@@ -250,16 +273,29 @@ public class FileTransferServer extends Host implements Runnable {
 						}
 						packetSize(receivePacket);
 						
-						if(!isValidOpCode(receivePacket))
+						if (validater.validate(receivePacket.getData()) != RequestType.DATA){
+							System.out.println("Received Unexpected OpCode******");
+							unexpectedOpCode = true;
+						}
+						
+						if (isError()) {
+							System.out.println("Error, stopping transfer******");
+							fos.close();
+							return;
+						}
+						
+						if(!isValidOpCode(receivePacket) || unexpectedOpCode)
 						{
 							String errorMsg = "Invalid Opcode";
 							sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
+							fos.close();
 							return;
 						}
 						if(getInt(receivePacket) > blockNum) 
 						{
 							String errorMsg = "Invalid Block Number";
 							sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
+							fos.close();
 							return;
 						}
 						
@@ -267,7 +303,7 @@ public class FileTransferServer extends Host implements Runnable {
 							String errorMsg = "Invalid data length > 512";
 							sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
 							System.exit(1);
-							return;
+							break;
 						}
 						tempBlockNum = getInt(receivePacket);
 						if(tempBlockNum < blockNum && !isWrongTID){
@@ -278,7 +314,8 @@ public class FileTransferServer extends Host implements Runnable {
 						numTimeOuts++;
 						if (numTimeOuts == 4){
 							System.out.println("Timed out 4 times, stopping transfer");
-							break;
+							fos.close();
+							return;
 						}
 					}
 				}
@@ -291,6 +328,12 @@ public class FileTransferServer extends Host implements Runnable {
 		}
 		inATransfer = false;
 		if(request != RequestType.DATA) sendaPacket(ack, receivePacket.getPort(), sendAndReceiveSocket, "Server");	//Error Handling
+		try { //disables timeout
+			sendAndReceiveSocket.setSoTimeout(0);
+		} catch (SocketException e1) {
+			
+			e1.printStackTrace();
+		}
 	}
 	
 	
@@ -326,7 +369,6 @@ public class FileTransferServer extends Host implements Runnable {
 		{
 			delimeter2 = true; 
 		}
-		
 		
 		if(fileName.length() == 0 ||fileName.length() > 15)  
 		{
@@ -510,7 +552,7 @@ public class FileTransferServer extends Host implements Runnable {
 		}.start();
 	}
 	
-
+	
 	/**
 	 * Main 
 	 * @param args
