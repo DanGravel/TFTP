@@ -151,20 +151,19 @@ public class FileTransferServer extends Host implements Runnable {
 						sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
 						return;
 					}
-					if(getInt(receivePacket) > blockNum) 
+					else if(getInt(receivePacket) > blockNum) 
 					{
 						String errorMsg = "Invalid Block Number";
 						sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
 						return;
 					}
-					if(!validAckLength(receivePacket)) {							
+					else if(!validAckLength(receivePacket)) {							
 						String errorMsg = "Invalid ACK size";
 						sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
-						System.exit(1);
 						return;
 					}
-					if(getInt(received) < blockNum) continue;
-					if(validater.validate(received.getData()) == RequestType.ACK) response = true;
+					else if(getInt(received) < blockNum) continue;
+					else if(validater.validate(received.getData()) == RequestType.ACK) response = true;
 					blockNum++;
 				} catch (Exception e){
 					sendaPacket(packetdata, tempPort, sendAndReceiveSocket, "Server");
@@ -214,13 +213,13 @@ public class FileTransferServer extends Host implements Runnable {
 				sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
 				return;
 			}
-			if(getInt(receivePacket) > blockNum) 
+			else if(getInt(receivePacket) > blockNum) 
 			{
 				String errorMsg = "Invalid Block Number";
 				sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
 				return;
 			}
-			if(!isValidDataLen(receivePacket)){
+			else if(!isValidDataLen(receivePacket)){
 				String errorMsg = "Invalid data length > 512";
 				sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
 				System.exit(1);
