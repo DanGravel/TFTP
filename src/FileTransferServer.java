@@ -145,6 +145,7 @@ public class FileTransferServer extends Host implements Runnable {
 					received = receiveaPacket("Server", sendAndReceiveSocket);
 					invalidTID(receivePacket);
 					packetSize(receivePacket);
+					if(isError()) return;
 					if(!isValidOpCode(receivePacket))
 					{
 						String errorMsg = "Invalid Opcode";
@@ -208,6 +209,9 @@ public class FileTransferServer extends Host implements Runnable {
 			receiveaPacket("Server", sendAndReceiveSocket);
 			invalidTID(receivePacket);
 			packetSize(receivePacket);
+			
+			if (isError()) return;
+			
 			if(!isValidOpCode(receivePacket))
 			{
 				String errorMsg = "Invalid Opcode *";
@@ -247,7 +251,7 @@ public class FileTransferServer extends Host implements Runnable {
 				int numTimeOuts = 0;
 				
 				while (tempBlockNum < blockNum){
-
+					
 					try {
 						receiveaPacket("Server", sendAndReceiveSocket);	
 						if (invalidTID(receivePacket)){
@@ -255,17 +259,25 @@ public class FileTransferServer extends Host implements Runnable {
 						}
 						packetSize(receivePacket);
 						
+						if (isError()) {
+							System.out.println("Error, stopping transfer******");
+							fos.close();
+							return;
+						}
+						
 						if(!isValidOpCode(receivePacket))
 						{
 							String errorMsg = "Invalid Opcode";
 							sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
-							break;
+							fos.close();
+							return;
 						}
 						if(getInt(receivePacket) > blockNum) 
 						{
 							String errorMsg = "Invalid Block Number";
 							sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
-							break;
+							fos.close();
+							return;
 						}
 						
 						if(!isValidDataLen(receivePacket)){
@@ -514,7 +526,7 @@ public class FileTransferServer extends Host implements Runnable {
 		}.start();
 	}
 	
-
+	
 	/**
 	 * Main 
 	 * @param args

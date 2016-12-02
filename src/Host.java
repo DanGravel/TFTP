@@ -220,5 +220,5 @@ public abstract class Host {
 		if(packet.getData().length > 516) return false;
 		return true;
 	}
-	
+
 }
