@@ -204,19 +204,27 @@ public class FileTransferServer extends Host implements Runnable {
 		File file = new File(path);
 		FileOutputStream fos = null;
 		int blockNum = 1;
+		boolean unexpectedOpCode = false;
 		try {
 			receiveaPacket("Server", sendAndReceiveSocket);
+			
+			if (validater.validate(receivePacket.getData()) != RequestType.DATA){
+				System.out.println("Received Unexpected OpCode******");
+				unexpectedOpCode = true;
+			}
+			
 			invalidTID(receivePacket);
 			packetSize(receivePacket);
 			
 			if (isError()) return;
 			
-			if(!isValidOpCode(receivePacket))
+			if(!isValidOpCode(receivePacket) || unexpectedOpCode)
 			{
 				String errorMsg = "Invalid Opcode *";
 				sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
 				return;
 			}
+			
 			else if(getInt(receivePacket) > blockNum) 
 			{
 				String errorMsg = "Invalid Block Number";
@@ -258,13 +266,18 @@ public class FileTransferServer extends Host implements Runnable {
 						}
 						packetSize(receivePacket);
 						
+						if (validater.validate(receivePacket.getData()) != RequestType.DATA){
+							System.out.println("Received Unexpected OpCode******");
+							unexpectedOpCode = true;
+						}
+						
 						if (isError()) {
 							System.out.println("Error, stopping transfer******");
 							fos.close();
 							return;
 						}
 						
-						if(!isValidOpCode(receivePacket))
+						if(!isValidOpCode(receivePacket) || unexpectedOpCode)
 						{
 							String errorMsg = "Invalid Opcode";
 							sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
