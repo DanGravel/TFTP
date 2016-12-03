@@ -46,6 +46,22 @@ public abstract class Host {
 		}
 	}
 	
+	protected void sendaPacket(byte[] message, int messageLength, int sendPort, DatagramSocket sendSocket, String host) {
+		try {
+			sendPacket = new DatagramPacket(message, messageLength, InetAddress.getLocalHost(), sendPort);
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+		p.printSenderOrReceiverInfo(false, sendPacket, host);
+		try {
+			sendSocket.send(sendPacket);
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+	}
+	
   /**
    * Method used to receive a packet from a certain host
    * 

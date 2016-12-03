@@ -185,7 +185,7 @@ public class FileTransferClient extends Host{
 		 	byte[] packetdata = new byte[PACKET_SIZE];
 			//sending write request
 			byte[] WRQ = arrayCombiner(write, filename);		
-		 	sendaPacket(WRQ,port, socket, sender);
+		 	sendaPacket(WRQ, WRQ.length, port, socket, sender);
 		 	//if you dont get a response on initial request re-prompt
 		 	
 		 	boolean response = false;
@@ -244,13 +244,13 @@ public class FileTransferClient extends Host{
 					if(endofFile == -1){ 
 						filedata = new byte[0];
 						packetdata = createDataPacket(filedata, blockNum);
-						sendaPacket(packetdata, receivePacket.getPort(), socket, sender);
+						sendaPacket(packetdata, packetdata.length, receivePacket.getPort(), socket, sender);
 						receiveaPacket(sender, socket);	
 						break;
 					}
 				
 					packetdata = createDataPacket(filedata, blockNum);
-					sendaPacket(packetdata, receivePacket.getPort(), socket, sender);
+					sendaPacket(packetdata, packetdata.length, receivePacket.getPort(), socket, sender);
 				
 					numTimeOuts = 0;
 					response = false;
@@ -305,7 +305,7 @@ public class FileTransferClient extends Host{
 							if(validAckNum(receivePacket,blockNum)) response = true;	
 							
 						}catch(SocketTimeoutException e){			 			
-							sendaPacket(packetdata, portyo, socket, sender);
+							sendaPacket(packetdata, packetdata.length, portyo, socket, sender);
 							numTimeOuts++;
 						}
 						if(numTimeOuts == 3){
@@ -345,7 +345,7 @@ public class FileTransferClient extends Host{
 
 			
 			byte[] RRQ = arrayCombiner(read, filename);
-	 		sendaPacket(RRQ,port, socket, sender);  //send request 	
+	 		sendaPacket(RRQ, RRQ.length, port, socket, sender);  //send request 	
 	 		int TID = 0;
 	 		boolean isFirstRead = true;
 	 		int blockNum = 1;	
@@ -406,7 +406,7 @@ public class FileTransferClient extends Host{
 							
 							//Checks if Data is duplicate
 							if(getInt(receivePacket) < blockNum){
-								sendaPacket(ack, receivePacket.getPort(), socket, sender);
+								sendaPacket(ack, ack.length, receivePacket.getPort(), socket, sender);
 							}
 							else if (getInt(receivePacket) > blockNum){
 								String errorMsg = "Invalid block num";
@@ -439,7 +439,7 @@ public class FileTransferClient extends Host{
 					datalength = getSize();
 					fis.write(Arrays.copyOfRange(receivePacket.getData(), 4, datalength));
 					ack = createAck(blockNum);
-					sendaPacket(ack, receivePacket.getPort(), socket, sender);
+					sendaPacket(ack, ack.length, receivePacket.getPort(), socket, sender);
 					tempPort = receivePacket.getPort();
 					blockNum++;
 				} while(datalength >= 512);

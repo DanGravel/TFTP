@@ -572,9 +572,9 @@ public class IntermediateHost extends Host {
 		RequestType r = validate.validate(receiveFromClient(PACKET_SIZE).getData());
 		int clientPort = receivePacket.getPort();
 		
-		byte[] data = receivePacket.getData();
-		
-		int serverThreadPort = 0;
+		//byte[] data = receivePacket.getData();
+		byte data[] = new byte[receivePacket.getLength()];
+		System.arraycopy(receivePacket.getData(), 0, data, 0, data.length);
 		
 		byte[] newData; 
 		int fileNameLength = 0;
@@ -645,7 +645,7 @@ public class IntermediateHost extends Host {
 		if(r == RequestType.WRITE) receiveFromServer(ACK_PACKET_SIZE);
 		else receiveFromServer(PACKET_SIZE);
 		
-		serverThreadPort = receivePacket.getPort();
+		receivePacket.getPort();
 		sendToClient(clientPort);
 	}
 	
@@ -954,25 +954,25 @@ public class IntermediateHost extends Host {
 	}
 	
 	private void sendToServer(DatagramPacket newPacket) {
-		sendaPacket(newPacket.getData(), SERVER_PORT, serverSocket, "Intermediate");
+		sendaPacket(newPacket.getData(), newPacket.getLength(), SERVER_PORT, serverSocket, "Intermediate");
 	}
 
 	private void sendToClient(int clientPort, DatagramPacket newPacket) {
-		sendaPacket(newPacket.getData(), clientPort, sendReceiveSocket, "Intermediate");
+		sendaPacket(newPacket.getData(), newPacket.getLength(), clientPort, sendReceiveSocket, "Intermediate");
 		
 	}
 
 	private void sendToServerThread(int port){
-		sendaPacket(receivePacket.getData(), port, serverSocket, "Intermediate");
+		sendaPacket(receivePacket.getData(), receivePacket.getLength(), port, serverSocket, "Intermediate");
 
 	}
 	
 	private void sendToServerThread(int port, DatagramPacket newPacket) {
-		sendaPacket(newPacket.getData(), port, serverSocket, "Intermediate");	
+		sendaPacket(newPacket.getData(), newPacket.getLength(), port, serverSocket, "Intermediate");	
 	}
 
 	private void sendToServer() {
-		sendaPacket(receivePacket.getData(), SERVER_PORT, serverSocket, "Intermediate");
+		sendaPacket(receivePacket.getData(), receivePacket.getLength(), SERVER_PORT, serverSocket, "Intermediate");
 	}
 
 	private DatagramPacket receiveFromClient(int size) {
@@ -998,7 +998,7 @@ public class IntermediateHost extends Host {
 	}
 
 	private void sendToClient(int clientPort) {
-		sendaPacket(receivePacket.getData(), clientPort, sendReceiveSocket, "Intermediate");
+		sendaPacket(receivePacket.getData(), receivePacket.getLength(), clientPort, sendReceiveSocket, "Intermediate");
 	}
 	
 	private boolean foundPacket(DatagramPacket packet) {

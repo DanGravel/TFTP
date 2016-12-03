@@ -75,8 +75,10 @@ public class FileTransferServer extends Host implements Runnable {
 			System.out.println("Could not bind to any port. Please free up some ports and restart the server");
 			return;
 		}
-		byte data[] = receivePacket.getData(); 
+		byte data[] = new byte[receivePacket.getLength()];
+		System.arraycopy(receivePacket.getData(), 0, data, 0, data.length);
 		RequestType request = validater.validate(data); //Find out what kind of packet is sent: RRQ, WRQ, etc.
+		
 		byte[] response = createRightPacket(request, data); //Create the right response to the packet
 		switch(request) {
 		case READ:
@@ -84,16 +86,12 @@ public class FileTransferServer extends Host implements Runnable {
 			break;
 		case WRITE:
 			if (inATransfer) break;
-			sendaPacket(response, receivePacket.getPort(), sendAndReceiveSocket, "Server"); //Sends an ACK
+			sendaPacket(response, response.length, receivePacket.getPort(), sendAndReceiveSocket, "Server"); //Sends an ACK
 			inATransfer = true;
 			receiveNextPartofFile();	//Star receive file
 			break;
-//		case ILLEGALTFTPOPERATION:
-//			String errorMsg = "Illegal TFTP";
-//			sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
-//			break;
 		default: 
-			sendaPacket(response, receivePacket.getPort(), sendAndReceiveSocket, "Server"); //Handles all errors
+			sendaPacket(response, response.length, receivePacket.getPort(), sendAndReceiveSocket, "Server"); //Handles all errors
 		}
 		sendAndReceiveSocket.close();
 	}
@@ -134,7 +132,7 @@ public class FileTransferServer extends Host implements Runnable {
 				toSend = Arrays.copyOfRange(fileData, start, upto); //Send part of file
 			}
 			packetdata = createDataPacket(toSend, blockNum);
-			sendaPacket(packetdata, receivePacket.getPort(), sendAndReceiveSocket, "Server");
+			sendaPacket(packetdata, packetdata.length, receivePacket.getPort(), sendAndReceiveSocket, "Server");
 			start += DATA_END; //Increment to next block of data
 			upto += DATA_END;
 			int tempPort = receivePacket.getPort();
@@ -169,7 +167,7 @@ public class FileTransferServer extends Host implements Runnable {
 					else if(validater.validate(received.getData()) == RequestType.ACK) response = true;
 					blockNum++;
 				} catch (Exception e){
-					sendaPacket(packetdata, tempPort, sendAndReceiveSocket, "Server");
+					sendaPacket(packetdata, packetdata.length, tempPort, sendAndReceiveSocket, "Server");
 					numOfTimeOuts++;
 					if(numOfTimeOuts == 4){
 						System.out.println("Timed out 4 times, stopping transfer");
@@ -198,7 +196,7 @@ public class FileTransferServer extends Host implements Runnable {
 		if(new File("C:\\").getUsableSpace() < PACKET_SIZE) { //Error handling if disk full
 			request = RequestType.DISKFULL;
 			byte[] b = createRightPacket(request, null);
-			sendaPacket(b, receivePacket.getPort(), sendAndReceiveSocket, "Server");
+			sendaPacket(b, b.length, receivePacket.getPort(), sendAndReceiveSocket, "Server");
 			return; 
 		}
 		try { 
@@ -256,7 +254,7 @@ public class FileTransferServer extends Host implements Runnable {
 				int endOfPacket = getSize();
 				byte[] data = Arrays.copyOfRange(wholePacket,START_FILE_DATA, endOfPacket); //ignore op code and only get file data
 				fos.write(data); //Write this to fileData
-				sendaPacket(ack, receivePacket.getPort(), sendAndReceiveSocket, "Server"); //SEND ACK
+				sendaPacket(ack, ack.length, receivePacket.getPort(), sendAndReceiveSocket, "Server"); //SEND ACK
 				if (endOfPacket < 512) break;
 				blockNum++;
 				int tempBlockNum = 0;
@@ -306,7 +304,7 @@ public class FileTransferServer extends Host implements Runnable {
 						tempBlockNum = getInt(receivePacket);
 						if(tempBlockNum < blockNum && !isWrongTID){
 							byte[] newPacket = createAck(tempBlockNum);
-							sendaPacket(newPacket, lastPort, sendAndReceiveSocket, "Server");
+							sendaPacket(newPacket,newPacket.length, lastPort, sendAndReceiveSocket, "Server");
 						}
 					} catch (SocketTimeoutException e){
 						numTimeOuts++;
@@ -325,7 +323,7 @@ public class FileTransferServer extends Host implements Runnable {
 			e.printStackTrace();
 		}
 		inATransfer = false;
-		if(request != RequestType.DATA) sendaPacket(ack, receivePacket.getPort(), sendAndReceiveSocket, "Server");	//Error Handling
+		if(request != RequestType.DATA) sendaPacket(ack, ack.length, receivePacket.getPort(), sendAndReceiveSocket, "Server");	//Error Handling
 		try { //disables timeout
 			sendAndReceiveSocket.setSoTimeout(0);
 		} catch (SocketException e1) {
@@ -415,11 +413,6 @@ public class FileTransferServer extends Host implements Runnable {
 			case INVALID:
 				response = new byte[]{0, 5, 0, 4}; 
 				errorMessage = findTypeOfInvalid(data, request);
-				break;
-			case ILLEGALTFTPOPERATION:
-				response = new byte[]{0, 5, 0, 5}; 
-				errorMessage = "Illegal TFTP Operation";
-				errorMessage = findTypeOfIllegalTFTP(data, request);
 				break;
 			case ACCESSDENIED:
 				response = new byte[]{0, 5, 0, 2};

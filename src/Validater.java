@@ -2,6 +2,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Date;
 
 
 public class Validater {
@@ -30,13 +31,42 @@ public class Validater {
 	}
 	
 	public String validateFileNameOrModeOrDelimiters(RequestType request, byte data[], String error) {
-		if(request == RequestType.READ || request == RequestType.WRITE) {
-			request = validateFileNameandMode(data, request);	//Get filename and validate packet
-			if(request == RequestType.INVALID) {
-				return "Invalid File Name, Mode, or no Delimiters";
-			}
+		String mode = "";
+		int i = Validater.FILE_NAME_START;
+		int x = i; 
+		//Append filename if request was read or write
+		while(data[i] != 0 && i < data.length){
+			fileName += (char)data[i];
+			if(fileName.charAt(i-2) == '.') x = i; 
+			i++;
 		}
-		return error;
+		x +=4;
+		
+		if(data[x] != 0 && i == data.length - 1) {
+			return "Missing Delimeter 1";
+		}
+		
+		i++; 
+		//Append mode if request was read or write
+		while(data[i] != 0 && i < data.length - 1){
+			mode += (char)data[i];
+			i++;
+		}
+		
+		if(data[data.length-1]!=0)//assuming delimiter one is there and second missing
+		{
+			return "Missing Delimeter 2";
+		}
+		
+		if(fileName.length() == 0 ||fileName.length() > 15)  
+		{
+			return "Missing filename";
+		}
+		else if(mode.length() == 0|| mode.length() > 15)
+		{
+			return "Missing Mode";
+		}
+		return null;
 	}
 	
 	private RequestType fileValidation(RequestType request) {		
@@ -68,34 +98,41 @@ public class Validater {
 	 */
 	public RequestType validateFileNameandMode(byte[] data, RequestType request) {
 		String mode = "";
-		int i = FILE_NAME_START;
+		int i = Validater.FILE_NAME_START;
+		int x = i; 
 		//Append filename if request was read or write
 		while(data[i] != 0 && i < data.length){
 			fileName += (char)data[i];
+			if(fileName.charAt(i-2) == '.') x = i; 
 			i++;
 		}
+		x +=4;
 		
-//		if(data[i]==0 && data[i+1]==0)//assuming delimeter 1 is missing and reach the end of the data
-//		{
-//			return RequestType.ILLEGALTFTPOPERATION;
-//		}
+		if(data[x] != 0 && i == data.length - 1) {
+			return RequestType.INVALID;
+		}
+		
 		i++; 
-
 		//Append mode if request was read or write
-		while(data[i] != 0 && i < data.length){
+		while(data[i] != 0 && i < data.length - 1){
 			mode += (char)data[i];
 			i++;
 		}
-		 
-//		if(data[i-1]!=0)//assuming delimiter one is there and second missing
-//		{
-//			return RequestType.ILLEGALTFTPOPERATION;
-//		}
 		
-		if(fileName.length() == 0 || mode.length() == 0 || fileName.length() > 15 || mode.length() > 15 )
+		if(data[data.length-1]!=0)//assuming delimiter one is there and second missing
 		{
-			return RequestType.ILLEGALTFTPOPERATION;
+			return RequestType.INVALID;
 		}
+		
+		if(fileName.length() == 0 ||fileName.length() > 15)  
+		{
+			return RequestType.INVALID;
+		}
+		else if(mode.length() == 0|| mode.length() > 15)
+		{
+			return RequestType.INVALID;
+		}
+		
 		return request;
 	}
 	
