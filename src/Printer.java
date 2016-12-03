@@ -23,6 +23,10 @@ public class Printer {
 			System.out.println("Host: " + packet.getAddress());
 			System.out.println("Host port: " + packet.getPort());
 			System.out.println("Length: " + packet.getLength());
+			if(isAck(packet) || isData(packet)){
+				System.out.println("Block Num: " + getInt(packet));
+
+			}
 			System.out.println("The packet contains: " + new String(packet.getData()));
 			printBytes(packet.getData());
 		} else {
@@ -49,5 +53,19 @@ public class Printer {
 		if(packet.length > 4) System.out.print("0");
 		System.out.println("\n");
 
+	}
+	
+	protected boolean isAck(DatagramPacket packet){
+		if(packet.getData()[0] == 0 && packet.getData()[1] == 4) return true; 
+		return false;
+	}
+	
+	protected boolean isData(DatagramPacket packet){
+		if(packet.getData()[0] == 0 && packet.getData()[1] == 3) return true; 
+		return false;
+	}
+	
+	protected int getInt(DatagramPacket packet){
+		return ((packet.getData()[2] & 0xff) << 8) | (packet.getData()[3] & 0xff);
 	}
 }

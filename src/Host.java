@@ -81,8 +81,8 @@ public abstract class Host {
 		byte[] ack = new byte[4];
 		ack[0] = 0;
 		ack[1] = 4;
-		ack[2] = (byte) ((blockNum - (blockNum % 256))/256);
-		ack[3] = (byte)(blockNum % 256);
+		ack[2] = (byte) ((blockNum >> 8)& 0xff);
+		ack[3] = (byte)(blockNum & 0xFF);
 		return ack;
 
 	}
@@ -99,13 +99,13 @@ public abstract class Host {
    * @return a byte array with packet information
    */
 	protected byte[] createDataPacket(int blockNum) {
-		return (new byte[] { 0, 3, (byte) (blockNum & 0xFF), (byte) ((blockNum >>> 8) & 0xFF) });
+		return (new byte[] { 0, 3, (byte)((blockNum >> 8)& 0xff), (byte) (blockNum & 0xFF) });
 	}
 	
 	
 	protected byte[] createErrorPacket(byte[] data,int error){
 		byte[] d = Arrays.copyOf(data, data.length);
-		byte[] datapacket = {0, 5, (byte) (error >>> 8),(byte) (error)};
+		byte[] datapacket = {0, 5, (byte) ((error >> 8)& 0xff),(byte) (error & 0xFF)};
 		int i = 0;
 		for(; i < data.length - 1 ; i++){};
 		datalen = i+1;
@@ -131,7 +131,7 @@ public abstract class Host {
    */
 	protected byte[] createDataPacket(byte[] data, int blockNum) {
 		byte[] d = Arrays.copyOf(data, data.length);
-		byte[] datapacket = {0, 3, (byte) (blockNum >>> 8),(byte) (blockNum)};
+		byte[] datapacket = {0, 3, (byte) ((blockNum >> 8)& 0xff),(byte) (blockNum & 0xFF)};
 		int i = 0;
 		for(; i < data.length - 1 ; i++){};
 		datalen = i+1;
@@ -173,18 +173,13 @@ public abstract class Host {
 	}
 	
 	protected boolean validAckNum(DatagramPacket packet, int num){
-		Byte val1 = packet.getData()[2];
-		Byte val2=  packet.getData()[3];
-		int val = (val1.intValue())*10 + val2.intValue();
+		int val = ((packet.getData()[2] & 0xff) << 8) | (packet.getData()[3] & 0xff);
 		if(val != num) return false;
 		return true;
 	}
 	
 	protected boolean isACKnumHigher(DatagramPacket packet, int num){
-		Byte val1 = packet.getData()[2];
-		Byte val2=  packet.getData()[3];
-		int val = (val1.intValue())*10 + val2.intValue();
-		boolean tst = val > num;
+		int val = ((packet.getData()[2] & 0xff) << 8) | (packet.getData()[3] & 0xff);
 		if(val > num) return true;
 		return false;
 	}
