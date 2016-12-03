@@ -277,6 +277,8 @@ public class IntermediateHost extends Host {
 			
 			serverThreadPort = receivePacket.getPort();
 			sendToClient(clientPort);
+			
+			conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
 
 		}
 		else {
