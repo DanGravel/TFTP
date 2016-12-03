@@ -196,10 +196,13 @@ public class FileTransferClient extends Host{
 		 	while(!response){
 			 	try{
 			 		receiveaPacket(sender, socket);
+				 	if(isError()){
+						handleError();
+						return;
+					}
 			 		if(!isAck(receivePacket)){
 						String errorMsg = "Expected an ACK, but received something else";
 						sendErrorMsg(errorMsg ,socket,sender, 4);
-						fis.close();
 						return;
 			 		}
 			 		TID = receivePacket.getPort();
@@ -362,6 +365,7 @@ public class FileTransferClient extends Host{
 							if(isError()) {
 								handleError();
 								fis.close();
+								if(isFirstRead) Files.deleteIfExists(file.toPath());
 								return;
 							}
 							
