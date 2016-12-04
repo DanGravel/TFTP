@@ -633,9 +633,7 @@ public class FileTransferClient extends Host{
 				}
 				else if(ip.matches(IPADDRESS_PATTERN)){
 					initAdress = InetAddress.getByName(ip);
-					if(initAdress.isReachable(4000)) break;
-					System.out.println("The IP you enetered does not seem to be responding");
-					continue;
+					break;
 
 				}
 				else{

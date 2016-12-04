@@ -981,6 +981,7 @@ public class IntermediateHost extends Host {
 		DatagramPacket returnPacket = null;
 		try {
 			 returnPacket = receiveaPacket("Intermediate", sendReceiveSocket, size);
+			 initAdress = returnPacket.getAddress();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
