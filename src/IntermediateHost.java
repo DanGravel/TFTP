@@ -21,7 +21,6 @@ public class IntermediateHost extends Host {
 	
 	public IntermediateHost() {
 		validate = new Validater(); 
-		//Printer.setIsVerbose(true); //TODO remove hardcoding for this
 		try {
 			sendReceiveSocket = new DatagramSocket(INTERMEDIATE_PORT);
 			serverSocket = new DatagramSocket();
@@ -515,10 +514,7 @@ public class IntermediateHost extends Host {
 			    	sendToServerThread(serverThreadPort);
 					new ErrorSim(delayTime, packet.getData(), serverThreadPort, serverSocket, duplicate).start();;
 				}				
-	    		if(requestType == RequestType.WRITE) {
-	    			receiveFromServer(ACK_PACKET_SIZE);
-		    		sendToClient(clientPort);
-	    		}
+
 	    		conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
 			}	
 		}
