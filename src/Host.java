@@ -67,9 +67,13 @@ public abstract class Host {
    * @param receiveSocket: the socket that is receiving the packet
    */
 	  protected DatagramPacket receiveaPacket(String host, DatagramSocket receiveSocket) throws SocketTimeoutException, IOException {
-		  byte data[] = new byte[PACKET_SIZE];
+		  byte data[] = new byte[PACKET_SIZE+1];
 	      receivePacket = new DatagramPacket(data, data.length);
 	      receiveSocket.receive(receivePacket);
+	      if(receivePacket.getData()[PACKET_SIZE] == 0) {
+	    	  receivePacket.setData(Arrays.copyOf(data, PACKET_SIZE));
+	    	  receivePacket.setLength(PACKET_SIZE);
+	      }
 	      p.printSenderOrReceiverInfo(true, receivePacket, host);
 	      return receivePacket;
 	  }
