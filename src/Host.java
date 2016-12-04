@@ -20,7 +20,7 @@ public abstract class Host {
 	protected String fileName = "";
 	protected DatagramPacket sendPacket, receivePacket;
 	protected int datalen;
-	protected static InetAddress initAdress;
+	protected static InetAddress initAddress;
 	//protected static InetAddress serverAdress;
 
 	  
@@ -33,7 +33,7 @@ public abstract class Host {
    * @param host: the name of which host the packet will be sent to
    */
 	protected void sendaPacket(byte[] message, int sendPort, DatagramSocket sendSocket, String host) {
-		sendPacket = new DatagramPacket(message, message.length, initAdress, sendPort);
+		sendPacket = new DatagramPacket(message, message.length, initAddress, sendPort);
 		p.printSenderOrReceiverInfo(false, sendPacket, host);
 		try {
 			sendSocket.send(sendPacket);
@@ -43,9 +43,9 @@ public abstract class Host {
 		}
 	}
 	
-	protected void sendaPacket(byte[] message, int messageLength, int sendPort, DatagramSocket sendSocket, String host) {
+	protected void sendaPacket(byte[] message, int messageLength, int sendPort, DatagramSocket sendSocket, String host, InetAddress addr) {
 	//	try {
-			sendPacket = new DatagramPacket(message, messageLength, initAdress, sendPort);
+			sendPacket = new DatagramPacket(message, messageLength, addr, sendPort);
 		//} 
 //		catch (UnknownHostException e) {
 //			e.printStackTrace();

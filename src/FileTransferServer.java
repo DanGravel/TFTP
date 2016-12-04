@@ -59,7 +59,7 @@ public class FileTransferServer extends Host implements Runnable {
 			System.out.println("Waiting..."); // so we know we're waiting
 			if(serverShutdown) System.exit(1);
 			receiveaPacket("Server", receiveSocket); 
-			initAdress = receivePacket.getAddress(); //ADDED BY DAN
+			initAddress = receivePacket.getAddress(); //ADDED BY DAN
 			Thread thread = new Thread(new FileTransferServer(receivePacket, 0)); //create a connection manager to deal with file transfer
 			thread.start();
 			Thread.sleep(1000);
@@ -88,12 +88,12 @@ public class FileTransferServer extends Host implements Runnable {
 			break;
 		case WRITE:
 			if (inATransfer) break;
-			sendaPacket(response, response.length, receivePacket.getPort(), sendAndReceiveSocket, "Server"); //Sends an ACK
+			sendaPacket(response, response.length, receivePacket.getPort(), sendAndReceiveSocket, "Server",initAddress); //Sends an ACK
 			inATransfer = true;
 			receiveNextPartofFile();	//Star receive file
 			break;
 		default: 
-			sendaPacket(response, response.length, receivePacket.getPort(), sendAndReceiveSocket, "Server"); //Handles all errors
+			sendaPacket(response, response.length, receivePacket.getPort(), sendAndReceiveSocket, "Server",initAddress); //Handles all errors
 		}
 		sendAndReceiveSocket.close();
 	}
@@ -134,7 +134,7 @@ public class FileTransferServer extends Host implements Runnable {
 				toSend = Arrays.copyOfRange(fileData, start, upto); //Send part of file
 			}
 			packetdata = createDataPacket(toSend, blockNum);
-			sendaPacket(packetdata, packetdata.length, receivePacket.getPort(), sendAndReceiveSocket, "Server");
+			sendaPacket(packetdata, packetdata.length, receivePacket.getPort(), sendAndReceiveSocket, "Server",initAddress);
 			start += DATA_END; //Increment to next block of data
 			upto += DATA_END;
 			int tempPort = receivePacket.getPort();
@@ -169,7 +169,7 @@ public class FileTransferServer extends Host implements Runnable {
 					else if(validater.validate(received.getData()) == RequestType.ACK) response = true;
 					blockNum++;
 				} catch (Exception e){
-					sendaPacket(packetdata, packetdata.length, tempPort, sendAndReceiveSocket, "Server");
+					sendaPacket(packetdata, packetdata.length, tempPort, sendAndReceiveSocket, "Server",initAddress);
 					numOfTimeOuts++;
 					if(numOfTimeOuts == 4){
 						System.out.println("Timed out 4 times, stopping transfer");
@@ -198,7 +198,7 @@ public class FileTransferServer extends Host implements Runnable {
 		if(new File("C:\\").getUsableSpace() < PACKET_SIZE) { //Error handling if disk full
 			request = RequestType.DISKFULL;
 			byte[] b = createRightPacket(request, null);
-			sendaPacket(b, b.length, receivePacket.getPort(), sendAndReceiveSocket, "Server");
+			sendaPacket(b, b.length, receivePacket.getPort(), sendAndReceiveSocket, "Server",initAddress);
 			return; 
 		}
 		try { 
@@ -256,7 +256,7 @@ public class FileTransferServer extends Host implements Runnable {
 				int endOfPacket = getSize();
 				byte[] data = Arrays.copyOfRange(wholePacket,START_FILE_DATA, endOfPacket); //ignore op code and only get file data
 				fos.write(data); //Write this to fileData
-				sendaPacket(ack, ack.length, receivePacket.getPort(), sendAndReceiveSocket, "Server"); //SEND ACK
+				sendaPacket(ack, ack.length, receivePacket.getPort(), sendAndReceiveSocket, "Server",initAddress); //SEND ACK
 				if (endOfPacket < 512) break;
 				blockNum++;
 				int tempBlockNum = 0;
@@ -306,7 +306,7 @@ public class FileTransferServer extends Host implements Runnable {
 						tempBlockNum = getInt(receivePacket);
 						if(tempBlockNum < blockNum && !isWrongTID){
 							byte[] newPacket = createAck(tempBlockNum);
-							sendaPacket(newPacket,newPacket.length, lastPort, sendAndReceiveSocket, "Server");
+							sendaPacket(newPacket,newPacket.length, lastPort, sendAndReceiveSocket, "Server",initAddress);
 						}
 					} catch (SocketTimeoutException e){
 						numTimeOuts++;
@@ -325,7 +325,7 @@ public class FileTransferServer extends Host implements Runnable {
 			e.printStackTrace();
 		}
 		inATransfer = false;
-		if(request != RequestType.DATA) sendaPacket(ack, ack.length, receivePacket.getPort(), sendAndReceiveSocket, "Server");	//Error Handling
+		if(request != RequestType.DATA) sendaPacket(ack, ack.length, receivePacket.getPort(), sendAndReceiveSocket, "Server",initAddress);	//Error Handling
 		try { //disables timeout
 			sendAndReceiveSocket.setSoTimeout(0);
 		} catch (SocketException e1) {

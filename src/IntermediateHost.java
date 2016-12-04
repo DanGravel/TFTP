@@ -956,32 +956,52 @@ public class IntermediateHost extends Host {
 	}
 	
 	private void sendToServer(DatagramPacket newPacket) {
-		sendaPacket(newPacket.getData(), newPacket.getLength(), SERVER_PORT, serverSocket, "Intermediate");
+		try {
+			sendaPacket(newPacket.getData(), newPacket.getLength(), SERVER_PORT, serverSocket, "Intermediate", InetAddress.getLocalHost());
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	private void sendToClient(int clientPort, DatagramPacket newPacket) {
-		sendaPacket(newPacket.getData(), newPacket.getLength(), clientPort, sendReceiveSocket, "Intermediate");
+		sendaPacket(newPacket.getData(), newPacket.getLength(), clientPort, sendReceiveSocket, "Intermediate",initAddress);
 		
 	}
 
-	private void sendToServerThread(int port){
-		sendaPacket(receivePacket.getData(), receivePacket.getLength(), port, serverSocket, "Intermediate");
+	private void sendToServerThread(int port) {
+		try {
+			sendaPacket(receivePacket.getData(), receivePacket.getLength(), port, serverSocket, "Intermediate",InetAddress.getLocalHost());
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 	}
 	
 	private void sendToServerThread(int port, DatagramPacket newPacket) {
-		sendaPacket(newPacket.getData(), newPacket.getLength(), port, serverSocket, "Intermediate");	
+		try {
+			sendaPacket(newPacket.getData(), newPacket.getLength(), port, serverSocket, "Intermediate",InetAddress.getLocalHost());
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}	
 	}
 
 	private void sendToServer() {
-		sendaPacket(receivePacket.getData(), receivePacket.getLength(), SERVER_PORT, serverSocket, "Intermediate");
+		try {
+			sendaPacket(receivePacket.getData(), receivePacket.getLength(), SERVER_PORT, serverSocket, "Intermediate",InetAddress.getLocalHost());
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	private DatagramPacket receiveFromClient(int size) {
 		DatagramPacket returnPacket = null;
 		try {
 			 returnPacket = receiveaPacket("Intermediate", sendReceiveSocket, size);
-			 initAdress = returnPacket.getAddress();
+			 initAddress = returnPacket.getAddress();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -1001,7 +1021,7 @@ public class IntermediateHost extends Host {
 	}
 
 	private void sendToClient(int clientPort) {
-		sendaPacket(receivePacket.getData(), receivePacket.getLength(), clientPort, sendReceiveSocket, "Intermediate");
+		sendaPacket(receivePacket.getData(), receivePacket.getLength(), clientPort, sendReceiveSocket, "Intermediate",initAddress);
 	}
 	
 	private boolean foundPacket(DatagramPacket packet) {
