@@ -75,22 +75,12 @@ public abstract class Host {
 	    	  receivePacket.setLength(ACK_PACKET_SIZE);
 	      }
 	      else if(receivePacket.getData()[PACKET_SIZE] == 0) {
-	    	  receivePacket.setData(Arrays.copyOf(data, PACKET_SIZE));
-	    	  receivePacket.setLength(PACKET_SIZE);
+	    	  receivePacket.setData(Arrays.copyOf(data, receivePacket.getLength()));
+	    	  receivePacket.setLength(receivePacket.getLength());
 	      }
 	      p.printSenderOrReceiverInfo(true, receivePacket, host);
 	      return receivePacket;
-	  }
-	  
-	  
-	  protected DatagramPacket receiveaPacket(String host, DatagramSocket receiveSocket, int packetSize) throws SocketTimeoutException, IOException {
-		  byte data[] = new byte[packetSize];
-	      receivePacket = new DatagramPacket(data, data.length); 
-	      receiveSocket.receive(receivePacket);
-	      p.printSenderOrReceiverInfo(true, receivePacket, host);
-	      return receivePacket;
-	  }
-  
+	  }  
   
   /**
    * creates a byte array with the acknowledgement info
