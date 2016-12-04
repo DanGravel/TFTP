@@ -29,9 +29,13 @@ public class FileTransferClient extends Host{
 	private static final byte[] write = {0,2};
 	private static final int TIMEOUT = 2000; 
 	private static String FILE_PATH_REGEX = "([a-zA-Z]:)?(\\\\[a-zA-Z0-9_.-]+)+\\\\?";
+	private static String IPADDRESS_PATTERN = 
+	        "(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)";
 	private static final int MAX_TIMEOUTS = 4;
 	private FileOutputStream fis;
 	private int TID;
+
+	
 	/**
 	 * FileTransferClient Constructor creates a new DatgramSocket.
 	 */
@@ -133,10 +137,9 @@ public class FileTransferClient extends Host{
 	
 	/**
 	 * Checks if the command is a file name, otherwise it is a unrecognized command.
-	 * 
 	 * @param s: The string that is inputted.
 	 */
-	private void stringChecker(String s){
+	private void stringChecker(String s) {
 		if(s.endsWith(".txt")) {
 			fileName = s;
 		}
@@ -144,15 +147,15 @@ public class FileTransferClient extends Host{
 			pathName = s;
 			System.out.println("New system path: " + pathName);
 		}
-		else{
+		else {
 			System.out.println("Sorry something you typed was no supported, try 'help'");
 			}
 	}
 	
-	private static String createPath(String filename){
-		if(pathName.endsWith("\\")){
+	private static String createPath(String filename) {
+		if(pathName.endsWith("\\")) {
 		  	return pathName + filename;
-	    }else{
+	    } else {
 	    	return pathName + "\\" + filename;
 	    }
 	}
@@ -171,7 +174,8 @@ public class FileTransferClient extends Host{
 	 	  	File file = new File(path);
 	 	  	TID = 0;
 			sendReceiveSocket.setSoTimeout(TIMEOUT);
-	 	  	//check if the file exists
+	 	  	
+			//check if the file exists
 	 	  	if (!file.exists()){
 	 	  		System.out.println("File does not exist");
 	 	  		return;
@@ -301,6 +305,13 @@ public class FileTransferClient extends Host{
 								return;
 							}
 							
+							//Checks if you have reached the TFTP file transfer limit
+							else if(getInt(receivePacket) == 65535){
+								System.out.println("You have reached the limit of tftp");
+								fis.close();
+								return;
+							}
+							
 							//Checks the ACK number
 							if(validAckNum(receivePacket,blockNum)) response = true;	
 							
@@ -383,7 +394,6 @@ public class FileTransferClient extends Host{
 							
 							if(!isData(receivePacket)){
 								String errorMsg = "Expected a data packet but got something else";
-								System.out.println("FUCK");
 								sendErrorMsg(errorMsg,socket,sender, 4);
 								fis.close();
 								return;
@@ -400,6 +410,13 @@ public class FileTransferClient extends Host{
 							if(!isValidOpCode(receivePacket)){
 								String errorMsg = "Invalid op code";
 								sendErrorMsg(errorMsg,socket,sender, 4);
+								fis.close();
+								return;
+							}
+							
+							//Checks if you have reached the TFTP file transfer limit
+							else if(getInt(receivePacket) == 65535){
+								System.out.println("You have reached the limit of tftp");
 								fis.close();
 								return;
 							}
@@ -605,6 +622,30 @@ public class FileTransferClient extends Host{
 		}
 	}
 	
+	private static void setNetwork() throws IOException{
+		BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+		while(true){
+			System.out.println("Enter address of server (if server is on this machine enter 'this'): ");
+				String ip = in.readLine();
+				if(ip.equals("this")){
+					initAdress = InetAddress.getLocalHost();
+					break;
+				}
+				else if(ip.matches(IPADDRESS_PATTERN)){
+					initAdress = InetAddress.getByName(ip);
+					if(initAdress.isReachable(4000)) break;
+					System.out.println("The IP you enetered does not seem to be responding");
+					continue;
+
+				}
+				else{
+					System.out.println("Not a valid IP adress");
+					setNetwork();
+					continue;
+				}
+			}
+	}
+	
 	
 	/**
 	 * Main.
@@ -614,6 +655,7 @@ public class FileTransferClient extends Host{
 	public static void main(String args[]) throws IOException {
 		FileTransferClient c = new FileTransferClient();
 		pathName();
+		setNetwork();
 		while(true){
 			c.promptUser();
 			if(c.fileName.length() != 0) c.sendAndReceive();

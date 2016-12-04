@@ -38,6 +38,7 @@ public class FileTransferServer extends Host implements Runnable {
 				receiveSocket = new DatagramSocket(SERVER_PORT);
 			}
 			receivePacket = packet; 
+
 		} catch (SocketException se) {
 			se.printStackTrace();
 			System.exit(1);
@@ -58,6 +59,7 @@ public class FileTransferServer extends Host implements Runnable {
 			System.out.println("Waiting..."); // so we know we're waiting
 			if(serverShutdown) System.exit(1);
 			receiveaPacket("Server", receiveSocket); 
+			initAdress = receivePacket.getAddress(); //ADDED BY DAN
 			Thread thread = new Thread(new FileTransferServer(receivePacket, 0)); //create a connection manager to deal with file transfer
 			thread.start();
 			Thread.sleep(1000);

@@ -901,6 +901,7 @@ public class IntermediateHost extends Host {
 				done = getSize() < PACKET_SIZE;
 				
 				sendToClient(clientPort); 
+				if(error == 1) break;
 				receiveFromClient(ACK_PACKET_SIZE);
 				sendToServerThread(serverThreadPort);
 			}
@@ -913,6 +914,7 @@ public class IntermediateHost extends Host {
 				done = getSize() < PACKET_SIZE;
 				
 				sendToServerThread(serverThreadPort);
+				if(error == 1) break;
 				receiveFromServer(ACK_PACKET_SIZE);
 				sendToClient(clientPort); 
 			}
@@ -944,8 +946,8 @@ public class IntermediateHost extends Host {
 			while(!done && error == 0) {
 				receiveFromClient(PACKET_SIZE);
 				done = getSize() < PACKET_SIZE;
-				
 				sendToServerThread(serverThreadPort);
+				if(error == 1) break; 
 				receiveFromServer(ACK_PACKET_SIZE);
 				sendToClient(clientPort);
 			}
