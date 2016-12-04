@@ -70,7 +70,7 @@ public abstract class Host {
 		  byte data[] = new byte[PACKET_SIZE+1];
 	      receivePacket = new DatagramPacket(data, data.length);
 	      receiveSocket.receive(receivePacket);
-	      if(receivePacket.getData()[4] == 0){
+	      if(receivePacket.getData()[4] == 0 && receivePacket.getData()[1] == 4){
 	    	  receivePacket.setData(Arrays.copyOf(data, ACK_PACKET_SIZE));
 	    	  receivePacket.setLength(ACK_PACKET_SIZE);
 	      }
