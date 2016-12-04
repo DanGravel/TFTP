@@ -1132,7 +1132,12 @@ public class IntermediateHost extends Host {
 			}
 			p.printSenderOrReceiverInfo(false, sendPacket, host);
 			
-			sendPacket.setAddress(initAddress);
+			try {
+				sendPacket.setAddress(InetAddress.getLocalHost());
+			} catch (UnknownHostException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 			try {
 				socket.send(sendPacket);
 			} catch (IOException e) {
