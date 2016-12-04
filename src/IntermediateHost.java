@@ -1171,6 +1171,7 @@ public class IntermediateHost extends Host {
 			}
 			p.printSenderOrReceiverInfo(false, sendPacket, host);
 			
+			sendPacket.setAddress(initAddress);
 			try {
 				socket.send(sendPacket);
 			} catch (IOException e) {
