@@ -351,9 +351,12 @@ public class IntermediateHost extends Host {
 						e.printStackTrace();
 					}
 					sendToServerThread(newServerPort);
-					
 				}
 			   finishTransfer(requestType, clientPort, serverThreadPort);
+			   if(delayTime > 5000) {
+				   receiveFromServer();
+				   sendToClient(clientPort);
+			   }
 			}
 			else if(requestType == RequestType.WRITE && delayTime > 5000){
 				DatagramPacket newPacket = receivePacket; 
@@ -422,8 +425,15 @@ public class IntermediateHost extends Host {
 			    	sendToClient(clientPort);
 					new ErrorSim(delayTime, duplicatePacket.getData(), clientPort, sendReceiveSocket, duplicate).start();
 			    }
+				
 				receiveFromClient();
-				sendToServerThread(serverThreadPort);				
+				sendToServerThread(serverThreadPort);
+				
+				if(requestType == RequestType.WRITE) {
+					receiveFromServer();
+					sendToClient(clientPort);
+				}
+				
 				finishTransfer(requestType, clientPort, serverThreadPort);
 				
 			}else if((requestType == RequestType.READ && packetType == 4) || (requestType == RequestType.WRITE && packetType == 3)) {
@@ -458,8 +468,6 @@ public class IntermediateHost extends Host {
 					}
 				}
 	    		conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
-	    		receiveFromServer();
-	    		sendToClient(clientPort);
 			}	
 		}
 	}
@@ -812,7 +820,7 @@ public class IntermediateHost extends Host {
 		if(requestType == RequestType.READ) {
 			while(!done && error == 0) {				
 				receiveFromServer();
-				done = getSize() < PACKET_SIZE;
+				done = receivePacket.getLength() < PACKET_SIZE;
 				
 				sendToClient(clientPort); 
 				if(error == 1) break;
@@ -825,7 +833,7 @@ public class IntermediateHost extends Host {
 		else {
 			while(!done && error == 0) {
 				receiveFromClient();
-				done = getSize() < PACKET_SIZE;
+				done = receivePacket.getLength() < PACKET_SIZE;
 				
 				sendToServerThread(serverThreadPort);
 				if(error == 1) break;
@@ -844,7 +852,7 @@ public class IntermediateHost extends Host {
 				sendToServerThread(serverThreadPort);
 				if(error == 1) break;
 				receiveFromServer();
-				done = getSize() < PACKET_SIZE;
+				done = receivePacket.getLength() < PACKET_SIZE;
 				
 				sendToClient(clientPort);
 			}
@@ -859,7 +867,7 @@ public class IntermediateHost extends Host {
 		else {
 			while(!done && error == 0) {
 				receiveFromClient();
-				done = getSize() < PACKET_SIZE;
+				done = receivePacket.getLength() < PACKET_SIZE;
 				sendToServerThread(serverThreadPort);
 				if(error == 1) break; 
 				receiveFromServer();
