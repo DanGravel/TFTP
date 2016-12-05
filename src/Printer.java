@@ -4,7 +4,7 @@ import java.net.DatagramPacket;
  * This class simply prints out necessary information of packets before sending them and after receiving them
  */
 public class Printer {
-	protected static boolean isVerbose;
+	private static boolean isVerbose;
 
 	public static boolean isVerbose() {
 		return isVerbose;
@@ -17,22 +17,18 @@ public class Printer {
 
 	   
 	public void printSenderOrReceiverInfo(boolean isReceiving, DatagramPacket packet, String host) {
+		String receivedOrSent = (isReceiving) ? "received from: " : "sent to: ";
+		System.out.println("\n" + host + ": Packet " + receivedOrSent);
+		System.out.println("Host: " + packet.getAddress());
+		System.out.println("Host port: " + packet.getPort());
 		if (isVerbose()) {
-			String receivedOrSent = (isReceiving) ? "received from: " : "sent to: ";
-			System.out.println("\n" + host + ": Packet " + receivedOrSent);
-			System.out.println("Host: " + packet.getAddress());
-			System.out.println("Host port: " + packet.getPort());
 			System.out.println("Length: " + packet.getLength());
 			if((isAck(packet) || isData(packet)) && packet.getLength() >= 4){
 				System.out.println("Block Num: " + getInt(packet));
-
 			}
 			System.out.println("The packet contains: " + new String(packet.getData()));
 			printBytes(packet.getData());
-		} else {
-			
-		}
-
+		} 
 	}
 	   
    /**
@@ -55,17 +51,17 @@ public class Printer {
 
 	}
 	
-	protected boolean isAck(DatagramPacket packet){
+	private boolean isAck(DatagramPacket packet){
 		if(packet.getData()[0] == 0 && packet.getData()[1] == 4) return true; 
 		return false;
 	}
 	
-	protected boolean isData(DatagramPacket packet){
+	private boolean isData(DatagramPacket packet){
 		if(packet.getData()[0] == 0 && packet.getData()[1] == 3) return true; 
 		return false;
 	}
 	
-	protected int getInt(DatagramPacket packet){
+	private int getInt(DatagramPacket packet){
 		return ((packet.getData()[2] & 0xff) << 8) | (packet.getData()[3] & 0xff);
 	}
 }
