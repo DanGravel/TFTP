@@ -790,8 +790,8 @@ public class IntermediateHost extends Host {
 				resizedPacket = new DatagramPacket(newData, newData.length);
 			}
 			else {
-				newData = new byte[2];
-				newData = Arrays.copyOf(receivePacket.getData(), 2);
+				newData = Arrays.copyOf(receivePacket.getData(), 5);
+				newData[ACK_PACKET_SIZE] = 1;
 				resizedPacket = new DatagramPacket(newData, newData.length);
 			}
 			sendToClient(clientPort, resizedPacket);
@@ -819,13 +819,13 @@ public class IntermediateHost extends Host {
 			byte[] data = receivePacket.getData();
 			byte[] newData = null;
 			if(requestType == RequestType.READ) {
-				newData = new byte[2];
-				System.arraycopy(data, 0, newData, 0, newData.length);
+				newData = Arrays.copyOf(receivePacket.getData(), 5);
+				newData[ACK_PACKET_SIZE] = 1;
 				resizedPacket = new DatagramPacket(newData, newData.length);
 			}
 			else {
-				newData = new byte[PACKET_SIZE + 20];
-				System.arraycopy(data, 0, newData, 0, data.length);
+				newData = Arrays.copyOf(receivePacket.getData(), PACKET_SIZE+1);
+				newData[PACKET_SIZE] = 1;
 				resizedPacket = new DatagramPacket(newData, newData.length);
 			}
 			
