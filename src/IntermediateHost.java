@@ -780,7 +780,7 @@ public class IntermediateHost extends Host {
 				else receiveFromClient(PACKET_SIZE);
 				sendToServerThread(serverThreadPort);
 				if(requestType == RequestType.READ) packet =  receiveFromServer(PACKET_SIZE);
-				else packet = receiveFromServer(ACK_PACKET_SIZE);
+				else packet = receiveFromServer(PACKET_SIZE + 1); //DAN
 			}
 
 			byte[] data = receivePacket.getData();

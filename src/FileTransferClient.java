@@ -502,6 +502,7 @@ public class FileTransferClient extends Host{
 		int i = 3; //start of error message
 		while(data[i++] != 0){
 			error += (char)data[i];
+			if(i+1 == data.length) break;
 		}
 		
 		switch(request){
