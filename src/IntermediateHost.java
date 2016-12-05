@@ -577,8 +577,8 @@ public class IntermediateHost extends Host {
 						
                         lost = foundPacket(packet);	
 					}
-					sendToClient(clientPort);
 					new ErrorSim(0, packet.getData(), clientPort, fakeTID, diffTID).start();
+					sendToClient(clientPort);
 				}
 				finishTransfer(requestType, clientPort, serverThreadPort);
 			}
@@ -611,8 +611,8 @@ public class IntermediateHost extends Host {
 						
 						  lost = foundPacket(packet);	
 					}
-					sendToServerThread(serverThreadPort);
 					new ErrorSim(0, packet.getData(), serverThreadPort, fakeTID, diffTID).start();
+					sendToServerThread(serverThreadPort);
 				}
 				conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
 			}
