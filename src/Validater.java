@@ -9,6 +9,7 @@ public class Validater {
 	
 	String fileName = "";
 	public static final int FILE_NAME_START = 2; // Index where filename starts for RRQ and WRQ
+	private String illegalErrorType;
 	
 	/**
 	 * @param data	The data of packet received
@@ -37,7 +38,7 @@ public class Validater {
 		//Append filename if request was read or write
 		while(data[i] != 0 && i < data.length){
 			fileName += (char)data[i];
-			if(fileName.charAt(i-2) == '.') x = i; 
+			if(fileName.charAt(i) == '.') x = i; 
 			i++;
 		}
 		x +=4;
