@@ -546,7 +546,7 @@ public class IntermediateHost extends Host {
 			e.printStackTrace();
 		}
 
-		RequestType	requestType = validate.validate(receiveFromClient(PACKET_SIZE).getData()); // receive request packet
+		RequestType requestType = validate.validate(receiveFromClient(PACKET_SIZE).getData()); // receive request packet
 			int clientPort = receivePacket.getPort();
 		
 			sendToServer();	// send request
@@ -784,13 +784,13 @@ public class IntermediateHost extends Host {
 			byte[] data = receivePacket.getData();
 			byte[] newData = null;
 			if(requestType == RequestType.READ) {
-				newData = new byte[PACKET_SIZE + 20];
-				System.arraycopy(data, 0, newData, 0, data.length);
+				newData = Arrays.copyOf(receivePacket.getData(), PACKET_SIZE+1);
+				newData[PACKET_SIZE] = 1;
 				resizedPacket = new DatagramPacket(newData, newData.length);
 			}
 			else {
 				newData = new byte[2];
-				System.arraycopy(data, 0, newData, 0, newData.length);
+				newData = Arrays.copyOf(receivePacket.getData(), 2);
 				resizedPacket = new DatagramPacket(newData, newData.length);
 			}
 			sendToClient(clientPort, resizedPacket);
