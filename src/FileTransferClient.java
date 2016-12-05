@@ -249,7 +249,22 @@ public class FileTransferClient extends Host{
 						filedata = new byte[0];
 						packetdata = createDataPacket(filedata, blockNum);
 						sendaPacket(packetdata, packetdata.length, receivePacket.getPort(), socket, sender,initAddress);
-						receiveaPacket(sender, socket);	
+						int portyMcPorty = receivePacket.getPort();
+						boolean respondFinal = false;
+						int numtimeout = 0;
+						while(!respondFinal) {
+							try {
+							 receiveaPacket(sender, socket);
+							 respondFinal= true;
+							} catch(SocketTimeoutException e) {
+								sendaPacket(packetdata, packetdata.length, portyMcPorty, socket, sender, initAddress);
+								numtimeout++;
+							}
+							if(numtimeout > 4){
+								System.out.println("Client timed out");
+								return;
+							}
+						}
 						break;
 					}
 				
@@ -488,6 +503,7 @@ public class FileTransferClient extends Host{
 		int i = 3; //start of error message
 		while(data[i++] != 0){
 			error += (char)data[i];
+			if(i+1 == data.length) break;
 		}
 		
 		switch(request){
@@ -527,7 +543,7 @@ public class FileTransferClient extends Host{
 	private byte[] arrayCombiner(byte readOrWrite[], String message) {
 		  byte msg[] = message.getBytes();
 		  byte seperator[] = new byte[] {0}; //zeroByte();
-		  byte mode[] = "ascii".getBytes();
+		  byte mode[] = "ascii".getBytes(); //TODO
 		  ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
 		  try {
 			outputStream.write(readOrWrite);
