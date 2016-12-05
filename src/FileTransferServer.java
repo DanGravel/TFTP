@@ -222,7 +222,7 @@ public class FileTransferServer extends Host implements Runnable {
 			}
 			
 			invalidTID(receivePacket);
-			packetSize(receivePacket);
+			//packetSize(receivePacket);
 						
 			if(!isValidOpCode(receivePacket) || unexpectedOpCode)
 			{
@@ -238,9 +238,9 @@ public class FileTransferServer extends Host implements Runnable {
 				return;
 			}
 			else if(!isValidDataLen(receivePacket)){
-				String errorMsg = "Invalid data length > 512";
+				String errorMsg = "Invalid data length > 516";
 				sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
-				System.exit(1);
+				//System.exit(1);
 				return;
 			}
 		} catch (Exception e1) {
@@ -276,7 +276,7 @@ public class FileTransferServer extends Host implements Runnable {
 						if (invalidTID(receivePacket)){
 							isWrongTID = true;
 						}
-						packetSize(receivePacket);
+						//packetSize(receivePacket);
 						
 						if (validater.validate(receivePacket.getData()) != RequestType.DATA){
 							System.out.println("Received Unexpected OpCode******");
@@ -299,7 +299,7 @@ public class FileTransferServer extends Host implements Runnable {
 						}
 						
 						if(!isValidDataLen(receivePacket)){
-							String errorMsg = "Invalid data length > 512";
+							String errorMsg = "Invalid data length > 516";
 							sendError(errorMsg, receivePacket.getPort(),sendAndReceiveSocket,"Server",4);
 							System.exit(1);
 							break;

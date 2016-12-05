@@ -780,7 +780,7 @@ public class IntermediateHost extends Host {
 				else receiveFromClient(PACKET_SIZE);
 				sendToServerThread(serverThreadPort);
 				if(requestType == RequestType.READ) packet =  receiveFromServer(PACKET_SIZE);
-				else packet = receiveFromServer(PACKET_SIZE + 1); //DAN
+				else packet = receiveFromServer(PACKET_SIZE); //DAN
 			}
 
 			byte[] data = receivePacket.getData();
@@ -1051,7 +1051,7 @@ public class IntermediateHost extends Host {
 	private DatagramPacket receiveFromClient(int size) {
 		DatagramPacket returnPacket = null;
 		try {
-			 returnPacket = receiveaPacket("Intermediate", sendReceiveSocket, size);
+			 returnPacket = receiveaPacket("Intermediate", sendReceiveSocket);
 			 initAddress = returnPacket.getAddress();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -1063,7 +1063,7 @@ public class IntermediateHost extends Host {
 	private DatagramPacket receiveFromServer(int size) {
 		DatagramPacket returnPacket = null;
 		try {
-			 returnPacket = receiveaPacket("Intermediate", serverSocket, size);
+			 returnPacket = receiveaPacket("Intermediate", serverSocket);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
