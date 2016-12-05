@@ -33,17 +33,18 @@ public class Validater {
 	
 	public String validateFileNameOrModeOrDelimiters(RequestType request, byte data[], String error) {
 		String mode = "";
+		fileName = "";
 		int i = Validater.FILE_NAME_START;
 		int x = i; 
 		//Append filename if request was read or write
 		while(data[i] != 0 && i < data.length){
 			fileName += (char)data[i];
-			if(fileName.charAt(i) == '.') x = i; 
+			if(fileName.charAt(i - 2) == '.') x = i;
 			i++;
 		}
-		x +=4;
+		x += 2;
 		
-		if(data[x] != 0 && i == data.length - 1) {
+		if(data[x] != 0 && i == data.length - 1) { 
 			return "Missing Delimeter 1";
 		}
 		
@@ -58,7 +59,6 @@ public class Validater {
 		{
 			return "Missing Delimeter 2";
 		}
-		
 		if(fileName.length() == 0 ||fileName.length() > 15)  
 		{
 			return "Missing filename";
