@@ -1,6 +1,7 @@
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.*;
+import java.util.Arrays;
 import java.util.Scanner;
 
 public class IntermediateHost extends Host {
@@ -347,8 +348,13 @@ public class IntermediateHost extends Host {
 						else delayed = foundPacket(receiveFromClient(PACKET_SIZE));
 						
 					}
+					sendToServerThread(serverThreadPort);
 					new ErrorSim(delayTime, receivePacket.getData(), serverThreadPort, serverSocket, delay).start();
 				}
+                if(requestType == RequestType.WRITE) {
+                    receiveFromServer(ACK_PACKET_SIZE);
+                    sendToClient(clientPort);
+                }
 				conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
 			}
 		}
@@ -476,7 +482,7 @@ public class IntermediateHost extends Host {
 				if (requestType == RequestType.READ)receiveFromClient(ACK_PACKET_SIZE);
 				else receiveFromClient(PACKET_SIZE);
 				sendToServerThread(serverThreadPort);
-				
+								
 				finishTransfer(requestType, clientPort, serverThreadPort);
 				
 			}else if((requestType == RequestType.READ && packetType == 4) || (requestType == RequestType.WRITE && packetType == 3)) {
@@ -512,10 +518,19 @@ public class IntermediateHost extends Host {
 			    		dupli = foundPacket(packet);						 
 					}
 			    	sendToServerThread(serverThreadPort);
+					receiveFromServer(ACK_PACKET_SIZE);
+					sendToClient(clientPort);
 					new ErrorSim(delayTime, packet.getData(), serverThreadPort, serverSocket, duplicate).start();;
 				}				
-
+				if(requestType == RequestType.WRITE) {
+					if(delayTime < 5000) {
+						receiveFromServer(ACK_PACKET_SIZE);
+						sendToClient(clientPort);
+					}
+				}
 	    		conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
+	    		receiveFromServer(ACK_PACKET_SIZE);
+	    		sendToClient(clientPort);
 			}	
 		}
 	}
@@ -532,7 +547,7 @@ public class IntermediateHost extends Host {
 			e.printStackTrace();
 		}
 
-		RequestType	requestType = validate.validate(receiveFromClient(PACKET_SIZE).getData()); // receive request packet
+		RequestType requestType = validate.validate(receiveFromClient(PACKET_SIZE).getData()); // receive request packet
 			int clientPort = receivePacket.getPort();
 		
 			sendToServer();	// send request
@@ -770,13 +785,13 @@ public class IntermediateHost extends Host {
 			byte[] data = receivePacket.getData();
 			byte[] newData = null;
 			if(requestType == RequestType.READ) {
-				newData = new byte[PACKET_SIZE + 20];
-				System.arraycopy(data, 0, newData, 0, data.length);
+				newData = Arrays.copyOf(receivePacket.getData(), PACKET_SIZE+1);
+				newData[PACKET_SIZE] = 1;
 				resizedPacket = new DatagramPacket(newData, newData.length);
 			}
 			else {
 				newData = new byte[2];
-				System.arraycopy(data, 0, newData, 0, newData.length);
+				newData = Arrays.copyOf(receivePacket.getData(), 2);
 				resizedPacket = new DatagramPacket(newData, newData.length);
 			}
 			sendToClient(clientPort, resizedPacket);
@@ -1165,6 +1180,7 @@ public class IntermediateHost extends Host {
 			} catch (UnknownHostException e) {
 				e.printStackTrace();
 			}
+			
 			p.printSenderOrReceiverInfo(false, sendPacket, host);
 			
 			try {

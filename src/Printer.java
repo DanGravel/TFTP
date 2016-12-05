@@ -19,7 +19,7 @@ public class Printer {
 	public void printSenderOrReceiverInfo(boolean isReceiving, DatagramPacket packet, String host) {
 		if (isVerbose()) {
 			String receivedOrSent = (isReceiving) ? "received from: " : "sent to: ";
-			System.out.println(host + ": Packet " + receivedOrSent);
+			System.out.println("\n" + host + ": Packet " + receivedOrSent);
 			System.out.println("Host: " + packet.getAddress());
 			System.out.println("Host port: " + packet.getPort());
 			System.out.println("Length: " + packet.getLength());
