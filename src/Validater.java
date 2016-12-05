@@ -38,7 +38,7 @@ public class Validater {
 		//Append filename if request was read or write
 		while(data[i] != 0 && i < data.length){
 			fileName += (char)data[i];
-			if(fileName.charAt(i-2) == '.') x = i; 
+			if(fileName.charAt(i) == '.') x = i; 
 			i++;
 		}
 		x +=4;
