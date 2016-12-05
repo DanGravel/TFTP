@@ -79,6 +79,7 @@ public abstract class Host {
 	    	  receivePacket.setData(Arrays.copyOf(data, receivePacket.getLength()));
 	    	  receivePacket.setLength(receivePacket.getLength());
 	      }
+
 	      p.printSenderOrReceiverInfo(true, receivePacket, host);
 	      return receivePacket;
 	  }

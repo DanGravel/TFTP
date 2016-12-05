@@ -9,6 +9,7 @@ public class Validater {
 	
 	String fileName = "";
 	public static final int FILE_NAME_START = 2; // Index where filename starts for RRQ and WRQ
+	private String illegalErrorType;
 	
 	/**
 	 * @param data	The data of packet received
