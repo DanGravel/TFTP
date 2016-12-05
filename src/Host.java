@@ -70,13 +70,14 @@ public abstract class Host {
 		  byte data[] = new byte[PACKET_SIZE+1];
 	      receivePacket = new DatagramPacket(data, data.length);
 	      receiveSocket.receive(receivePacket);
-	      if(receivePacket.getData()[4] == 0 && receivePacket.getData()[1] == 4){
+	      
+	      /*if(receivePacket.getData()[4] == 0 && receivePacket.getData()[1] == 4){
 	    	  receivePacket.setData(Arrays.copyOf(data, ACK_PACKET_SIZE));
 	    	  receivePacket.setLength(ACK_PACKET_SIZE);
-	      }
-	      else if(receivePacket.getData()[PACKET_SIZE] == 0) {
-	    	  receivePacket.setData(Arrays.copyOf(data, PACKET_SIZE));
-	    	  receivePacket.setLength(PACKET_SIZE);
+	      }*/
+	      if(receivePacket.getData()[PACKET_SIZE] == 0) {
+	    	  receivePacket.setData(Arrays.copyOf(data, receivePacket.getLength()));
+	    	  receivePacket.setLength(receivePacket.getLength());
 	      }
 	      p.printSenderOrReceiverInfo(true, receivePacket, host);
 	      return receivePacket;
@@ -183,7 +184,8 @@ public abstract class Host {
 		while (wholePacket[endOfPacket] != 0 && endOfPacket != 515) {
 			endOfPacket++;
 		}
-		if (wholePacket[515] != 0) {
+		
+		if (wholePacket.length > 515 && wholePacket[515] != 0) {
 			endOfPacket++;
 		}
 		return endOfPacket;

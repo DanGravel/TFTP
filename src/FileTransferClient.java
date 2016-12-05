@@ -312,8 +312,9 @@ public class FileTransferClient extends Host{
 								return;
 							}
 							
+							boolean isCorrectAck = validAckNum(receivePacket,blockNum);
 							//Checks the ACK number
-							if(validAckNum(receivePacket,blockNum)) response = true;	
+							if(isCorrectAck) response = true;	
 							
 						}catch(SocketTimeoutException e){			 			
 							sendaPacket(packetdata, packetdata.length, portyo, socket, sender,initAddress);
