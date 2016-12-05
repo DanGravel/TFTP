@@ -244,7 +244,8 @@ public class FileTransferServer extends Host implements Runnable {
 				return;
 			}
 		} catch (Exception e1) {
-			e1.printStackTrace();
+			System.out.println("Timed out, terminating transfer");
+			return;
 		}
 		boolean isWrongTID = false;
 		request = validater.validate(receivePacket.getData()); //Get the request

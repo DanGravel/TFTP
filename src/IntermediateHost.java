@@ -779,7 +779,7 @@ public class IntermediateHost extends Host {
 		if(requestType == RequestType.READ) {
 			while(!done && error == 0) {				
 				receiveFromServer();
-				done = getSize() < PACKET_SIZE;
+				done = receivePacket.getLength() < PACKET_SIZE;
 				sendToClient(clientPort); 
 				if(error == 1) break;
 				receiveFromClient();
@@ -791,7 +791,7 @@ public class IntermediateHost extends Host {
 		else {
 			while(!done && error == 0) {
 				receiveFromClient();
-				done = getSize() < PACKET_SIZE;
+				done = receivePacket.getLength() < PACKET_SIZE;
 				sendToServerThread(serverThreadPort);
 				if(error == 1) break;
 				receiveFromServer();

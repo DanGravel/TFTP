@@ -173,7 +173,7 @@ public abstract class Host {
 		while (wholePacket[endOfPacket] != 0 && endOfPacket != 515) {
 			endOfPacket++;
 		}
-		if (wholePacket[515] != 0) {
+		if (wholePacket.length >= 515 && wholePacket[515] != 0) {
 			endOfPacket++;
 		}
 		return endOfPacket;
