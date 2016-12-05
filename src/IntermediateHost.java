@@ -347,8 +347,13 @@ public class IntermediateHost extends Host {
 						else delayed = foundPacket(receiveFromClient(PACKET_SIZE));
 						
 					}
+					sendToServerThread(serverThreadPort);
 					new ErrorSim(delayTime, receivePacket.getData(), serverThreadPort, serverSocket, delay).start();
 				}
+                if(requestType == RequestType.WRITE) {
+                    receiveFromServer(ACK_PACKET_SIZE);
+                    sendToClient(clientPort);
+                }
 				conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
 			}
 		}
@@ -476,7 +481,7 @@ public class IntermediateHost extends Host {
 				if (requestType == RequestType.READ)receiveFromClient(ACK_PACKET_SIZE);
 				else receiveFromClient(PACKET_SIZE);
 				sendToServerThread(serverThreadPort);
-				
+								
 				finishTransfer(requestType, clientPort, serverThreadPort);
 				
 			}else if((requestType == RequestType.READ && packetType == 4) || (requestType == RequestType.WRITE && packetType == 3)) {
@@ -512,10 +517,19 @@ public class IntermediateHost extends Host {
 			    		dupli = foundPacket(packet);						 
 					}
 			    	sendToServerThread(serverThreadPort);
+					receiveFromServer(ACK_PACKET_SIZE);
+					sendToClient(clientPort);
 					new ErrorSim(delayTime, packet.getData(), serverThreadPort, serverSocket, duplicate).start();;
 				}				
-
+				if(requestType == RequestType.WRITE) {
+					if(delayTime < 5000) {
+						receiveFromServer(ACK_PACKET_SIZE);
+						sendToClient(clientPort);
+					}
+				}
 	    		conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
+	    		receiveFromServer(ACK_PACKET_SIZE);
+	    		sendToClient(clientPort);
 			}	
 		}
 	}
@@ -1165,6 +1179,7 @@ public class IntermediateHost extends Host {
 			} catch (UnknownHostException e) {
 				e.printStackTrace();
 			}
+			
 			p.printSenderOrReceiverInfo(false, sendPacket, host);
 			
 			sendPacket.setAddress(initAddress);
