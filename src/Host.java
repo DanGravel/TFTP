@@ -81,16 +81,7 @@ public abstract class Host {
 	      p.printSenderOrReceiverInfo(true, receivePacket, host);
 	      return receivePacket;
 	  }
-	  
-	  
-	  protected DatagramPacket receiveaPacket(String host, DatagramSocket receiveSocket, int packetSize) throws SocketTimeoutException, IOException {
-		  byte data[] = new byte[packetSize];
-	      receivePacket = new DatagramPacket(data, data.length); 
-	      receiveSocket.receive(receivePacket);
-	      p.printSenderOrReceiverInfo(true, receivePacket, host);
-	      return receivePacket;
-	  }
-  
+ 
   
   /**
    * creates a byte array with the acknowledgement info

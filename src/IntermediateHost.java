@@ -31,7 +31,6 @@ public class IntermediateHost extends Host {
 		}
 	}
 	
-
 	/*
 	 * 0 - Normal
 	 * 1 - Lose packet
@@ -174,11 +173,10 @@ public class IntermediateHost extends Host {
 	}
 	
 	private void normal() {
-		RequestType r = validate.validate(receiveFromClient(PACKET_SIZE).getData());
+		RequestType r = validate.validate(receiveFromClient().getData());
 		int clientPort = receivePacket.getPort();
 		sendToServer();
-		if(r == RequestType.WRITE) receiveFromServer(ACK_PACKET_SIZE);
-		else receiveFromServer(PACKET_SIZE);
+		receiveFromServer();
 		int serverThreadPort = receivePacket.getPort();
 		sendToClient(clientPort);
 		finishTransfer(r, clientPort, serverThreadPort);		
@@ -191,17 +189,15 @@ public class IntermediateHost extends Host {
 		RequestType requestType = null;
 		if(packetType == 1){ // RRQ or WRQ
 			System.out.println("Losing a request packet");
-			receiveFromClient(PACKET_SIZE);						
+			receiveFromClient();						
 		}
 		else {
-			requestType = validate.validate(receiveFromClient(PACKET_SIZE).getData()); // receive request packet
+			requestType = validate.validate(receiveFromClient().getData()); // receive request packet
 			int clientPort = receivePacket.getPort();
 		
 			sendToServer();	// send request
 			if((requestType == RequestType.READ && packetType == 3) ||(requestType == RequestType.WRITE && packetType == 4)) {
-				DatagramPacket packet = null;
-				if(requestType == RequestType.READ) packet = receiveFromServer(PACKET_SIZE);
-				else packet = receiveFromServer(ACK_PACKET_SIZE);
+				DatagramPacket packet = receiveFromServer();
 				serverThreadPort = packet.getPort(); 
 				if(foundPacket(packet)) {
 					System.out.println("Lost packet # " + packetNum);
@@ -210,14 +206,9 @@ public class IntermediateHost extends Host {
 					lost = false;
 					while(!lost) {
 						sendToClient(clientPort);
-						
-						if (requestType == RequestType.READ) receiveFromClient(ACK_PACKET_SIZE);
-						else receiveFromClient(PACKET_SIZE);
-						
+						receiveFromClient();
 						sendToServerThread(serverThreadPort);
-						
-						if(requestType == RequestType.READ) lost = foundPacket(receiveFromServer(PACKET_SIZE));
-						else lost = foundPacket(receiveFromServer(ACK_PACKET_SIZE));
+						lost = foundPacket(receiveFromServer());
 						
 					}
 					System.out.println("Lost packet # " + packetNum);	
@@ -227,14 +218,10 @@ public class IntermediateHost extends Host {
 			}
 				
 			else if((requestType == RequestType.READ && packetType == 4) || (requestType == RequestType.WRITE && packetType == 3)) {				
-				if(requestType == RequestType.READ) serverThreadPort = receiveFromServer(PACKET_SIZE).getPort();
-				else serverThreadPort = receiveFromServer(ACK_PACKET_SIZE).getPort();
-				
+				serverThreadPort = receiveFromServer().getPort();
 				sendToClient(clientPort);
 				
-				DatagramPacket packet = null;
-				if (requestType == RequestType.READ) packet = receiveFromClient(ACK_PACKET_SIZE);
-				else packet = receiveFromClient(PACKET_SIZE);
+				DatagramPacket packet = receiveFromClient();
 
 				if(foundPacket(packet)) {
 					System.out.println("Lost packet # " + packetNum);
@@ -243,17 +230,12 @@ public class IntermediateHost extends Host {
 					lost = false; 
 					while(!lost) {
 						sendToServerThread(serverThreadPort);
-						if(requestType == RequestType.READ) receiveFromServer(PACKET_SIZE);
-						else receiveFromServer(ACK_PACKET_SIZE);
-						
+						receiveFromServer();
 						sendToClient(clientPort);
-						
-						if (requestType == RequestType.READ) lost = foundPacket(receiveFromClient(ACK_PACKET_SIZE));
-						else lost = foundPacket(receiveFromClient(PACKET_SIZE));
+						lost = foundPacket(receiveFromClient());
 					}
 					System.out.println("Lost packet # " + packetNum);
 				}
-				
 				conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
 			}
 		}
@@ -267,13 +249,11 @@ public class IntermediateHost extends Host {
 		
 		if(packetType == 1){ // RRQ or WRQ
 			System.out.println("Delay a request packet");
-			requestType = validate.validate(receiveFromClient(PACKET_SIZE).getData());
+			requestType = validate.validate(receiveFromClient().getData());
 			int clientPort = receivePacket.getPort();
 			
 			new ErrorSim(delayTime, receivePacket.getData(), SERVER_PORT, serverSocket, delay).start();
-			
-			if(requestType == RequestType.READ) receiveFromServer(PACKET_SIZE);
-			else receiveFromServer(ACK_PACKET_SIZE);
+			receiveFromServer();
 			
 			serverThreadPort = receivePacket.getPort();
 			sendToClient(clientPort);
@@ -282,17 +262,12 @@ public class IntermediateHost extends Host {
 
 		}
 		else {
-			requestType = validate.validate(receiveFromClient(PACKET_SIZE).getData()); // receive request packet
+			requestType = validate.validate(receiveFromClient().getData()); // receive request packet
 			int clientPort = receivePacket.getPort();
-		
 			sendToServer();	// send request
 			
 			if((requestType == RequestType.READ && packetType == 3) || (requestType == RequestType.WRITE && packetType == 4)) {
-				DatagramPacket packet = null;
-				
-				if(requestType == RequestType.READ) packet = receiveFromServer(PACKET_SIZE);
-				else packet = receiveFromServer(ACK_PACKET_SIZE);
-
+				DatagramPacket packet = receiveFromServer();
 				serverThreadPort = packet.getPort();
 				
 				if(foundPacket(packet)) {
@@ -302,34 +277,21 @@ public class IntermediateHost extends Host {
 					delayed = false; 
 					while(!delayed) {
 						sendToClient(clientPort);
-						
-						if (requestType == RequestType.READ)receiveFromClient(ACK_PACKET_SIZE);
-						else receiveFromClient(PACKET_SIZE);
-						
+						receiveFromClient();
 						sendToServerThread(serverThreadPort);
-						
-						if(requestType == RequestType.READ) delayed = foundPacket(receiveFromServer(PACKET_SIZE));
-						else delayed = foundPacket(receiveFromServer(ACK_PACKET_SIZE));
+						delayed = foundPacket(receiveFromServer());
 
 					}
 					new ErrorSim(delayTime, receivePacket.getData(), clientPort, sendReceiveSocket, delay).start();
-				}
-				
+				}	
 				finishTransfer(requestType, clientPort, serverThreadPort);
 			}
 			else if((requestType == RequestType.READ && packetType == 4) || (requestType == RequestType.WRITE && packetType == 3)) { 	
-				DatagramPacket packet = null;
-				
-				if(requestType == RequestType.READ) packet = receiveFromServer(PACKET_SIZE);
-				else packet = receiveFromServer(ACK_PACKET_SIZE);
-
+				DatagramPacket packet = receiveFromServer();
 				serverThreadPort = packet.getPort(); 
 				sendToClient(clientPort);
 				
-				DatagramPacket p = null;
-
-				if (requestType == RequestType.READ) p = receiveFromClient(ACK_PACKET_SIZE);
-				else p = receiveFromClient(PACKET_SIZE);
+				DatagramPacket p = receiveFromClient();
 				
 				if(foundPacket(p)) {
 					new ErrorSim(delayTime, receivePacket.getData(), serverThreadPort, serverSocket, delay).start();
@@ -338,21 +300,15 @@ public class IntermediateHost extends Host {
 					delayed = false;
 					while(!delayed) {
 						sendToServerThread(serverThreadPort);
-						
-						if(requestType == RequestType.READ) receiveFromServer(PACKET_SIZE);
-						else receiveFromServer(ACK_PACKET_SIZE);
-						
+						receiveFromServer();
 						sendToClient(clientPort);
-						
-						if (requestType == RequestType.READ) delayed = foundPacket(receiveFromClient(ACK_PACKET_SIZE));
-						else delayed = foundPacket(receiveFromClient(PACKET_SIZE));
-						
+						delayed = foundPacket(receiveFromClient());
 					}
 					sendToServerThread(serverThreadPort);
 					new ErrorSim(delayTime, receivePacket.getData(), serverThreadPort, serverSocket, delay).start();
 				}
                 if(requestType == RequestType.WRITE) {
-                    receiveFromServer(ACK_PACKET_SIZE);
+                    receiveFromServer();
                     sendToClient(clientPort);
                 }
 				conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
@@ -369,22 +325,18 @@ public class IntermediateHost extends Host {
 		RequestType requestType = null;
 		if(packetType == 1)
 		{
-			requestType = validate.validate(receiveFromClient(PACKET_SIZE).getData()); // get RRQ/WRQ
+			requestType = validate.validate(receiveFromClient().getData()); // get RRQ/WRQ
 			if(requestType == RequestType.READ || (requestType == RequestType.WRITE && delayTime < 5000)) {
 				DatagramPacket newPacket = receivePacket; // SAVE read
 				int clientPort = receivePacket.getPort();
 				sendToServer(); // Send request
-				if (requestType == RequestType.READ)serverThreadPort = receiveFromServer(PACKET_SIZE).getPort();
-				else serverThreadPort = receiveFromServer(ACK_PACKET_SIZE).getPort();
+				serverThreadPort = receiveFromServer().getPort();
 				sendToClient(clientPort);
 				
 				int newServerPort = 0;
 				new ErrorSim(delayTime, newPacket.getData(), SERVER_PORT, serverSocket, duplicate).start();
-				if (requestType == RequestType.READ) newServerPort = receiveFromServer(PACKET_SIZE).getPort();
-				else newServerPort = receiveFromServer(ACK_PACKET_SIZE).getPort();
-				
-				//sendToClient(clientPort);
-				
+				newServerPort = receiveFromServer().getPort();
+
 				if(serverThreadPort != newServerPort) {
 					DatagramSocket invalid = null;
 					try {
@@ -430,12 +382,12 @@ public class IntermediateHost extends Host {
 							e.printStackTrace();
 						}
 						
-						receiveFromServer(PACKET_SIZE);
+						receiveFromServer();
 						sendToClient(clientPort);
 					}
 				}.start(); 
 				
-				serverThreadPort = receiveFromServer(ACK_PACKET_SIZE).getPort();
+				serverThreadPort = receiveFromServer().getPort();
 				sendToClient(clientPort);
 				finishTransfer(RequestType.WRITE, clientPort, serverThreadPort);
 				
@@ -443,16 +395,12 @@ public class IntermediateHost extends Host {
 		}
 		else
 		{
-			requestType = validate.validate(receiveFromClient(PACKET_SIZE).getData()); // receive request packet
+			requestType = validate.validate(receiveFromClient().getData()); // receive request packet
 			int clientPort = receivePacket.getPort();
 			sendToServer();	// send request
 			if((requestType == RequestType.READ && packetType == 3) || (requestType == RequestType.WRITE && packetType == 4)) 
 			{
-				DatagramPacket duplicatePacket = null;
-				
-				if(requestType == RequestType.READ) duplicatePacket = receiveFromServer(PACKET_SIZE);
-				else duplicatePacket = receiveFromServer(ACK_PACKET_SIZE);
-				
+				DatagramPacket duplicatePacket = receiveFromServer();
 				serverThreadPort = receivePacket.getPort();
 				
 				if(foundPacket(duplicatePacket)) 
@@ -466,36 +414,22 @@ public class IntermediateHost extends Host {
 			    	while(!dupli) 
 			    	{
 						sendToClient(clientPort);
-						
-						if (requestType == RequestType.READ)receiveFromClient(ACK_PACKET_SIZE);
-						else receiveFromClient(PACKET_SIZE);
-						
+						receiveFromClient();
 						sendToServerThread(serverThreadPort);
-						
-						if(requestType == RequestType.READ) dupli = foundPacket(receiveFromServer(PACKET_SIZE));
-						else dupli = foundPacket(receiveFromServer(ACK_PACKET_SIZE));
+						dupli = foundPacket(receiveFromServer());
 						duplicatePacket = receivePacket;
-	
 					}
 			    	sendToClient(clientPort);
 					new ErrorSim(delayTime, duplicatePacket.getData(), clientPort, sendReceiveSocket, duplicate).start();
 			    }
-				if (requestType == RequestType.READ)receiveFromClient(ACK_PACKET_SIZE);
-				else receiveFromClient(PACKET_SIZE);
-				sendToServerThread(serverThreadPort);
-								
+				receiveFromClient();
+				sendToServerThread(serverThreadPort);				
 				finishTransfer(requestType, clientPort, serverThreadPort);
 				
 			}else if((requestType == RequestType.READ && packetType == 4) || (requestType == RequestType.WRITE && packetType == 3)) {
-				if(requestType == RequestType.READ) serverThreadPort = receiveFromServer(PACKET_SIZE).getPort();
-				else serverThreadPort = receiveFromServer(ACK_PACKET_SIZE).getPort();
-				
+				serverThreadPort = receiveFromServer().getPort();
 				sendToClient(clientPort);
-				
-				DatagramPacket packet = null;
-				if (requestType == RequestType.READ) packet = receiveFromClient(ACK_PACKET_SIZE);
-				else packet = receiveFromClient(PACKET_SIZE);
-			    
+				DatagramPacket packet = receiveFromClient();
 				if(foundPacket(packet)) 
 				{
 					sendToServerThread(serverThreadPort);
@@ -507,30 +441,24 @@ public class IntermediateHost extends Host {
 			    	while(!dupli) 
 			    	{
 			    		sendToServerThread(serverThreadPort);
-						
-			    		if(requestType == RequestType.READ) receiveFromServer(PACKET_SIZE);
-						else receiveFromServer(ACK_PACKET_SIZE);
-			    		
+			    		receiveFromServer();
 			    		sendToClient(clientPort);
-			    		
-						if (requestType == RequestType.READ) packet = receiveFromClient(ACK_PACKET_SIZE);
-						else packet = receiveFromClient(PACKET_SIZE);
-						
+			    		packet = receiveFromClient();
 			    		dupli = foundPacket(packet);						 
 					}
 			    	sendToServerThread(serverThreadPort);
-					receiveFromServer(ACK_PACKET_SIZE);
+					receiveFromServer();
 					sendToClient(clientPort);
 					new ErrorSim(delayTime, packet.getData(), serverThreadPort, serverSocket, duplicate).start();;
 				}				
 				if(requestType == RequestType.WRITE) {
 					if(delayTime < 5000) {
-						receiveFromServer(ACK_PACKET_SIZE);
+						receiveFromServer();
 						sendToClient(clientPort);
 					}
 				}
 	    		conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
-	    		receiveFromServer(ACK_PACKET_SIZE);
+	    		receiveFromServer();
 	    		sendToClient(clientPort);
 			}	
 		}
@@ -548,15 +476,15 @@ public class IntermediateHost extends Host {
 			e.printStackTrace();
 		}
 
-		RequestType requestType = validate.validate(receiveFromClient(PACKET_SIZE).getData()); // receive request packet
+		RequestType requestType = validate.validate(receiveFromClient().getData()); // receive request packet
 			int clientPort = receivePacket.getPort();
 		
 			sendToServer();	// send request
 			
 			if((requestType == RequestType.READ && packetType == 3) ||(requestType == RequestType.WRITE && packetType == 4)) {
 				DatagramPacket packet = null;
-				if(requestType == RequestType.READ) packet = receiveFromServer(PACKET_SIZE);
-				else packet = receiveFromServer(ACK_PACKET_SIZE);
+				if(requestType == RequestType.READ) packet = receiveFromServer();
+				else packet = receiveFromServer();
 				serverThreadPort = packet.getPort(); 
 				if(foundPacket(packet)) {
 					sendToClient(clientPort);
@@ -566,16 +494,9 @@ public class IntermediateHost extends Host {
 					lost = false;
 					while(!lost) {
 						sendToClient(clientPort);
-						
-						if (requestType == RequestType.READ) receiveFromClient(ACK_PACKET_SIZE);
-						else receiveFromClient(PACKET_SIZE);
-						
+						receiveFromClient();
 						sendToServerThread(serverThreadPort);
-						
-						
-						if(requestType == RequestType.READ) packet = receiveFromServer(PACKET_SIZE);
-						else packet = receiveFromServer(ACK_PACKET_SIZE);
-						
+						packet = receiveFromServer();
                         lost = foundPacket(packet);	
 					}
 					new ErrorSim(0, packet.getData(), clientPort, fakeTID, diffTID).start();
@@ -585,15 +506,9 @@ public class IntermediateHost extends Host {
 			}
 				
 			else if((requestType == RequestType.READ && packetType == 4) || (requestType == RequestType.WRITE && packetType == 3)) {				
-				if(requestType == RequestType.READ) serverThreadPort = receiveFromServer(PACKET_SIZE).getPort();
-				else serverThreadPort = receiveFromServer(ACK_PACKET_SIZE).getPort();
-				
+				serverThreadPort = receiveFromServer().getPort();
 				sendToClient(clientPort);
-				
-				DatagramPacket packet = null;
-				if (requestType == RequestType.READ) packet = receiveFromClient(ACK_PACKET_SIZE);
-				else packet = receiveFromClient(PACKET_SIZE);
-
+				DatagramPacket packet = receiveFromClient();
 				if(foundPacket(packet)) {
 					sendToServerThread(serverThreadPort);
 					new ErrorSim(0, packet.getData(), serverThreadPort, fakeTID, diffTID).start();
@@ -602,15 +517,10 @@ public class IntermediateHost extends Host {
 					lost = false; 
 					while(!lost) {
 						sendToServerThread(serverThreadPort);
-						if(requestType == RequestType.READ) receiveFromServer(PACKET_SIZE);
-						else receiveFromServer(ACK_PACKET_SIZE);
-						
+						receiveFromServer();
 						sendToClient(clientPort);
-						
-						if (requestType == RequestType.READ) packet = receiveFromClient(ACK_PACKET_SIZE);
-						else packet = receiveFromClient(PACKET_SIZE);
-						
-						  lost = foundPacket(packet);	
+						packet = receiveFromClient();
+						lost = foundPacket(packet);	
 					}
 					new ErrorSim(0, packet.getData(), serverThreadPort, fakeTID, diffTID).start();
 					sendToServerThread(serverThreadPort);
@@ -620,10 +530,8 @@ public class IntermediateHost extends Host {
 		}
 	
 	private void corruptRequest() {
-		RequestType r = validate.validate(receiveFromClient(PACKET_SIZE).getData());
+		RequestType r = validate.validate(receiveFromClient().getData());
 		int clientPort = receivePacket.getPort();
-		
-		//byte[] data = receivePacket.getData();
 		byte data[] = new byte[receivePacket.getLength()];
 		System.arraycopy(receivePacket.getData(), 0, data, 0, data.length);
 		
@@ -692,16 +600,13 @@ public class IntermediateHost extends Host {
 			corruptPacket = new DatagramPacket(newData, newData.length);
 			sendToServer(corruptPacket);
 		}
-		
-		if(r == RequestType.WRITE) receiveFromServer(ACK_PACKET_SIZE);
-		else receiveFromServer(PACKET_SIZE);
-		
+		receiveFromServer();
 		receivePacket.getPort();
 		sendToClient(clientPort);
 	}
 	
 	private void changeOpCode() {
-		RequestType requestType = validate.validate(receiveFromClient(PACKET_SIZE).getData());
+		RequestType requestType = validate.validate(receiveFromClient().getData());
 		int clientPort = receivePacket.getPort();
 		int serverThreadPort;
 		DatagramPacket wrongOp = null;
@@ -712,77 +617,65 @@ public class IntermediateHost extends Host {
 			data[1] = wrongOpCode[1];	
 			wrongOp = new DatagramPacket(data, data.length);
 			sendToServer(wrongOp);
-			receiveFromServer(PACKET_SIZE);			
+			receiveFromServer();			
 			serverThreadPort = receivePacket.getPort();
 			sendToClient(clientPort);
  		} else {
  			sendToServer();
-			DatagramPacket packet;
-			if(requestType == RequestType.READ) packet =  receiveFromServer(PACKET_SIZE);
-			else packet = receiveFromServer(ACK_PACKET_SIZE);
+			DatagramPacket packet = receiveFromServer();
 			serverThreadPort = receivePacket.getPort();
  			if((requestType == RequestType.READ && packetType == 3) ||(requestType == RequestType.WRITE && packetType == 4)) {
  			
  				while(!foundPacket(packet)) {
 					sendToClient(clientPort);
-					if (requestType == RequestType.READ) receiveFromClient(ACK_PACKET_SIZE);
-					else receiveFromClient(PACKET_SIZE);
+					receiveFromClient();
 					sendToServerThread(serverThreadPort);
-					if(requestType == RequestType.READ) packet =  receiveFromServer(PACKET_SIZE);
-					else packet = receiveFromServer(ACK_PACKET_SIZE);
+					packet = receiveFromServer();
 				}		
 				byte[] data = receivePacket.getData();
 				data[0] = wrongOpCode[0];
 				data[1] = wrongOpCode[1];
 				wrongOp = new DatagramPacket(data, data.length);
 				sendToClient(clientPort, wrongOp);
-				receiveFromClient(PACKET_SIZE);
+				receiveFromClient();
 				sendToServerThread(serverThreadPort);
  			} else if((requestType == RequestType.READ && packetType == 4) || (requestType == RequestType.WRITE && packetType == 3)) {
  				sendToClient(clientPort);
- 				if(requestType == RequestType.READ) packet =  receiveFromClient(ACK_PACKET_SIZE);
- 				else packet = receiveFromClient(PACKET_SIZE);
+ 				packet = receiveFromClient();
  				while(!foundPacket(packet)) {
 					sendToServerThread(serverThreadPort);
-					if(requestType == RequestType.READ) receiveFromServer(PACKET_SIZE);
-					else receiveFromServer(ACK_PACKET_SIZE);
+					receiveFromServer();
 					sendToClient(clientPort);
-					if (requestType == RequestType.READ) packet = receiveFromClient(ACK_PACKET_SIZE);
-					else packet = receiveFromClient(PACKET_SIZE);
+					packet = receiveFromClient();
 				}
  				byte[] data = receivePacket.getData();
 				data[0] = wrongOpCode[0];
 				data[1] = wrongOpCode[1];
 				wrongOp = new DatagramPacket(data, data.length);
 				sendToServerThread(serverThreadPort, wrongOp);
-				receiveFromServer(PACKET_SIZE);
+				receiveFromServer();
 				sendToClient(clientPort);
  			}
- 		}
- 			
+ 		}	
  	}
 	
 	private void resizePacket() {
-		RequestType requestType = validate.validate(receiveFromClient(PACKET_SIZE).getData());
+		RequestType requestType = validate.validate(receiveFromClient().getData());
 		int clientPort = receivePacket.getPort();
 		int serverThreadPort = 0;
 		DatagramPacket resizedPacket = null;
 		DatagramPacket packet = null;
 		sendToServer();	// send request
-		if(requestType == RequestType.READ) packet = receiveFromServer(PACKET_SIZE);
-		else packet = receiveFromServer(ACK_PACKET_SIZE);
+		packet = receiveFromServer();
 		serverThreadPort = packet.getPort(); 		
 		
 		if((requestType == RequestType.READ && packetType == 3) ||(requestType == RequestType.WRITE && packetType == 4)) {
 			while(!foundPacket(packet)) {
 				sendToClient(clientPort);
-				if (requestType == RequestType.READ) receiveFromClient(ACK_PACKET_SIZE);
-				else receiveFromClient(PACKET_SIZE);
+				receiveFromClient();
 				sendToServerThread(serverThreadPort);
-				if(requestType == RequestType.READ) packet =  receiveFromServer(PACKET_SIZE);
-				else packet = receiveFromServer(ACK_PACKET_SIZE);
+				packet = receiveFromServer();
 			}
-
 			byte[] data = receivePacket.getData();
 			byte[] newData = null;
 			if(requestType == RequestType.READ) {
@@ -796,25 +689,18 @@ public class IntermediateHost extends Host {
 				resizedPacket = new DatagramPacket(newData, newData.length);
 			}
 			sendToClient(clientPort, resizedPacket);
-			receiveFromClient(PACKET_SIZE);		// should be receiving an error
+			receiveFromClient();		// should be receiving an error
 			sendToServerThread(serverThreadPort);
 			
 		} else if((requestType == RequestType.READ && packetType == 4) || (requestType == RequestType.WRITE && packetType == 3)) {
 			sendToClient(clientPort);
-			
-			if (requestType == RequestType.READ) packet = receiveFromClient(ACK_PACKET_SIZE);
-			else packet = receiveFromClient(PACKET_SIZE);
+			packet = receiveFromClient();
 			
 			while(!foundPacket(packet)) {
 				sendToServerThread(serverThreadPort);
-				
-				if(requestType == RequestType.READ) receiveFromServer(PACKET_SIZE);
-				else receiveFromServer(ACK_PACKET_SIZE);
-				
+				receiveFromServer();
 				sendToClient(clientPort);
-				
-				if (requestType == RequestType.READ) packet = receiveFromClient(ACK_PACKET_SIZE);
-				else packet = receiveFromClient(PACKET_SIZE);
+				packet = receiveFromClient();
 			}
 			
 			byte[] data = receivePacket.getData();
@@ -828,10 +714,9 @@ public class IntermediateHost extends Host {
 				newData = Arrays.copyOf(receivePacket.getData(), PACKET_SIZE+1);
 				newData[PACKET_SIZE] = 1;
 				resizedPacket = new DatagramPacket(newData, newData.length);
-			}
-			
+			}	
 			sendToServerThread(serverThreadPort, resizedPacket);
-			receiveFromServer(PACKET_SIZE);	// receive error packet
+			receiveFromServer();	// receive error packet
 			sendToClient(clientPort);
 		}
 	}
@@ -845,16 +730,13 @@ public class IntermediateHost extends Host {
 		RequestType requestType = null;
 
 		DatagramPacket packet = null;
-		requestType = validate.validate(receiveFromClient(PACKET_SIZE).getData()); // receive request packet
+		requestType = validate.validate(receiveFromClient().getData()); // receive request packet
 		int clientPort = receivePacket.getPort();
 		sendToServer();	// send request
 		if((requestType == RequestType.READ && packetType == 3) || (requestType == RequestType.WRITE && packetType == 4)) 
 		{				
-			if(requestType == RequestType.READ) packet = receiveFromServer(PACKET_SIZE);
-			else packet = receiveFromServer(ACK_PACKET_SIZE);
-			
+			packet = receiveFromServer();
 			data = packet.getData();
-			
 			serverThreadPort = receivePacket.getPort();
 			
 			if(foundPacket(packet)) 
@@ -871,16 +753,10 @@ public class IntermediateHost extends Host {
 		    	while(!currPacket) 
 		    	{
 					sendToClient(clientPort);
-					
-					if (requestType == RequestType.READ)receiveFromClient(ACK_PACKET_SIZE);
-					else receiveFromClient(PACKET_SIZE);
-					
+					receiveFromClient();
 					sendToServerThread(serverThreadPort);
-					
-					if(requestType == RequestType.READ) currPacket = foundPacket(receiveFromServer(PACKET_SIZE));
-					else currPacket = foundPacket(receiveFromServer(ACK_PACKET_SIZE));
+					currPacket = foundPacket(receiveFromServer());
 					packet = receivePacket;
-
 				}
 		    	data = packet.getData();
 				data[2] = wrongBlockNum[0];
@@ -892,14 +768,9 @@ public class IntermediateHost extends Host {
 			finishTransfer(requestType, clientPort, serverThreadPort);
 			
 		}else if((requestType == RequestType.READ && packetType == 4) || (requestType == RequestType.WRITE && packetType == 3)) {
-			if(requestType == RequestType.READ) serverThreadPort = receiveFromServer(PACKET_SIZE).getPort();
-			else serverThreadPort = receiveFromServer(ACK_PACKET_SIZE).getPort();
-			
+			serverThreadPort = receiveFromServer().getPort();
 			sendToClient(clientPort);
-			
-			if (requestType == RequestType.READ) packet = receiveFromClient(ACK_PACKET_SIZE);
-			else packet = receiveFromClient(PACKET_SIZE);
-		    
+			packet = receiveFromClient();
 			data = packet.getData();
 			
 			if(foundPacket(packet)) 
@@ -917,15 +788,8 @@ public class IntermediateHost extends Host {
 		    	while(!currPacket) 
 		    	{
 		    		sendToServerThread(serverThreadPort);
-					
-		    		if(requestType == RequestType.READ) receiveFromServer(PACKET_SIZE);
-					else receiveFromServer(ACK_PACKET_SIZE);
-		    		
-		    		sendToClient(clientPort);
-		    		
-					if (requestType == RequestType.READ) packet = receiveFromClient(ACK_PACKET_SIZE);
-					else packet = receiveFromClient(PACKET_SIZE);
-					
+		    		receiveFromServer();
+		    		packet = receiveFromClient();
 		    		currPacket = foundPacket(packet);						 
 				}
 		    	data = packet.getData();
@@ -936,10 +800,9 @@ public class IntermediateHost extends Host {
 				sendToServerThread(serverThreadPort, changedBlockNum);
 			}
     		if(requestType == RequestType.WRITE) {
-    			receiveFromServer(ACK_PACKET_SIZE);
+    			receiveFromServer();
     			sendToClient(clientPort);
     		}
-			
 			conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
 		}
 	}
@@ -948,12 +811,12 @@ public class IntermediateHost extends Host {
 		boolean done = false; 
 		if(requestType == RequestType.READ) {
 			while(!done && error == 0) {				
-				receiveFromServer(PACKET_SIZE);
+				receiveFromServer();
 				done = getSize() < PACKET_SIZE;
 				
 				sendToClient(clientPort); 
 				if(error == 1) break;
-				receiveFromClient(ACK_PACKET_SIZE);
+				receiveFromClient();
 				sendToServerThread(serverThreadPort);
 			}
 			done = false; 
@@ -961,12 +824,12 @@ public class IntermediateHost extends Host {
 		}
 		else {
 			while(!done && error == 0) {
-				receiveFromClient(PACKET_SIZE);
+				receiveFromClient();
 				done = getSize() < PACKET_SIZE;
 				
 				sendToServerThread(serverThreadPort);
 				if(error == 1) break;
-				receiveFromServer(ACK_PACKET_SIZE);
+				receiveFromServer();
 				sendToClient(clientPort); 
 			}
 			done = false; 
@@ -977,17 +840,17 @@ public class IntermediateHost extends Host {
 		boolean done = false;
 		if(requestType == RequestType.READ) {
 			while(!done && error == 0) {
-				receiveFromClient(ACK_PACKET_SIZE);
+				receiveFromClient();
 				sendToServerThread(serverThreadPort);
 				if(error == 1) break;
-				receiveFromServer(PACKET_SIZE);
+				receiveFromServer();
 				done = getSize() < PACKET_SIZE;
 				
 				sendToClient(clientPort);
 			}
 			
 			if(error == 0) {
-				receiveFromClient(ACK_PACKET_SIZE);
+				receiveFromClient();
 				sendToServerThread(serverThreadPort);
 			}
 			done = false; 
@@ -995,11 +858,11 @@ public class IntermediateHost extends Host {
 		
 		else {
 			while(!done && error == 0) {
-				receiveFromClient(PACKET_SIZE);
+				receiveFromClient();
 				done = getSize() < PACKET_SIZE;
 				sendToServerThread(serverThreadPort);
 				if(error == 1) break; 
-				receiveFromServer(ACK_PACKET_SIZE);
+				receiveFromServer();
 				sendToClient(clientPort);
 			}
 			done = false; 
@@ -1010,7 +873,6 @@ public class IntermediateHost extends Host {
 		try {
 			sendaPacket(newPacket.getData(), newPacket.getLength(), SERVER_PORT, serverSocket, "Intermediate", InetAddress.getLocalHost());
 		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -1024,7 +886,6 @@ public class IntermediateHost extends Host {
 		try {
 			sendaPacket(receivePacket.getData(), receivePacket.getLength(), port, serverSocket, "Intermediate",InetAddress.getLocalHost());
 		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
@@ -1034,7 +895,6 @@ public class IntermediateHost extends Host {
 		try {
 			sendaPacket(newPacket.getData(), newPacket.getLength(), port, serverSocket, "Intermediate",InetAddress.getLocalHost());
 		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}	
 	}
@@ -1043,15 +903,14 @@ public class IntermediateHost extends Host {
 		try {
 			sendaPacket(receivePacket.getData(), receivePacket.getLength(), SERVER_PORT, serverSocket, "Intermediate",InetAddress.getLocalHost());
 		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 
-	private DatagramPacket receiveFromClient(int size) {
+	private DatagramPacket receiveFromClient() {
 		DatagramPacket returnPacket = null;
 		try {
-			 returnPacket = receiveaPacket("Intermediate", sendReceiveSocket, size);
+			 returnPacket = receiveaPacket("Intermediate", sendReceiveSocket);
 			 initAddress = returnPacket.getAddress();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -1060,10 +919,10 @@ public class IntermediateHost extends Host {
 		return returnPacket;
 	}
 
-	private DatagramPacket receiveFromServer(int size) {
+	private DatagramPacket receiveFromServer() {
 		DatagramPacket returnPacket = null;
 		try {
-			 returnPacket = receiveaPacket("Intermediate", serverSocket, size);
+			 returnPacket = receiveaPacket("Intermediate", serverSocket);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
