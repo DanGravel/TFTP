@@ -376,13 +376,14 @@ public class IntermediateHost extends Host {
 				sendToServer(); // Send request
 				if (requestType == RequestType.READ)serverThreadPort = receiveFromServer(PACKET_SIZE).getPort();
 				else serverThreadPort = receiveFromServer(ACK_PACKET_SIZE).getPort();
-	
+				sendToClient(clientPort);
+				
 				int newServerPort = 0;
 				new ErrorSim(delayTime, newPacket.getData(), SERVER_PORT, serverSocket, duplicate).start();
 				if (requestType == RequestType.READ) newServerPort = receiveFromServer(PACKET_SIZE).getPort();
 				else newServerPort = receiveFromServer(ACK_PACKET_SIZE).getPort();
 				
-				sendToClient(clientPort);
+				//sendToClient(clientPort);
 				
 				if(serverThreadPort != newServerPort) {
 					DatagramSocket invalid = null;
@@ -402,7 +403,7 @@ public class IntermediateHost extends Host {
 				}
 			   finishTransfer(requestType, clientPort, serverThreadPort);
 			}
-			else {
+			else if(requestType == RequestType.WRITE && delayTime > 5000){
 				DatagramPacket newPacket = receivePacket; 
 				int clientPort = receivePacket.getPort();
 				sendToServer(); // Send request
