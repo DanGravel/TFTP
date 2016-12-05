@@ -23,7 +23,7 @@ public class Printer {
 			System.out.println("Host: " + packet.getAddress());
 			System.out.println("Host port: " + packet.getPort());
 			System.out.println("Length: " + packet.getLength());
-			if(isAck(packet) || isData(packet)){
+			if((isAck(packet) || isData(packet)) && packet.getLength() >= 4){
 				System.out.println("Block Num: " + getInt(packet));
 
 			}
