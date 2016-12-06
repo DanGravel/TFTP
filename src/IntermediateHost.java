@@ -42,7 +42,7 @@ public class IntermediateHost extends Host {
 	 * 7 - Invalid Packet Size
 	 * 8 - Change Block Number
 	 */
-	public void sendAndReceive(InputStream in) { 
+	public void sendAndReceive(InputStream in) throws UnknownHostException { 
 		System.out.println("Press 0 for normal mode, \nPress 1 to lose a packet, \nPress 2 to delay a packet, \nPress 3 to duplicate a packet, \nPress 4 to change the TID, \nPress 5 to corrupt request packet, \nPress 6 to change opcode, \nPress 7 to have invalid packet size, \nPress 8 to change the block number");
 		s = new Scanner(in);
 		userInput = checkBounds(9, 0, -1);
@@ -250,7 +250,7 @@ public class IntermediateHost extends Host {
 		}
 	}
 	
-	private void delayPacket() {
+	private void delayPacket() throws UnknownHostException {
 		String delay = "DELAYED PACKET";
 		int serverThreadPort = 0; 
 		boolean delayed; 
@@ -261,7 +261,7 @@ public class IntermediateHost extends Host {
 			requestType = validate.validate(receiveFromClient().getData());
 			int clientPort = receivePacket.getPort();
 			
-			new ErrorSim(delayTime, receivePacket.getData(), SERVER_PORT, serverSocket, delay).start();
+			new ErrorSim(delayTime, receivePacket.getData(), SERVER_PORT, serverSocket, delay, InetAddress.getLocalHost()).start();
 			receiveFromServer();
 			
 			serverThreadPort = receivePacket.getPort();
@@ -280,7 +280,7 @@ public class IntermediateHost extends Host {
 				serverThreadPort = packet.getPort();
 				
 				if(foundPacket(packet)) {
-					new ErrorSim(delayTime, packet.getData(), clientPort, sendReceiveSocket, delay).start();
+					new ErrorSim(delayTime, packet.getData(), clientPort, sendReceiveSocket, delay, initAddress).start();
 				}
 				else {
 					delayed = false; 
@@ -291,7 +291,7 @@ public class IntermediateHost extends Host {
 						delayed = foundPacket(receiveFromServer());
 
 					}
-					new ErrorSim(delayTime, receivePacket.getData(), clientPort, sendReceiveSocket, delay).start();
+					new ErrorSim(delayTime, receivePacket.getData(), clientPort, sendReceiveSocket, delay, initAddress).start();
 				}	
 				finishTransfer(requestType, clientPort, serverThreadPort);
 			}
@@ -303,7 +303,7 @@ public class IntermediateHost extends Host {
 				DatagramPacket p = receiveFromClient();
 				
 				if(foundPacket(p)) {
-					new ErrorSim(delayTime, receivePacket.getData(), serverThreadPort, serverSocket, delay).start();
+					new ErrorSim(delayTime, receivePacket.getData(), serverThreadPort, serverSocket, delay, InetAddress.getLocalHost()).start();
 				}
 				else {
 					delayed = false;
@@ -314,7 +314,7 @@ public class IntermediateHost extends Host {
 						delayed = foundPacket(receiveFromClient());
 					}
 					sendToServerThread(serverThreadPort);
-					new ErrorSim(delayTime, receivePacket.getData(), serverThreadPort, serverSocket, delay).start();
+					new ErrorSim(delayTime, receivePacket.getData(), serverThreadPort, serverSocket, delay, InetAddress.getLocalHost()).start();
 				}
                 if(requestType == RequestType.WRITE) {
                     receiveFromServer();
@@ -327,19 +327,19 @@ public class IntermediateHost extends Host {
 					serverThreadPort = receiveFromServer().getPort();
 					sendToClient(clientPort);
 					DatagramPacket packet = receiveFromClient(); //receive diskFull error
-					new ErrorSim(delayTime, packet.getData(), serverThreadPort, serverSocket, delay).start();
+					new ErrorSim(delayTime, packet.getData(), serverThreadPort, serverSocket, delay, InetAddress.getLocalHost()).start();
 					
 				}
 				else {
 					DatagramPacket packet = receiveFromServer();
-					new ErrorSim(delayTime, packet.getData(), clientPort, sendReceiveSocket, delay).start();
+					new ErrorSim(delayTime, packet.getData(), clientPort, sendReceiveSocket, delay, initAddress).start();
 				}
 			}
 			
 		}
 	}
 	
-	private void duplicatePacket() 
+	private void duplicatePacket() throws UnknownHostException 
 	{
 		String duplicate = "DUPLICATED PACKET";
 		int serverThreadPort = 0; 
@@ -357,7 +357,7 @@ public class IntermediateHost extends Host {
 				sendToClient(clientPort);
 				
 				int newServerPort = 0;
-				new ErrorSim(delayTime, newPacket.getData(), SERVER_PORT, serverSocket, duplicate).start();
+				new ErrorSim(delayTime, newPacket.getData(), SERVER_PORT, serverSocket, duplicate, InetAddress.getLocalHost()).start();
 				newServerPort = receiveFromServer().getPort();
 
 				if(serverThreadPort != newServerPort) {
@@ -367,7 +367,7 @@ public class IntermediateHost extends Host {
 					} catch (SocketException e) {					
 						e.printStackTrace();
 					}
-					new ErrorSim(0, receivePacket.getData(), clientPort, invalid, "INVALID DUPL TID").start();
+					new ErrorSim(0, receivePacket.getData(), clientPort, invalid, "INVALID DUPL TID", initAddress).start();
 					try {
 						receiveaPacket("Sim Server Thread 2", invalid);
 					} catch (IOException e) {
@@ -432,7 +432,7 @@ public class IntermediateHost extends Host {
 				if(foundPacket(duplicatePacket)) 
 			    {
 			    	sendToClient(clientPort);
-					new ErrorSim(delayTime, duplicatePacket.getData(), clientPort, sendReceiveSocket, duplicate).start();
+					new ErrorSim(delayTime, duplicatePacket.getData(), clientPort, sendReceiveSocket, duplicate, initAddress).start();
 				}
 			    else
 			    {
@@ -446,7 +446,7 @@ public class IntermediateHost extends Host {
 						duplicatePacket = receivePacket;
 					}
 			    	sendToClient(clientPort);
-					new ErrorSim(delayTime, duplicatePacket.getData(), clientPort, sendReceiveSocket, duplicate).start();
+					new ErrorSim(delayTime, duplicatePacket.getData(), clientPort, sendReceiveSocket, duplicate, initAddress).start();
 			    }
 				
 				receiveFromClient();
@@ -466,7 +466,7 @@ public class IntermediateHost extends Host {
 				if(foundPacket(packet)) 
 				{
 					sendToServerThread(serverThreadPort);
-					new ErrorSim(delayTime, packet.getData(), serverThreadPort, serverSocket, duplicate).start();
+					new ErrorSim(delayTime, packet.getData(), serverThreadPort, serverSocket, duplicate, InetAddress.getLocalHost()).start();
 				}
 				else
 				{
@@ -482,7 +482,7 @@ public class IntermediateHost extends Host {
 			    	sendToServerThread(serverThreadPort);
 					receiveFromServer();
 					sendToClient(clientPort);
-					new ErrorSim(delayTime, packet.getData(), serverThreadPort, serverSocket, duplicate).start();;
+					new ErrorSim(delayTime, packet.getData(), serverThreadPort, serverSocket, duplicate, InetAddress.getLocalHost()).start();;
 				}				
 				if(requestType == RequestType.WRITE) {
 					if(delayTime < 5000) {
@@ -498,12 +498,12 @@ public class IntermediateHost extends Host {
 					sendToClient(clientPort);
 					DatagramPacket packet = receiveFromClient(); //receive diskFull error
 					sendToServerThread(serverThreadPort);
-					new ErrorSim(delayTime, packet.getData(), serverThreadPort, serverSocket, duplicate).start();
+					new ErrorSim(delayTime, packet.getData(), serverThreadPort, serverSocket, duplicate, InetAddress.getLocalHost()).start();
 				}
 				else {
 					receiveFromServer();
 					sendToClient(clientPort);
-					new ErrorSim(delayTime, receivePacket.getData(), clientPort, sendReceiveSocket, duplicate).start();
+					new ErrorSim(delayTime, receivePacket.getData(), clientPort, sendReceiveSocket, duplicate, initAddress).start();
 				}
 			}
 		}
@@ -1109,7 +1109,7 @@ public class IntermediateHost extends Host {
 	}
 	
 
-	public static void main(String args[]) {
+	public static void main(String args[]) throws UnknownHostException {
 		IntermediateHost ih = new IntermediateHost();
 		ih.promptIntermediateOperator();
 		while(true) {
@@ -1142,14 +1142,17 @@ public class IntermediateHost extends Host {
 		private int sendPort; 
 		private DatagramSocket socket; 
 		private String host;
-		DatagramPacket sendPacket; 
+		private DatagramPacket sendPacket; 
+		private InetAddress address; 
 		
-		public ErrorSim(int delayTime, byte[] data, int sendPort, DatagramSocket socket, String host) {
+		
+		public ErrorSim(int delayTime, byte[] data, int sendPort, DatagramSocket socket, String host, InetAddress address) {
 			this.delayTime = delayTime;
 			this.data = data;
 			this.sendPort = sendPort; 
 			this.socket = socket;
 			this.host = host;
+			this.address = address;
 		}
 		
 		public void run() {
@@ -1158,13 +1161,8 @@ public class IntermediateHost extends Host {
 			} catch(InterruptedException e) {
 				Thread.currentThread().interrupt();
 			}
-			
-			try {
-				sendPacket = new DatagramPacket(data, data.length, InetAddress.getLocalHost(), sendPort);
-			} catch (UnknownHostException e) {
-				e.printStackTrace();
-			}
-			
+
+			sendPacket = new DatagramPacket(data, data.length, address, sendPort);
 			p.printSenderOrReceiverInfo(false, sendPacket, host);
 			
 			try {
