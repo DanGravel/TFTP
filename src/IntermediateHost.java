@@ -42,7 +42,7 @@ public class IntermediateHost extends Host {
 	 * 7 - Invalid Packet Size
 	 * 8 - Change Block Number
 	 */
-	public void sendAndReceive(InputStream in) { //TODO account for errors in user input
+	public void sendAndReceive(InputStream in) { 
 		System.out.println("Press 0 for normal mode, \nPress 1 to lose a packet, \nPress 2 to delay a packet, \nPress 3 to duplicate a packet, \nPress 4 to change the TID, \nPress 5 to corrupt request packet, \nPress 6 to change opcode, \nPress 7 to have invalid packet size, \nPress 8 to change the block number");
 		s = new Scanner(in);
 		userInput = checkBounds(9, 0, -1);
@@ -88,6 +88,7 @@ public class IntermediateHost extends Host {
 			System.out.println("\tPress 2 to remove mode");
 			System.out.println("\tPress 3 remove delimeter 1");
 			System.out.println("\tPress 4 remove delimeter 2");
+			System.out.println("\tPress 5 remove delimeter from error packet");
 			corruptRequest = checkBounds(5, 0, 0);			
 			corruptRequest();
 		}
@@ -113,7 +114,7 @@ public class IntermediateHost extends Host {
 		
 		// change block number
 		else if(userInput == 8) {
-			chooseTypeOfPacket("change block # of", "changing the block # of", false);
+			chooseTypeOfPacket("change block # of (for error, change code)", "changing the block # of ((for error, change code)", false);
 			choosePacketNumber("change the block #");
 			
 			//TODO handle invalid inputs
@@ -160,16 +161,14 @@ public class IntermediateHost extends Host {
 		if(packetType == 3 || packetType == 4){
 			System.out.println("Enter the packet number you want to " + string + ": ");
 			packetNum = checkBounds(100, 0, 0);
-		} else {
-			packetNum = 1; // losing first packet since RRQ or WRQ	
-		}
+		} 
 	}
 	
 	private void chooseTypeOfPacket(String string, String stringing, boolean hasOne) {
 		System.out.println("Intermediate host will be " + stringing + " a packet");
-		String options = (hasOne) ? " (Request - 1, DATA - 3, ACK - 4)" : " (DATA - 3, ACK - 4)";
+		String options = (hasOne) ? " (Request - 1, DATA - 3, ACK - 4, Error - 5)" : " (DATA - 3, ACK - 4, Error - 5)";
 		System.out.println("Select type of packet to " + string + options);
-		packetType = (hasOne) ? checkBounds(5, 0, 2) : checkBounds(5, 2, 0);
+		packetType = (hasOne) ? checkBounds(6, 0, 2) : checkBounds(6, 2, 0);
 	}
 	
 	private void normal() {
@@ -237,6 +236,14 @@ public class IntermediateHost extends Host {
 					System.out.println("Lost packet # " + packetNum);
 				}
 				conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
+			}
+			else if(packetType == 5) {
+				if(requestType == RequestType.WRITE) {
+					receiveFromServer(); 
+				}
+				else {
+					System.out.println("No error packet is sent on a write; client just reprompts");
+				}
 			}
 		}
 	}
@@ -313,6 +320,16 @@ public class IntermediateHost extends Host {
                 }
 				conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
 			}
+			else if(packetType == 5) {
+				if(requestType == RequestType.WRITE) {
+					receiveFromServer();
+					new ErrorSim(delayTime, receivePacket.getData(), clientPort, sendReceiveSocket, delay).start();
+				}
+				else {
+					System.out.println("No error packet is sent on a write; client just reprompts");
+				}
+			}
+			
 		}
 	}
 	
@@ -468,7 +485,17 @@ public class IntermediateHost extends Host {
 					}
 				}
 	    		conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
-			}	
+			}
+			else if(packetType == 5) {
+				if(requestType == RequestType.WRITE) {
+					receiveFromServer();
+					sendToClient(clientPort);
+					new ErrorSim(delayTime, receivePacket.getData(), clientPort, sendReceiveSocket, duplicate).start();
+				}
+				else {
+					System.out.println("No error packet is sent on a write; client just reprompts");
+				}
+			}
 		}
 	}
 
@@ -535,10 +562,19 @@ public class IntermediateHost extends Host {
 				}
 				conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
 			}
+			else if(packetType == 5) {
+				if(requestType == RequestType.WRITE) {
+					receiveFromServer();
+					new ErrorSim(delayTime, receivePacket.getData(), clientPort, fakeTID, diffTID).start();
+				}
+				else {
+					System.out.println("No error packet is sent on a write; client just reprompts");
+				}
+			}
 		}
 	
 	private void corruptRequest() {
-		RequestType r = validate.validate(receiveFromClient().getData());
+		RequestType requestType = validate.validate(receiveFromClient().getData());
 		int clientPort = receivePacket.getPort();
 		byte data[] = new byte[receivePacket.getLength()];
 		System.arraycopy(receivePacket.getData(), 0, data, 0, data.length);
@@ -608,9 +644,26 @@ public class IntermediateHost extends Host {
 			corruptPacket = new DatagramPacket(newData, newData.length);
 			sendToServer(corruptPacket);
 		}
-		receiveFromServer();
-		receivePacket.getPort();
-		sendToClient(clientPort);
+		
+		if(corruptRequest == 5) {
+			if(requestType == RequestType.WRITE) {
+				sendToServer();
+				receiveFromServer();
+				newData = new byte[receivePacket.getLength() - 1];
+				System.arraycopy(receivePacket.getData(), 0, newData, 0, newData.length);
+				corruptPacket = new DatagramPacket(newData, newData.length);
+				sendToClient(clientPort, corruptPacket);
+				
+			}
+			else {
+				System.out.println("No error packet is sent on a write; client just reprompts");
+			}
+		}
+		else {
+			receiveFromServer();
+			receivePacket.getPort();
+			sendToClient(clientPort);
+		}
 	}
 	
 	private void changeOpCode() {
@@ -663,6 +716,14 @@ public class IntermediateHost extends Host {
 				sendToServerThread(serverThreadPort, wrongOp);
 				receiveFromServer();
 				sendToClient(clientPort);
+ 			}
+ 			else if(packetType == 5) {				
+				byte[] data = receivePacket.getData();
+				data[0] = wrongOpCode[0];
+				data[1] = wrongOpCode[1];	
+				wrongOp = new DatagramPacket(data, data.length);
+				sendToClient(clientPort, wrongOp);
+				
  			}
  		}	
  	}
@@ -812,6 +873,20 @@ public class IntermediateHost extends Host {
     			sendToClient(clientPort);
     		}
 			conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
+		}
+		else if(packetType == 5) {
+			if(requestType == RequestType.WRITE) {
+				receiveFromServer();
+				data = receivePacket.getData();
+				data[2] = wrongBlockNum[0];
+				data[3] = wrongBlockNum[1];
+				
+				changedBlockNum = new DatagramPacket(data, data.length);
+				sendToClient(clientPort, changedBlockNum);
+			}
+			else {
+				System.out.println("No error packet is sent on a write; client just reprompts");
+			}
 		}
 	}
 	
