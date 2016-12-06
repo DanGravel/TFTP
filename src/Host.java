@@ -32,8 +32,8 @@ public abstract class Host {
    * @param sendSocket: the socket that the packet will be sent to
    * @param host: the name of which host the packet will be sent to
    */
-	protected void sendaPacket(byte[] message, int sendPort, DatagramSocket sendSocket, String host) {
-		sendPacket = new DatagramPacket(message, message.length, initAddress, sendPort);
+	protected void sendaPacket(byte[] message, int sendPort, DatagramSocket sendSocket, String host, InetAddress address) {
+		sendPacket = new DatagramPacket(message, message.length, address, sendPort);
 		p.printSenderOrReceiverInfo(false, sendPacket, host);
 		try {
 			sendSocket.send(sendPacket);
@@ -220,7 +220,7 @@ public abstract class Host {
 	protected void sendError(String msg, int port, DatagramSocket socket, String sender, int error){
 		String errorMsg = msg;
 		byte[] bytes = errorMsg.getBytes();
-		sendaPacket(createErrorPacket(bytes,error), port, socket, sender);
+		sendaPacket(createErrorPacket(bytes,error), port, socket, sender, initAddress);
 	}
 	
 	protected  boolean isValidOpCode(DatagramPacket packet){

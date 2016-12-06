@@ -509,7 +509,7 @@ public class IntermediateHost extends Host {
 		}
 	}
 
-	private void invalidTID() {
+	private void invalidTID() throws UnknownHostException {
 		String diffTID = "DIFFERENT TID";
 		int serverThreadPort = 0; 
 		boolean lost; 
@@ -532,7 +532,7 @@ public class IntermediateHost extends Host {
 				else packet = receiveFromServer();
 				serverThreadPort = packet.getPort(); 
 				if(foundPacket(packet)) {
-					sendaPacket(packet.getData(), clientPort, fakeTID, diffTID);
+					sendaPacket(packet.getData(), clientPort, fakeTID, diffTID, initAddress);
 					sendToClient(clientPort);
 				}
 				else {
@@ -544,7 +544,7 @@ public class IntermediateHost extends Host {
 						packet = receiveFromServer();
                         lost = foundPacket(packet);	
 					}
-					sendaPacket(packet.getData(), clientPort, fakeTID, diffTID);
+					sendaPacket(packet.getData(), clientPort, fakeTID, diffTID, initAddress);
 					sendToClient(clientPort);
 				}
 				finishTransfer(requestType, clientPort, serverThreadPort);
@@ -555,7 +555,7 @@ public class IntermediateHost extends Host {
 				sendToClient(clientPort);
 				DatagramPacket packet = receiveFromClient();
 				if(foundPacket(packet)) {
-					sendaPacket(packet.getData(), serverThreadPort, fakeTID, diffTID);
+					sendaPacket(packet.getData(), serverThreadPort, fakeTID, diffTID, InetAddress.getLocalHost());
 					sendToServerThread(serverThreadPort);
 				}
 				else {
@@ -567,7 +567,7 @@ public class IntermediateHost extends Host {
 						packet = receiveFromClient();
 						lost = foundPacket(packet);	
 					}
-					sendaPacket(packet.getData(), serverThreadPort, fakeTID, diffTID);
+					sendaPacket(packet.getData(), serverThreadPort, fakeTID, diffTID, InetAddress.getLocalHost());
 					sendToServerThread(serverThreadPort);
 				}
 				conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
@@ -577,13 +577,13 @@ public class IntermediateHost extends Host {
 					serverThreadPort = receiveFromServer().getPort();
 					sendToClient(clientPort);
 					receiveFromClient(); //receive diskFull error
-					sendaPacket(receivePacket.getData(), serverThreadPort, fakeTID, diffTID);
+					sendaPacket(receivePacket.getData(), serverThreadPort, fakeTID, diffTID, InetAddress.getLocalHost());
 					sendToServerThread(serverThreadPort);
 					
 				}
 				else {
 					receiveFromServer();
-					sendaPacket(receivePacket.getData(), clientPort, fakeTID, diffTID);
+					sendaPacket(receivePacket.getData(), clientPort, fakeTID, diffTID, initAddress);
 					sendToClient(clientPort);
 				}
 			}
