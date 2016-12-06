@@ -88,6 +88,7 @@ public class IntermediateHost extends Host {
 			System.out.println("\tPress 2 to remove mode");
 			System.out.println("\tPress 3 remove delimeter 1");
 			System.out.println("\tPress 4 remove delimeter 2");
+			System.out.println("\tPress 5 remove delimeter from error packet");
 			corruptRequest = checkBounds(5, 0, 0);			
 			corruptRequest();
 		}
@@ -113,7 +114,7 @@ public class IntermediateHost extends Host {
 		
 		// change block number
 		else if(userInput == 8) {
-			chooseTypeOfPacket("change block # of", "changing the block # of", false);
+			chooseTypeOfPacket("change block # of (for error, change code)", "changing the block # of ((for error, change code)", false);
 			choosePacketNumber("change the block #");
 			
 			//TODO handle invalid inputs
@@ -573,7 +574,7 @@ public class IntermediateHost extends Host {
 		}
 	
 	private void corruptRequest() {
-		RequestType r = validate.validate(receiveFromClient().getData());
+		RequestType requestType = validate.validate(receiveFromClient().getData());
 		int clientPort = receivePacket.getPort();
 		byte data[] = new byte[receivePacket.getLength()];
 		System.arraycopy(receivePacket.getData(), 0, data, 0, data.length);
@@ -643,9 +644,26 @@ public class IntermediateHost extends Host {
 			corruptPacket = new DatagramPacket(newData, newData.length);
 			sendToServer(corruptPacket);
 		}
-		receiveFromServer();
-		receivePacket.getPort();
-		sendToClient(clientPort);
+		
+		if(corruptRequest == 5) {
+			if(requestType == RequestType.READ) {
+				sendToServer();
+				receiveFromServer();
+				newData = new byte[receivePacket.getLength() - 1];
+				System.arraycopy(receivePacket.getData(), 0, newData, 0, newData.length);
+				corruptPacket = new DatagramPacket(newData, newData.length);
+				sendToClient(clientPort, corruptPacket);
+				
+			}
+			else {
+				System.out.println("No error packet is sent on a write; client just reprompts");
+			}
+		}
+		else {
+			receiveFromServer();
+			receivePacket.getPort();
+			sendToClient(clientPort);
+		}
 	}
 	
 	private void changeOpCode() {
@@ -847,6 +865,20 @@ public class IntermediateHost extends Host {
     			sendToClient(clientPort);
     		}
 			conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
+		}
+		else if(packetType == 5) {
+			if(requestType == RequestType.READ) {
+				receiveFromServer();
+				data = receivePacket.getData();
+				data[2] = wrongBlockNum[0];
+				data[3] = wrongBlockNum[1];
+				
+				changedBlockNum = new DatagramPacket(data, data.length);
+				sendToClient(clientPort, changedBlockNum);
+			}
+			else {
+				System.out.println("No error packet is sent on a write; client just reprompts");
+			}
 		}
 	}
 	
