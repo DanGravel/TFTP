@@ -393,10 +393,15 @@ public class FileTransferClient extends Host{
 						try{
 							receiveaPacket(sender, socket);
 							if(isError()) {
-								if(receivePacket.getPort() == TID){
+								if(!isFirstRead && receivePacket.getPort() == TID){
 									handleError();
 									fis.close();
-									if(isFirstRead) Files.deleteIfExists(file.toPath());
+									return;
+								}
+								if(isFirstRead){
+									handleError();
+									fis.close();
+									Files.deleteIfExists(file.toPath());
 									return;
 								}
 								System.out.println("You received an error from an unknown TID, ignoring it");
