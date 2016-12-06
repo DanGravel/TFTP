@@ -140,7 +140,7 @@ public class FileTransferServer extends Host implements Runnable {
 				toSend = Arrays.copyOfRange(fileData, start, upto); //Send part of file
 			}
 			packetdata = createDataPacket(toSend, blockNum);
-			sendaPacket(packetdata, packetdata.length, receivePacket.getPort(), sendAndReceiveSocket, "Server",initAddress);
+			sendaPacket(packetdata, packetdata.length, TID, sendAndReceiveSocket, "Server",initAddress);
 			start += DATA_END; //Increment to next block of data
 			upto += DATA_END;
 			int tempPort = receivePacket.getPort();
@@ -156,7 +156,7 @@ public class FileTransferServer extends Host implements Runnable {
 						return;
 					}
 					if (validater.validate(received.getData()) != RequestType.ACK) unexpectedOpCode = true;
-					invalidTID(receivePacket);
+					if(invalidTID(receivePacket)) continue;
 					packetSize(receivePacket);
 					if(!isValidOpCode(receivePacket) || unexpectedOpCode)
 					{
@@ -179,7 +179,7 @@ public class FileTransferServer extends Host implements Runnable {
 					else if(validater.validate(received.getData()) == RequestType.ACK) response = true;
 					blockNum++;
 				} catch (Exception e){
-					sendaPacket(packetdata, packetdata.length, tempPort, sendAndReceiveSocket, "Server",initAddress);
+					sendaPacket(packetdata, packetdata.length, TID, sendAndReceiveSocket, "Server",initAddress);
 					numOfTimeOuts++;
 					if(numOfTimeOuts == 4){
 						System.out.println("Timed out 4 times, stopping transfer");
@@ -267,7 +267,7 @@ public class FileTransferServer extends Host implements Runnable {
 				int endOfPacket = getSize();
 				byte[] data = Arrays.copyOfRange(wholePacket,START_FILE_DATA, endOfPacket); //ignore op code and only get file data
 				fos.write(data); //Write this to fileData
-				sendaPacket(ack, ack.length, receivePacket.getPort(), sendAndReceiveSocket, "Server",initAddress); //SEND ACK
+				sendaPacket(ack, ack.length, TID, sendAndReceiveSocket, "Server",initAddress); //SEND ACK
 				if (endOfPacket < 512) break;
 				blockNum++;
 				int tempBlockNum = 0;
@@ -291,6 +291,7 @@ public class FileTransferServer extends Host implements Runnable {
 						
 						if (invalidTID(receivePacket)){
 							isWrongTID = true;
+							continue;
 						}
 						//packetSize(receivePacket);
 						
@@ -322,9 +323,10 @@ public class FileTransferServer extends Host implements Runnable {
 						}
 						tempBlockNum = getInt(receivePacket);
 						if(tempBlockNum < blockNum && !isWrongTID){
+							
 							byte[] newPacket = createAck(tempBlockNum);
 							sendaPacket(newPacket,newPacket.length, lastPort, sendAndReceiveSocket, "Server",initAddress);
-						}
+						} 
 					} catch (SocketTimeoutException e){
 						numTimeOuts++;
 						if (numTimeOuts == 4){
@@ -342,7 +344,7 @@ public class FileTransferServer extends Host implements Runnable {
 			e.printStackTrace();
 		}
 		inATransfer = false;
-		if(request != RequestType.DATA) sendaPacket(ack, ack.length, receivePacket.getPort(), sendAndReceiveSocket, "Server",initAddress);	//Error Handling
+		if(request != RequestType.DATA) sendaPacket(ack, ack.length, TID, sendAndReceiveSocket, "Server",initAddress);	//Error Handling
 		try { //disables timeout
 			sendAndReceiveSocket.setSoTimeout(0);
 		} catch (SocketException e1) {
