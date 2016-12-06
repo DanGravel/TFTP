@@ -145,6 +145,10 @@ public class FileTransferServer extends Host implements Runnable {
 				try{	
 					received = receiveaPacket("Server", sendAndReceiveSocket);
 					if(isError()) return;
+					if(getInt(receivePacket) == 65535){
+						System.out.println("You have reached the limit of tftp");
+						return;
+					}
 					if (validater.validate(received.getData()) != RequestType.ACK) unexpectedOpCode = true;
 					invalidTID(receivePacket);
 					packetSize(receivePacket);

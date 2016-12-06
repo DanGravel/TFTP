@@ -175,6 +175,7 @@ public abstract class Host {
 		int endOfPacket = 4;
 		while (wholePacket[endOfPacket] != 0 && endOfPacket != 515) {
 			endOfPacket++;
+			if(endOfPacket +1 == wholePacket.length) break;
 		}
 		
 		if (wholePacket.length > 515 && wholePacket[515] != 0) {

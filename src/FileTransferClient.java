@@ -279,9 +279,12 @@ public class FileTransferClient extends Host{
 							receiveaPacket(sender, socket);
 							response = false;
 							if(isError()){
-								handleError();
-								fis.close();
-								return;
+								if(receivePacket.getPort() == TID){ 
+									handleError();
+									fis.close();
+									return;
+								}
+								System.out.println("You received an error from an unknown TID, ignoring it");
 							}
 							
 							//checks the TID of an incoming packet
@@ -390,10 +393,13 @@ public class FileTransferClient extends Host{
 						try{
 							receiveaPacket(sender, socket);
 							if(isError()) {
-								handleError();
-								fis.close();
-								if(isFirstRead) Files.deleteIfExists(file.toPath());
-								return;
+								if(receivePacket.getPort() == TID){
+									handleError();
+									fis.close();
+									if(isFirstRead) Files.deleteIfExists(file.toPath());
+									return;
+								}
+								System.out.println("You received an error from an unknown TID, ignoring it");
 							}
 							
 							//Checks if this is the first packet receive and records its TID
@@ -432,6 +438,8 @@ public class FileTransferClient extends Host{
 							
 							//Checks if you have reached the TFTP file transfer limit
 							else if(getInt(receivePacket) == 65535){
+								ack = createAck(blockNum);
+								sendaPacket(ack, ack.length, receivePacket.getPort(), socket, sender,initAddress);
 								System.out.println("You have reached the limit of tftp");
 								fis.close();
 								return;
@@ -505,7 +513,7 @@ public class FileTransferClient extends Host{
 			error += (char)data[i];
 			if(i+1 == data.length) break;
 		}
-		
+
 		switch(request){
 		case FILENOTFOUND:
 			System.out.println(error);
@@ -526,8 +534,16 @@ public class FileTransferClient extends Host{
 		case INVALID_TID:
 			System.out.println(error);
 			break;
-		default: System.out.println("Error?");
+		default: System.out.println("Error");
 		}
+		
+		if(data[2] != 0 || data[3] > 7 || data[3] < 1){
+			System.out.println("An error occured however the error type is incorect");
+		}
+		if(data[data.length-1] != 0){
+			System.out.println("An error occured however the error is missing its delimeter");
+		}
+		
 		return;
 	}
 
