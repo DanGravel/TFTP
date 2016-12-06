@@ -201,16 +201,26 @@ public class FileTransferClient extends Host{
 			 	try{
 			 		receiveaPacket(sender, socket);
 				 	if(isError()){
-						handleError();
-						return;
+				 		if(mode == Mode.TEST && receivePacket.getPort() == INTERMEDIATE_PORT){ 
+							handleError();
+							return;
+						}
+				 		if(mode == Mode.NORMAL) {
+				 			handleError();
+							return;
+				 		}
+						System.out.println("You received an error from an unknown TID, ignoring it");
 					}
-			 		if(!isAck(receivePacket)){
+			 		if(!isAck(receivePacket) && !isError()){
 						String errorMsg = "Expected an ACK, but received something else";
 						sendErrorMsg(errorMsg ,socket,sender, 4);
 						return;
 			 		}
-			 		TID = receivePacket.getPort();
-			 		response = true;
+			 		if(!isError()){
+			 			TID = receivePacket.getPort();
+			 			response = true;
+			 		}
+			 		
 			 	}catch(SocketTimeoutException e){
 			 		System.out.println("Didnt recieve a response from the server");
 			 		numTimeOuts++;
