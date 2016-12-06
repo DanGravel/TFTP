@@ -477,7 +477,11 @@ public class FileTransferClient extends Host{
 						}
 					}
 					
-					if(diskFull(file, socket, sender)) return;
+					if(diskFull(file, socket, sender)) {
+						String errorMsg = "Disk Full";
+						sendError(errorMsg, receivePacket.getPort(),socket,sender,4);
+						return;
+					}
 					if(isError()){
 						handleError();
 						return;
