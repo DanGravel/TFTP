@@ -238,12 +238,7 @@ public class IntermediateHost extends Host {
 				conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
 			}
 			else if(packetType == 5) {
-				if(requestType == RequestType.WRITE) {
-					receiveFromServer(); 
-				}
-				else {
-					System.out.println("No error packet is sent on a write; client just reprompts");
-				}
+				receiveFromServer(); 
 			}
 		}
 	}
@@ -321,13 +316,8 @@ public class IntermediateHost extends Host {
 				conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
 			}
 			else if(packetType == 5) {
-				if(requestType == RequestType.WRITE) {
-					receiveFromServer();
-					new ErrorSim(delayTime, receivePacket.getData(), clientPort, sendReceiveSocket, delay).start();
-				}
-				else {
-					System.out.println("No error packet is sent on a write; client just reprompts");
-				}
+				DatagramPacket packet = receiveFromServer();
+				new ErrorSim(delayTime, packet.getData(), clientPort, sendReceiveSocket, delay).start();
 			}
 			
 		}
@@ -487,14 +477,9 @@ public class IntermediateHost extends Host {
 	    		conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
 			}
 			else if(packetType == 5) {
-				if(requestType == RequestType.WRITE) {
-					receiveFromServer();
-					sendToClient(clientPort);
-					new ErrorSim(delayTime, receivePacket.getData(), clientPort, sendReceiveSocket, duplicate).start();
-				}
-				else {
-					System.out.println("No error packet is sent on a write; client just reprompts");
-				}
+				receiveFromServer();
+				sendToClient(clientPort);
+				new ErrorSim(delayTime, receivePacket.getData(), clientPort, sendReceiveSocket, duplicate).start();
 			}
 		}
 	}
@@ -522,8 +507,8 @@ public class IntermediateHost extends Host {
 				else packet = receiveFromServer();
 				serverThreadPort = packet.getPort(); 
 				if(foundPacket(packet)) {
+					sendaPacket(packet.getData(), clientPort, fakeTID, diffTID);
 					sendToClient(clientPort);
-					new ErrorSim(0, packet.getData(), clientPort, fakeTID, diffTID).start();	// send to client
 				}
 				else {
 					lost = false;
@@ -534,7 +519,7 @@ public class IntermediateHost extends Host {
 						packet = receiveFromServer();
                         lost = foundPacket(packet);	
 					}
-					new ErrorSim(0, packet.getData(), clientPort, fakeTID, diffTID).start();
+					sendaPacket(packet.getData(), clientPort, fakeTID, diffTID);
 					sendToClient(clientPort);
 				}
 				finishTransfer(requestType, clientPort, serverThreadPort);
@@ -545,8 +530,8 @@ public class IntermediateHost extends Host {
 				sendToClient(clientPort);
 				DatagramPacket packet = receiveFromClient();
 				if(foundPacket(packet)) {
+					sendaPacket(packet.getData(), serverThreadPort, fakeTID, diffTID);
 					sendToServerThread(serverThreadPort);
-					new ErrorSim(0, packet.getData(), serverThreadPort, fakeTID, diffTID).start();
 				}
 				else {
 					lost = false; 
@@ -557,19 +542,15 @@ public class IntermediateHost extends Host {
 						packet = receiveFromClient();
 						lost = foundPacket(packet);	
 					}
-					new ErrorSim(0, packet.getData(), serverThreadPort, fakeTID, diffTID).start();
+					sendaPacket(packet.getData(), serverThreadPort, fakeTID, diffTID);
 					sendToServerThread(serverThreadPort);
 				}
 				conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
 			}
 			else if(packetType == 5) {
-				if(requestType == RequestType.WRITE) {
-					receiveFromServer();
-					new ErrorSim(delayTime, receivePacket.getData(), clientPort, fakeTID, diffTID).start();
-				}
-				else {
-					System.out.println("No error packet is sent on a write; client just reprompts");
-				}
+				receiveFromServer();
+				sendaPacket(receivePacket.getData(), clientPort, fakeTID, diffTID);
+				sendToClient(clientPort);
 			}
 		}
 	
@@ -646,18 +627,12 @@ public class IntermediateHost extends Host {
 		}
 		
 		if(corruptRequest == 5) {
-			if(requestType == RequestType.WRITE) {
-				sendToServer();
-				receiveFromServer();
-				newData = new byte[receivePacket.getLength() - 1];
-				System.arraycopy(receivePacket.getData(), 0, newData, 0, newData.length);
-				corruptPacket = new DatagramPacket(newData, newData.length);
-				sendToClient(clientPort, corruptPacket);
-				
-			}
-			else {
-				System.out.println("No error packet is sent on a write; client just reprompts");
-			}
+			sendToServer();
+			receiveFromServer();
+			newData = new byte[receivePacket.getLength() - 1];
+			System.arraycopy(receivePacket.getData(), 0, newData, 0, newData.length);
+			corruptPacket = new DatagramPacket(newData, newData.length);
+			sendToClient(clientPort, corruptPacket);
 		}
 		else {
 			receiveFromServer();
