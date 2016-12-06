@@ -238,7 +238,7 @@ public class IntermediateHost extends Host {
 				conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
 			}
 			else if(packetType == 5) {
-				if(requestType == RequestType.READ) {
+				if(requestType == RequestType.WRITE) {
 					receiveFromServer(); 
 				}
 				else {
@@ -321,7 +321,7 @@ public class IntermediateHost extends Host {
 				conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
 			}
 			else if(packetType == 5) {
-				if(requestType == RequestType.READ) {
+				if(requestType == RequestType.WRITE) {
 					receiveFromServer();
 					new ErrorSim(delayTime, receivePacket.getData(), clientPort, sendReceiveSocket, delay).start();
 				}
@@ -487,7 +487,7 @@ public class IntermediateHost extends Host {
 	    		conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
 			}
 			else if(packetType == 5) {
-				if(requestType == RequestType.READ) {
+				if(requestType == RequestType.WRITE) {
 					receiveFromServer();
 					sendToClient(clientPort);
 					new ErrorSim(delayTime, receivePacket.getData(), clientPort, sendReceiveSocket, duplicate).start();
@@ -563,7 +563,7 @@ public class IntermediateHost extends Host {
 				conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
 			}
 			else if(packetType == 5) {
-				if(requestType == RequestType.READ) {
+				if(requestType == RequestType.WRITE) {
 					receiveFromServer();
 					new ErrorSim(delayTime, receivePacket.getData(), clientPort, fakeTID, diffTID).start();
 				}
@@ -646,7 +646,7 @@ public class IntermediateHost extends Host {
 		}
 		
 		if(corruptRequest == 5) {
-			if(requestType == RequestType.READ) {
+			if(requestType == RequestType.WRITE) {
 				sendToServer();
 				receiveFromServer();
 				newData = new byte[receivePacket.getLength() - 1];
@@ -867,7 +867,7 @@ public class IntermediateHost extends Host {
 			conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
 		}
 		else if(packetType == 5) {
-			if(requestType == RequestType.READ) {
+			if(requestType == RequestType.WRITE) {
 				receiveFromServer();
 				data = receivePacket.getData();
 				data[2] = wrongBlockNum[0];
