@@ -1,4 +1,3 @@
-/serverFiles/
 /FileTransferClient$Mode.class
 /FileTransferClient.class
 /FileTransferServer$1.class
@@ -10,4 +9,4 @@
 /Printer.class
 /RequestType.class
 /Validater.class
-*.txt
+/serverFiles/
