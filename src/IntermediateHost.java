@@ -238,7 +238,14 @@ public class IntermediateHost extends Host {
 				conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
 			}
 			else if(packetType == 5) {
-				receiveFromServer(); 
+				if(requestType == RequestType.READ) {
+					serverThreadPort = receiveFromServer().getPort();
+					sendToClient(clientPort);
+					receiveFromClient(); //receive diskFull error
+				}
+				else {
+					receiveFromServer(); 
+				}
 			}
 		}
 	}
@@ -316,8 +323,17 @@ public class IntermediateHost extends Host {
 				conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
 			}
 			else if(packetType == 5) {
-				DatagramPacket packet = receiveFromServer();
-				new ErrorSim(delayTime, packet.getData(), clientPort, sendReceiveSocket, delay).start();
+				if(requestType == RequestType.READ) {
+					serverThreadPort = receiveFromServer().getPort();
+					sendToClient(clientPort);
+					DatagramPacket packet = receiveFromClient(); //receive diskFull error
+					new ErrorSim(delayTime, packet.getData(), serverThreadPort, serverSocket, delay).start();
+					
+				}
+				else {
+					DatagramPacket packet = receiveFromServer();
+					new ErrorSim(delayTime, packet.getData(), clientPort, sendReceiveSocket, delay).start();
+				}
 			}
 			
 		}
@@ -477,9 +493,18 @@ public class IntermediateHost extends Host {
 	    		conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
 			}
 			else if(packetType == 5) {
-				receiveFromServer();
-				sendToClient(clientPort);
-				new ErrorSim(delayTime, receivePacket.getData(), clientPort, sendReceiveSocket, duplicate).start();
+				if(requestType == RequestType.READ) {
+					serverThreadPort = receiveFromServer().getPort();
+					sendToClient(clientPort);
+					DatagramPacket packet = receiveFromClient(); //receive diskFull error
+					sendToServerThread(serverThreadPort);
+					new ErrorSim(delayTime, packet.getData(), serverThreadPort, serverSocket, duplicate).start();
+				}
+				else {
+					receiveFromServer();
+					sendToClient(clientPort);
+					new ErrorSim(delayTime, receivePacket.getData(), clientPort, sendReceiveSocket, duplicate).start();
+				}
 			}
 		}
 	}
@@ -548,9 +573,19 @@ public class IntermediateHost extends Host {
 				conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
 			}
 			else if(packetType == 5) {
-				receiveFromServer();
-				sendaPacket(receivePacket.getData(), clientPort, fakeTID, diffTID);
-				sendToClient(clientPort);
+				if(requestType == RequestType.READ) {
+					serverThreadPort = receiveFromServer().getPort();
+					sendToClient(clientPort);
+					receiveFromClient(); //receive diskFull error
+					sendaPacket(receivePacket.getData(), serverThreadPort, fakeTID, diffTID);
+					sendToServerThread(serverThreadPort);
+					
+				}
+				else {
+					receiveFromServer();
+					sendaPacket(receivePacket.getData(), clientPort, fakeTID, diffTID);
+					sendToClient(clientPort);
+				}
 			}
 		}
 	
@@ -627,12 +662,24 @@ public class IntermediateHost extends Host {
 		}
 		
 		if(corruptRequest == 5) {
-			sendToServer();
-			receiveFromServer();
-			newData = new byte[receivePacket.getLength() - 1];
-			System.arraycopy(receivePacket.getData(), 0, newData, 0, newData.length);
-			corruptPacket = new DatagramPacket(newData, newData.length);
-			sendToClient(clientPort, corruptPacket);
+			if(requestType == RequestType.READ) {
+				sendToServer();
+				int serverThreadPort = receiveFromServer().getPort();
+				sendToClient(clientPort);
+				receiveFromClient();
+				newData = new byte[receivePacket.getLength() - 1];
+				System.arraycopy(receivePacket.getData(), 0, newData, 0, newData.length);
+				corruptPacket = new DatagramPacket(newData, newData.length);
+				sendToServerThread(serverThreadPort, corruptPacket);
+			}
+			else {
+				sendToServer();
+				receiveFromServer();
+				newData = new byte[receivePacket.getLength() - 1];
+				System.arraycopy(receivePacket.getData(), 0, newData, 0, newData.length);
+				corruptPacket = new DatagramPacket(newData, newData.length);
+				sendToClient(clientPort, corruptPacket);
+			}
 		}
 		else {
 			receiveFromServer();
@@ -692,12 +739,23 @@ public class IntermediateHost extends Host {
 				receiveFromServer();
 				sendToClient(clientPort);
  			}
- 			else if(packetType == 5) {				
-				byte[] data = receivePacket.getData();
-				data[0] = wrongOpCode[0];
-				data[1] = wrongOpCode[1];	
-				wrongOp = new DatagramPacket(data, data.length);
-				sendToClient(clientPort, wrongOp);
+ 			else if(packetType == 5) {
+ 				if(requestType == RequestType.READ) {
+ 					sendToClient(clientPort);
+ 					receiveFromClient(); 
+ 					byte[] data = receivePacket.getData();
+ 					data[0] = wrongOpCode[0];
+ 					data[1] = wrongOpCode[1];	
+ 					wrongOp = new DatagramPacket(data, data.length);
+ 					sendToServerThread(serverThreadPort, wrongOp);
+ 				}
+ 				else {
+ 					byte[] data = receivePacket.getData();
+ 					data[0] = wrongOpCode[0];
+ 					data[1] = wrongOpCode[1];	
+ 					wrongOp = new DatagramPacket(data, data.length);
+ 					sendToClient(clientPort, wrongOp);
+ 				}
 				
  			}
  		}	
@@ -850,13 +908,26 @@ public class IntermediateHost extends Host {
 			conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
 		}
 		else if(packetType == 5) {
-			receiveFromServer();
-			data = receivePacket.getData();
-			data[2] = wrongBlockNum[0];
-			data[3] = wrongBlockNum[1];
+			if(requestType == RequestType.READ) {
+				serverThreadPort = receiveFromServer().getPort(); 
+				sendToClient(clientPort);
+				receiveFromClient(); 
+				data = receivePacket.getData(); 
+				data[2] = wrongBlockNum[0];
+				data[3] = wrongBlockNum[1];
 			
-			changedBlockNum = new DatagramPacket(data, data.length);
-			sendToClient(clientPort, changedBlockNum);
+				changedBlockNum = new DatagramPacket(data, data.length);
+				sendToServerThread(serverThreadPort, changedBlockNum);
+			}
+			else {
+				receiveFromServer();
+				data = receivePacket.getData();
+				data[2] = wrongBlockNum[0];
+				data[3] = wrongBlockNum[1];
+			
+				changedBlockNum = new DatagramPacket(data, data.length);
+				sendToClient(clientPort, changedBlockNum);
+			}
 		}
 	}
 	
