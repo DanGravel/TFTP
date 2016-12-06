@@ -718,13 +718,13 @@ public class IntermediateHost extends Host {
 				sendToClient(clientPort);
  			}
  			else if(packetType == 5) {			
-				sendToServer(wrongOp);
+				sendToServer();
 				receiveFromServer();	
 				byte[] data = receivePacket.getData();
 				data[0] = wrongOpCode[0];
 				data[1] = wrongOpCode[1];	
 				wrongOp = new DatagramPacket(data, data.length);
-				sendToClient(clientPort);
+				sendToClient(clientPort, wrongOp);
 				
  			}
  		}	
