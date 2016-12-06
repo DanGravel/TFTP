@@ -850,18 +850,13 @@ public class IntermediateHost extends Host {
 			conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
 		}
 		else if(packetType == 5) {
-			if(requestType == RequestType.WRITE) {
-				receiveFromServer();
-				data = receivePacket.getData();
-				data[2] = wrongBlockNum[0];
-				data[3] = wrongBlockNum[1];
-				
-				changedBlockNum = new DatagramPacket(data, data.length);
-				sendToClient(clientPort, changedBlockNum);
-			}
-			else {
-				System.out.println("No error packet is sent on a write; client just reprompts");
-			}
+			receiveFromServer();
+			data = receivePacket.getData();
+			data[2] = wrongBlockNum[0];
+			data[3] = wrongBlockNum[1];
+			
+			changedBlockNum = new DatagramPacket(data, data.length);
+			sendToClient(clientPort, changedBlockNum);
 		}
 	}
 	
