@@ -42,7 +42,7 @@ public class IntermediateHost extends Host {
 	 * 7 - Invalid Packet Size
 	 * 8 - Change Block Number
 	 */
-	public void sendAndReceive(InputStream in) { //TODO account for errors in user input
+	public void sendAndReceive(InputStream in) { 
 		System.out.println("Press 0 for normal mode, \nPress 1 to lose a packet, \nPress 2 to delay a packet, \nPress 3 to duplicate a packet, \nPress 4 to change the TID, \nPress 5 to corrupt request packet, \nPress 6 to change opcode, \nPress 7 to have invalid packet size, \nPress 8 to change the block number");
 		s = new Scanner(in);
 		userInput = checkBounds(9, 0, -1);
@@ -167,9 +167,9 @@ public class IntermediateHost extends Host {
 	
 	private void chooseTypeOfPacket(String string, String stringing, boolean hasOne) {
 		System.out.println("Intermediate host will be " + stringing + " a packet");
-		String options = (hasOne) ? " (Request - 1, DATA - 3, ACK - 4)" : " (DATA - 3, ACK - 4)";
+		String options = (hasOne) ? " (Request - 1, DATA - 3, ACK - 4, Error - 5)" : " (DATA - 3, ACK - 4, Error - 5)";
 		System.out.println("Select type of packet to " + string + options);
-		packetType = (hasOne) ? checkBounds(5, 0, 2) : checkBounds(5, 2, 0);
+		packetType = (hasOne) ? checkBounds(6, 0, 2) : checkBounds(6, 2, 0);
 	}
 	
 	private void normal() {
