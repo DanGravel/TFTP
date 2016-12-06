@@ -342,7 +342,7 @@ public class FileTransferClient extends Host{
 							
 							boolean isCorrectAck = validAckNum(receivePacket,blockNum);
 							//Checks the ACK number
-							if(isCorrectAck) response = true;	
+							if(isCorrectAck && receivePacket.getPort() == TID) response = true;	
 							
 						}catch(SocketTimeoutException e){			 			
 							sendaPacket(packetdata, packetdata.length, TID, socket, sender,initAddress);
@@ -473,7 +473,7 @@ public class FileTransferClient extends Host{
 							}
 					
 							//Checks if Data is what we expect if it is continue transfer
-							if(validPacketNum(receivePacket,blockNum)) response = true;
+							if(validPacketNum(receivePacket,blockNum) && receivePacket.getPort() == TID) response = true;
 							
 						}catch(SocketTimeoutException e){
 					 		System.out.println("Didnt recieve a response from the server");
