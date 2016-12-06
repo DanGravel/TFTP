@@ -55,15 +55,21 @@ public class FileTransferServer extends Host implements Runnable {
 	public void sendAndReceive() throws Exception {
 		System.out.println("Server: Waiting for Packet.\n");
 		for (;;) {	
-			if(serverShutdown) System.exit(1);
+			if(serverShutdown) {
+				return;
+			}
 			System.out.println("Waiting..."); // so we know we're waiting
-			if(serverShutdown) System.exit(1);
+			if(serverShutdown) {
+				return;
+			}
 			receiveaPacket("Server", receiveSocket); 
 			initAddress = receivePacket.getAddress(); //ADDED BY DAN
 			Thread thread = new Thread(new FileTransferServer(receivePacket, 0)); //create a connection manager to deal with file transfer
 			thread.start();
 			Thread.sleep(1000);
-			if(serverShutdown)System.exit(1);
+			if(serverShutdown){
+				return;
+			}
 		}
 	}
 	
@@ -268,6 +274,11 @@ public class FileTransferServer extends Host implements Runnable {
 				int lastPort = receivePacket.getPort();
 				int numTimeOuts = 0;
 				
+				if(blockNum == 65536){
+					System.out.println("You have reached the limit of tftp");
+					return;
+				}
+				
 				while (tempBlockNum < blockNum){
 					
 					try {
@@ -277,6 +288,7 @@ public class FileTransferServer extends Host implements Runnable {
 							fos.close();
 							return;
 						}
+						
 						if (invalidTID(receivePacket)){
 							isWrongTID = true;
 						}
@@ -538,9 +550,11 @@ public class FileTransferServer extends Host implements Runnable {
 					if(key.equalsIgnoreCase("q")) {
 						System.out.println("Server no longer accepting new client connections\n");
 						serverShutdown = true;
-						//receiveSocket.close();
+						receiveSocket.close();
 						reader.close();
-					} else if (key.equalsIgnoreCase("v")){
+						break;
+					}			
+					else if (key.equalsIgnoreCase("v")){
 						System.out.println("Enabling Verbose\n");
 						Printer.setIsVerbose(true);
 						System.out.println("Press q to quit server\n");
