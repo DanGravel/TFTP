@@ -160,9 +160,7 @@ public class IntermediateHost extends Host {
 		if(packetType == 3 || packetType == 4){
 			System.out.println("Enter the packet number you want to " + string + ": ");
 			packetNum = checkBounds(100, 0, 0);
-		} else {
-			packetNum = 1; // losing first packet since RRQ or WRQ	
-		}
+		} 
 	}
 	
 	private void chooseTypeOfPacket(String string, String stringing, boolean hasOne) {
