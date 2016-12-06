@@ -238,6 +238,14 @@ public class IntermediateHost extends Host {
 				}
 				conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
 			}
+			else if(packetType == 5) {
+				if(requestType == RequestType.READ) {
+					receiveFromServer(); 
+				}
+				else {
+					System.out.println("No error packet is sent on a write; client just reprompts");
+				}
+			}
 		}
 	}
 	
@@ -313,6 +321,16 @@ public class IntermediateHost extends Host {
                 }
 				conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
 			}
+			else if(packetType == 5) {
+				if(requestType == RequestType.READ) {
+					receiveFromServer();
+					new ErrorSim(delayTime, receivePacket.getData(), clientPort, sendReceiveSocket, delay).start();
+				}
+				else {
+					System.out.println("No error packet is sent on a write; client just reprompts");
+				}
+			}
+			
 		}
 	}
 	
@@ -468,7 +486,17 @@ public class IntermediateHost extends Host {
 					}
 				}
 	    		conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
-			}	
+			}
+			else if(packetType == 5) {
+				if(requestType == RequestType.READ) {
+					receiveFromServer();
+					sendToClient(clientPort);
+					new ErrorSim(delayTime, receivePacket.getData(), clientPort, sendReceiveSocket, duplicate).start();
+				}
+				else {
+					System.out.println("No error packet is sent on a write; client just reprompts");
+				}
+			}
 		}
 	}
 
@@ -534,6 +562,15 @@ public class IntermediateHost extends Host {
 					sendToServerThread(serverThreadPort);
 				}
 				conditionalFinishTransfer(requestType, clientPort, serverThreadPort);
+			}
+			else if(packetType == 5) {
+				if(requestType == RequestType.READ) {
+					receiveFromServer();
+					new ErrorSim(delayTime, receivePacket.getData(), clientPort, fakeTID, diffTID).start();
+				}
+				else {
+					System.out.println("No error packet is sent on a write; client just reprompts");
+				}
 			}
 		}
 	
