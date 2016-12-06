@@ -717,9 +717,7 @@ public class IntermediateHost extends Host {
 				receiveFromServer();
 				sendToClient(clientPort);
  			}
- 			else if(packetType == 5) {			
-				sendToServer();
-				receiveFromServer();	
+ 			else if(packetType == 5) {				
 				byte[] data = receivePacket.getData();
 				data[0] = wrongOpCode[0];
 				data[1] = wrongOpCode[1];	
