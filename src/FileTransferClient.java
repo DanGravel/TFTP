@@ -335,7 +335,7 @@ public class FileTransferClient extends Host{
 							if(isCorrectAck) response = true;	
 							
 						}catch(SocketTimeoutException e){			 			
-							sendaPacket(packetdata, packetdata.length, portyo, socket, sender,initAddress);
+							sendaPacket(packetdata, packetdata.length, TID, socket, sender,initAddress);
 							numTimeOuts++;
 						}
 						if(numTimeOuts == 3){
